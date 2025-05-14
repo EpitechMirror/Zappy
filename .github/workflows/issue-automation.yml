@@ -1,0 +1,45 @@
+name: Issue Management
+
+on:
+  issues:
+    types: [opened, labeled, unlabeled, assigned, unassigned]
+  pull_request:
+    types: [opened, closed, reopened]
+
+jobs:
+  issue-management:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Move new issues to Backlog
+        if: github.event_name == 'issues' && github.event.action == 'opened'
+        uses: alex-page/github-project-automation-plus@v0.8.3
+        with:
+          project: Zappy Development
+          column: Backlog
+          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
+      
+      - name: Move assigned issues to To Do
+        if: github.event_name == 'issues' && github.event.action == 'assigned'
+        uses: alex-page/github-project-automation-plus@v0.8.3
+        with:
+          project: Zappy Development
+          column: To Do
+          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
+      
+      - name: Move PRs to Review
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: alex-page/github-project-automation-plus@v0.8.3
+        with:
+          project: Zappy Development
+          column: Review
+          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
+          
+      - name: Move PRs to Done when closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: alex-page/github-project-automation-plus@v0.8.3
+        with:
+          project: Zappy Development
+          column: Done
+          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}

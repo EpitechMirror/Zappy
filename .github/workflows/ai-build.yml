@@ -1,0 +1,46 @@
+name: AI Client Build and Test
+
+on:
+  push:
+    branches: [ dev, main ]
+    paths:
+      - 'ai/**'
+      - '.github/workflows/ai-build.yml'
+  pull_request:
+    branches: [ dev, main ]
+    paths:
+      - 'ai/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        cd ai
+        pip install -r requirements.txt
+        pip install pytest pytest-cov flake8
+    
+    - name: Lint with flake8
+      run: |
+        cd ai
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+    - name: Test with pytest
+      run: |
+        cd ai
+        pytest --cov=./ --cov-report=xml
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./ai/
+        flags: ai

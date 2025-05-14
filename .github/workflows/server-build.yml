@@ -1,0 +1,50 @@
+name: Server Build and Test
+
+on:
+  push:
+    branches: [ dev, main ]
+    paths:
+      - 'server/**'
+      - '.github/workflows/server-build.yml'
+  pull_request:
+    branches: [ dev, main ]
+    paths:
+      - 'server/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc make valgrind
+    
+    - name: Build
+      run: |
+        cd server
+        make
+    
+    - name: Run tests
+      run: |
+        cd server
+        make test
+    
+    - name: Check memory leaks
+      run: |
+        cd server
+        make valgrind-test
+    
+    - name: Code coverage
+      run: |
+        cd server
+        make coverage
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./server/coverage/
+        flags: server

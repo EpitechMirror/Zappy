@@ -1,0 +1,29 @@
+name: Push to mirror repository
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+
+jobs:
+  push-to-mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo (again, full history)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up SSH for push
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.MIRROR_PUSH_TOKEN }}
+
+      - name: Add mirror remote
+        run: git remote add mirror ${{ env.MIRROR_REPO_URL }}
+
+      - name: Push all branches and tags to mirror
+        run: |
+          git push mirror --all --force
+          git push mirror --tags --force

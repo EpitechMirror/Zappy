@@ -1,0 +1,32 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+    branches: [ dev, main ]
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc make
+        python -m pip install --upgrade pip
+        pip install -r ai/requirements.txt
+        pip install -r gui/requirements.txt
+    
+    - name: Build all components
+      run: make all
+    
+    - name: Run integration tests
+      run: |
+        cd scripts
+        ./run_integration_tests.sh
