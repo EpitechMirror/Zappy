@@ -135,11 +135,11 @@ jobs:
           echo "Processing all open issues and PRs..."
           
           # Get all open issues
-          ISSUES=$(gh issue list --state open --json number,title,url,assignees,labels,nodeId --limit 100)
+          ISSUES=$(gh issue list --state open --json number,title,url,assignees,labels,id --limit 100)
           
           # Process each issue
           echo "$ISSUES" | jq -c '.[]' | while read -r issue; do
-            NODE_ID=$(echo "$issue" | jq -r '.nodeId')
+            NODE_ID=$(echo "$issue" | jq -r '.id')
             NUMBER=$(echo "$issue" | jq -r '.number')
             HAS_ASSIGNEES=$(echo "$issue" | jq '.assignees | length > 0')
             
@@ -199,11 +199,11 @@ jobs:
           done
           
           # Get all open PRs
-          PRS=$(gh pr list --state open --json number,title,url,assignees,labels,nodeId --limit 100)
+          PRS=$(gh pr list --state open --json number,title,url,assignees,labels,id --limit 100)
           
           # Process each PR
           echo "$PRS" | jq -c '.[]' | while read -r pr; do
-            NODE_ID=$(echo "$pr" | jq -r '.nodeId')
+            NODE_ID=$(echo "$pr" | jq -r '.id')
             NUMBER=$(echo "$pr" | jq -r '.number')
             
             echo "Processing PR #$NUMBER"
@@ -240,11 +240,11 @@ jobs:
           done
           
           # Get all closed, merged PRs from last 7 days
-          MERGED_PRS=$(gh pr list --state merged --json number,title,url,mergedAt,nodeId --limit 100 --search "merged:>$(date -d '7 days ago' +'%Y-%m-%d')")
+          MERGED_PRS=$(gh pr list --state merged --json number,title,url,mergedAt,id --limit 100 --search "merged:>$(date -d '7 days ago' +'%Y-%m-%d')")
           
           # Process each merged PR
           echo "$MERGED_PRS" | jq -c '.[]' | while read -r pr; do
-            NODE_ID=$(echo "$pr" | jq -r '.nodeId')
+            NODE_ID=$(echo "$pr" | jq -r '.id')
             NUMBER=$(echo "$pr" | jq -r '.number')
             
             echo "Processing merged PR #$NUMBER"
