@@ -33,6 +33,147 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
       
+      # For workflow_dispatch and schedule, process all open issues and PRs
+      - name: Process all open issues for workflow_dispatch and schedule
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        run: |
+          echo "Processing all open issues for workflow_dispatch or scheduled run..."
+          
+          # Get all open issues
+          ISSUES=$(gh issue list --state open --json number,nodeId --jq '.[]')
+          echo "Found open issues: $ISSUES"
+          
+          for issue in $(echo "$ISSUES" | jq -c '.'); do
+            ISSUE_NUMBER=$(echo $issue | jq -r '.number')
+            ISSUE_NODE_ID=$(echo $issue | jq -r '.nodeId')
+            echo "Processing issue #$ISSUE_NUMBER with node ID: $ISSUE_NODE_ID"
+            
+            # Check if issue is already in project
+            PROJECT_ITEM=$(gh api graphql -f query='
+              query($project:ID!, $content:ID!) {
+                projectV2(id: $project) {
+                  items(first: 1, filter: {contentIds: [$content]}) {
+                    nodes {
+                      id
+                    }
+                  }
+                }
+              }' -f project="${{ secrets.PROJECT_ID }}" -f content="$ISSUE_NODE_ID" --jq '.data.projectV2.items.nodes[0].id')
+            
+            if [ -z "$PROJECT_ITEM" ] || [ "$PROJECT_ITEM" = "null" ]; then
+              # Add issue to project if not already there
+              echo "Adding issue #$ISSUE_NUMBER to project..."
+              RESPONSE=$(gh api graphql -f query='
+                mutation($project:ID!, $content:ID!) {
+                  addProjectV2ItemById(input: {projectId: $project contentId: $content}) {
+                    item {
+                      id
+                    }
+                  }
+                }' -f project="${{ secrets.PROJECT_ID }}" -f content="$ISSUE_NODE_ID")
+              
+              ITEM_ID=$(echo $RESPONSE | jq -r '.data.addProjectV2ItemById.item.id')
+              echo "Item ID: $ITEM_ID"
+              
+              # Determine status based on whether issue is assigned
+              IS_ASSIGNED=$(gh issue view $ISSUE_NUMBER --json assignees --jq '.assignees | length > 0')
+              
+              if [ "$IS_ASSIGNED" = "true" ]; then
+                # Set to To Do status
+                echo "Issue is assigned. Setting status to To Do..."
+                STATUS_ID="${{ secrets.TODO_OPTION_ID }}"
+              else
+                # Set to Backlog status
+                echo "Issue is unassigned. Setting status to Backlog..."
+                STATUS_ID="${{ secrets.BACKLOG_OPTION_ID }}"
+              fi
+              
+              # Update status
+              gh api graphql -f query='
+                mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project
+                    itemId: $item
+                    fieldId: $field
+                    value: { 
+                      singleSelectOptionId: $value
+                    }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }' -f project="${{ secrets.PROJECT_ID }}" -f item="$ITEM_ID" -f field="${{ secrets.STATUS_FIELD_ID }}" -f value="$STATUS_ID"
+            else
+              echo "Issue #$ISSUE_NUMBER is already in the project."
+              # Optionally update status based on assignment here
+            fi
+          done
+      
+      - name: Process all open PRs for workflow_dispatch and schedule
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        run: |
+          echo "Processing all open PRs for workflow_dispatch or scheduled run..."
+          
+          # Get all open PRs
+          PRS=$(gh pr list --state open --json number,nodeId --jq '.[]')
+          echo "Found open PRs: $PRS"
+          
+          for pr in $(echo "$PRS" | jq -c '.'); do
+            PR_NUMBER=$(echo $pr | jq -r '.number')
+            PR_NODE_ID=$(echo $pr | jq -r '.nodeId')
+            echo "Processing PR #$PR_NUMBER with node ID: $PR_NODE_ID"
+            
+            # Check if PR is already in project
+            PROJECT_ITEM=$(gh api graphql -f query='
+              query($project:ID!, $content:ID!) {
+                projectV2(id: $project) {
+                  items(first: 1, filter: {contentIds: [$content]}) {
+                    nodes {
+                      id
+                    }
+                  }
+                }
+              }' -f project="${{ secrets.PROJECT_ID }}" -f content="$PR_NODE_ID" --jq '.data.projectV2.items.nodes[0].id')
+            
+            if [ -z "$PROJECT_ITEM" ] || [ "$PROJECT_ITEM" = "null" ]; then
+              # Add PR to project if not already there
+              echo "Adding PR #$PR_NUMBER to project..."
+              RESPONSE=$(gh api graphql -f query='
+                mutation($project:ID!, $content:ID!) {
+                  addProjectV2ItemById(input: {projectId: $project contentId: $content}) {
+                    item {
+                      id
+                    }
+                  }
+                }' -f project="${{ secrets.PROJECT_ID }}" -f content="$PR_NODE_ID")
+              
+              ITEM_ID=$(echo $RESPONSE | jq -r '.data.addProjectV2ItemById.item.id')
+              echo "Item ID: $ITEM_ID"
+              
+              # Set to Review status
+              echo "Setting status to Review..."
+              gh api graphql -f query='
+                mutation($project:ID!, $item:ID!, $field:ID!, $value:String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: $project
+                    itemId: $item
+                    fieldId: $field
+                    value: { 
+                      singleSelectOptionId: $value
+                    }
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }' -f project="${{ secrets.PROJECT_ID }}" -f item="$ITEM_ID" -f field="${{ secrets.STATUS_FIELD_ID }}" -f value="${{ secrets.REVIEW_OPTION_ID }}"
+            else
+              echo "PR #$PR_NUMBER is already in the project."
+            fi
+          done
+      
+      # For normal issue event handling
       - name: Get Item ID for Issue
         if: github.event_name == 'issues'
         id: get-issue-id
