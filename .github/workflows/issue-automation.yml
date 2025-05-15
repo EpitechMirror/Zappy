@@ -12,34 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Authenticate with GitHub CLI
+        run: echo "${{ secrets.PROJECT_MANAGEMENT_TOKEN }}" | gh auth login --with-token
+
       - name: Move new issues to Backlog
         if: github.event_name == 'issues' && github.event.action == 'opened'
-        uses: alex-page/github-project-automation-plus@v0.8.3
-        with:
-          project: Zappy Development
-          column: Backlog
-          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
-      
+        run: gh issue edit ${{ github.event.issue.number }} --add-project 'Zappy Development' --column Backlog
+
       - name: Move assigned issues to To Do
         if: github.event_name == 'issues' && github.event.action == 'assigned'
-        uses: alex-page/github-project-automation-plus@v0.8.3
-        with:
-          project: Zappy Development
-          column: To Do
-          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
-      
+        run: gh issue edit ${{ github.event.issue.number }} --add-project 'Zappy Development' --column 'To Do'
+
       - name: Move PRs to Review
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
-        uses: alex-page/github-project-automation-plus@v0.8.3
-        with:
-          project: Zappy Development
-          column: Review
-          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
-          
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-project 'Zappy Development' --column Review
+
       - name: Move PRs to Done when closed
         if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-        uses: alex-page/github-project-automation-plus@v0.8.3
-        with:
-          project: Zappy Development
-          column: Done
-          repo-token: ${{ secrets.PROJECT_MANAGEMENT_TOKEN }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-project 'Zappy Development' --column Done
