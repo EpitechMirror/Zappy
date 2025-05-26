@@ -21,7 +21,7 @@ jobs:
           ssh-private-key: ${{ secrets.MIRROR_PUSH_TOKEN }}
 
       - name: Add mirror remote
-        run: git remote add mirror ${{ env.MIRROR_REPO_URL }}
+        run: git remote add mirror ${{ secrets.MIRROR_REPO_URL }}
 
       - name: Push all branches and tags to mirror
         run: |
