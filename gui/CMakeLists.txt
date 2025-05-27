@@ -47,3 +47,15 @@ endif()
 
 # Optional install
 install(TARGETS zappy_gui RUNTIME DESTINATION bin)
+
+enable_testing()
+add_executable(unit_tests
+    tests/test_client.cpp
+    tests/test_map.cpp
+    client/Client.cpp
+    map/Map.cpp
+)
+target_link_libraries(unit_tests
+    criterion pthread
+)
+add_test(NAME client_tests COMMAND unit_tests)
