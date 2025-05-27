@@ -33,6 +33,10 @@
 *.so
 *.so.*
 *.dylib
+/.vscode
+.editorconfig
+.clang-format
+.pre-commit-config.yaml
 
 # Executables
 *.exe

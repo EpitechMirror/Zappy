@@ -4,19 +4,21 @@
 #include <iostream>
 #include "raylib.h"
 #include "Camera/Camera.hpp"
+#include "../map/Map.hpp"
 
 
 class Renderer
 {
+    public:
+        Renderer(int width, int height, const Map & map);
+        void renderWindow();
+        void gameLoop();
+
     private:
         int _screenWidth;
         int _screenHeight;
+        const Map &_map; 
         CameraController _cameraController;
-    protected:
-    public:
-        Renderer(int width, int height);
-        void renderWindow();
-        void gameLoop();
 };
 
 #endif

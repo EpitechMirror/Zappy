@@ -61,10 +61,15 @@ bool Client::receiveMapSize() {
         std::cout << "Received: [" << line << "]" << std::endl;
         std::istringstream iss(line);
 
-        if (iss >> _mapWidth >> _mapHeight) {
-            std::cout << "Parsed map size: " << _mapWidth << " x " << _mapHeight << std::endl;
-            _map.setSize(_mapWidth, _mapHeight);
-            return true;
+        std::string prefix;
+        if (!(iss >> prefix)) continue;
+
+        if (prefix == "msz") {
+            if (iss >> _mapWidth >> _mapHeight) {
+                std::cout << "Parsed map size: " << _mapWidth << " x " << _mapHeight << std::endl;
+                _map.setSize(_mapWidth, _mapHeight);
+                return true;
+            }
         }
     }
 

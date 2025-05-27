@@ -7,6 +7,8 @@
 
 #ifndef MAP_HPP_
 #define MAP_HPP_
+#include <iostream>
+
 #pragma once
 
 class Map {

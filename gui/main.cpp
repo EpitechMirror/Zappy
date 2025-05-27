@@ -37,12 +37,30 @@ int main(int argc, char** argv) {
 
     try {
         Client client(host, port);
-        Renderer renderer(SCREEN_WIDTH, SCREEN_HEIGHT);
-        client.connectToServer();
+
+        if (!client.connectToServer()) {
+            std::cerr << "Connection to server failed." << std::endl;
+            return EXIT_FAILURE;
+        }
+
         std::cout << "Connected to server " << host << ":" << port << std::endl;
-        
+
+        if (!client.sendGraphicCommand()) {
+            std::cerr << "Failed to send GRAPHIC command." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        if (!client.receiveMapSize()) {
+            std::cerr << "Failed to get map size." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "Map size: " << client.getMap().getWidth() << " x " << client.getMap().getHeight() << std::endl;
+
+        Renderer renderer(SCREEN_WIDTH, SCREEN_HEIGHT, client.getMap());
         renderer.renderWindow();
         client.disconnect();
+
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
