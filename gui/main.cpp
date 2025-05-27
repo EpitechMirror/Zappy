@@ -6,9 +6,7 @@
 */
 
 #include "raylib.h"
-#include <iostream>
-#include <string>
-#include <getopt.h>
+#include "client/Client.hpp"
 
 constexpr int SCREEN_WIDTH = 1280;
 constexpr int SCREEN_HEIGHT = 720;
@@ -36,21 +34,30 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    // Initialize Raylib window
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Zappy 3D GUI");
-    SetTargetFPS(60);
+    try {
+        Client client(host, port);
+        client.connectToServer();
+        std::cout << "Connected to server " << host << ":" << port << std::endl;
 
-    // Main loop: run until window close
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Zappy 3D GUI");
+        SetTargetFPS(60);
 
-        // TODO: render 3D scene here
+        while (!WindowShouldClose()) {
+            BeginDrawing();
+            ClearBackground(RAYWHITE);
 
-        DrawText("Zappy GUI - Raylib 3D Base", 20, 20, 20, DARKGRAY);
-        EndDrawing();
+            // TODO: Ajouter l'affichage 3D ici
+            DrawText("Zappy GUI - Raylib 3D Base", 20, 20, 20, DARKGRAY);
+
+            EndDrawing();
+        }
+
+        CloseWindow();
+        client.disconnect();
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
-    CloseWindow();
     return 0;
 }
