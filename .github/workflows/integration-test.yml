@@ -21,7 +21,6 @@ jobs:
         sudo apt-get install -y build-essential gcc make
         python -m pip install --upgrade pip
         pip install -r ai/requirements.txt
-        pip install -r gui/requirements.txt
     
     - name: Build all components
       run: make all
