@@ -25,6 +25,8 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/client/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/map/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Camera/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
