@@ -24,6 +24,7 @@ link_directories(${RAYLIB_LIBRARY_DIRS})
 file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/client/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
