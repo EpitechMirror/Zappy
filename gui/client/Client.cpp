@@ -7,56 +7,86 @@
 
 #include "Client.hpp"
 
-Client::Client(const std::string& host, int port)
-    : _host(host), _port(port), _sock(-1), _connected(false) {}
+Client::Client(const std::string &host, int port)
+    : _host(host), _port(port), _socket(-1) {}
 
 Client::~Client() {
-    disconnect();
+    if (_socket != -1)
+        close(_socket);
 }
 
-void Client::createSocket() {
-    _sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (_sock < 0)
-        throw std::runtime_error("Failed to create socket");
+bool Client::connectToServer() {
+    _socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (_socket < 0) {
+        std::cerr << "Socket creation failed\n";
+        return false;
+    }
+
+    sockaddr_in serv_addr {};
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(_port);
+
+    if (inet_pton(AF_INET, _host.c_str(), &serv_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address\n";
+        return false;
+    }
+
+    if (connect(_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        std::cerr << "Connection failed\n";
+        return false;
+    }
+
+    return true;
 }
 
-void Client::connectToServer() {
-    createSocket();
+bool Client::sendGraphicCommand() {
+    const char *msg = "GRAPHIC\n";
+    return send(_socket, msg, strlen(msg), 0) > 0;
+}
 
-    struct sockaddr_in serverAddr{};
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(_port);
+bool Client::readLine(std::string &line) {
+    line.clear();
+    char ch;
+    while (recv(_socket, &ch, 1, 0) > 0) {
+        if (ch == '\n') break;
+        line += ch;
+    }
+    return !line.empty();
+}
 
-    struct hostent* server = gethostbyname(_host.c_str());
-    if (!server)
-        throw std::runtime_error("Host not found");
+bool Client::receiveMapSize() {
+    std::string line;
 
-    std::memcpy(&serverAddr.sin_addr.s_addr, server->h_addr, server->h_length);
+    while (readLine(line)) {
+        std::cout << "Received: [" << line << "]" << std::endl;
+        std::istringstream iss(line);
 
-    if (connect(_sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
-        throw std::runtime_error("Connection failed");
+        if (iss >> _mapWidth >> _mapHeight) {
+            std::cout << "Parsed map size: " << _mapWidth << " x " << _mapHeight << std::endl;
+            _map.setSize(_mapWidth, _mapHeight);
+            return true;
+        }
+    }
 
-    _connected = true;
+    std::cerr << "Failed to receive map size\n";
+    return false;
 }
 
 void Client::disconnect() {
-    if (_connected) {
-        close(_sock);
-        _connected = false;
+    if (_socket != -1) {
+        close(_socket);
+        _socket = -1;
     }
 }
 
-void Client::sendMessage(const std::string& message) {
-    if (!_connected) throw std::runtime_error("Not connected");
-    if (send(_sock, message.c_str(), message.size(), 0) < 0)
-        throw std::runtime_error("Failed to send message");
+const Map &Client::getMap() const {
+    return _map;
 }
 
-std::string Client::receiveMessage() {
-    if (!_connected) throw std::runtime_error("Not connected");
-    char buffer[1024] = {0};
-    ssize_t len = recv(_sock, buffer, sizeof(buffer) - 1, 0);
-    if (len < 0)
-        throw std::runtime_error("Failed to receive message");
-    return std::string(buffer, len);
+int Client::getMapWidth() const {
+    return _mapWidth;
+}
+
+int Client::getMapHeight() const {
+    return _mapHeight;
 }
