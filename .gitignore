@@ -1,4 +1,5 @@
 # File created using '.gitignore Generator' for Visual Studio Code: https://bit.ly/vscode-gig
+
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,c,c++,cmake,python,ruby,rust
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,linux,c,c++,cmake,python,ruby,rust
 
@@ -114,8 +115,6 @@ CMakeUserPresets.json
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 
 # Distribution / packaging
 .Python
@@ -280,6 +279,7 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+
 ### Ruby ###
 *.gem
 *.rbc
@@ -368,6 +368,7 @@ Cargo.lock
 # Ignore all local history of files
 .history
 .ionide
+
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,c,c++,cmake,python,ruby,rust
 
