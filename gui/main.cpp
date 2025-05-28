@@ -6,9 +6,8 @@
 */
 
 #include "raylib.h"
-#include <iostream>
-#include <string>
-#include <getopt.h>
+#include "client/Client.hpp"
+#include "renderer/Renderer.hpp"
 
 constexpr int SCREEN_WIDTH = 1280;
 constexpr int SCREEN_HEIGHT = 720;
@@ -36,21 +35,36 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    // Initialize Raylib window
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Zappy 3D GUI");
-    SetTargetFPS(60);
+    try {
+        Client client(host, port);
 
-    // Main loop: run until window close
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
+        if (!client.connectToServer()) {
+            std::cerr << "Connection to server failed." << std::endl;
+            return EXIT_FAILURE;
+        }
 
-        // TODO: render 3D scene here
+        std::cout << "Connected to server " << host << ":" << port << std::endl;
 
-        DrawText("Zappy GUI - Raylib 3D Base", 20, 20, 20, DARKGRAY);
-        EndDrawing();
+        if (!client.sendGraphicCommand()) {
+            std::cerr << "Failed to send GRAPHIC command." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        if (!client.receiveMapSize()) {
+            std::cerr << "Failed to get map size." << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "Map size: " << client.getMap().getWidth() << " x " << client.getMap().getHeight() << std::endl;
+
+        Renderer renderer(SCREEN_WIDTH, SCREEN_HEIGHT, client.getMap());
+        renderer.renderWindow();
+        client.disconnect();
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
-    CloseWindow();
     return 0;
 }
