@@ -157,7 +157,8 @@ class ZappyAI:
             self.state.world_height = int(dims[1])
 
             print(
-                f"Connected to server. Team slots: {self.state.team_slots}, World: {self.state.world_width}x{self.state.world_height}"
+                f"Connected to server. Team slots: {self.state.team_slots}, \
+                World: {self.state.world_width}x{self.state.world_height}"
             )
             return True
         except Exception as e:
