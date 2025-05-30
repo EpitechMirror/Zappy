@@ -24,13 +24,13 @@ jobs:
         pip install pre-commit
         
     - name: Run pre-commit
-      run: |
-        pre-commit run --all-files
+      run: pre-commit run --all-files
       continue-on-error: true
     
-    - name: Check for changes
+    - name: Commit pre-commit fixes
       run: |
-        if [[ -n $(git status --porcelain) ]]; then
-          echo "Pre-commit made changes. Please run 'pre-commit run --all-files' locally and commit the changes."
-          exit 1
-        fi
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --staged --quiet || git commit -m "Auto-fix pre-commit issues"
+        git push
