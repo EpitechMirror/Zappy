@@ -37,7 +37,7 @@ jobs:
     - name: Test with pytest
       run: |
         cd ai
-        pytest --cov=./ --cov-report=xml
+        pytest tests/ --cov=./ --cov-report=xml:coverage.xml
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
