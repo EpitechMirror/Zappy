@@ -1,0 +1,66 @@
+name: GUI Client Build and Test
+on:
+  push:
+    branches: [ dev, main ]
+    paths:
+      - 'gui/**'
+      - '.github/workflows/gui-build.yml'
+  pull_request:
+    branches: [ dev, main ]
+    paths:
+      - 'gui/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake pkg-config
+        sudo apt-get install -y libasound2-dev mesa-common-dev libx11-dev libxrandr-dev libxi-dev xorg-dev libgl1-mesa-dev libglu1-mesa-dev
+    
+    - name: Install Raylib
+      run: |
+        git clone https://github.com/raysan5/raylib.git
+        cd raylib
+        mkdir build && cd build
+        cmake .. -DBUILD_EXAMPLES=OFF
+        make -j$(nproc)
+        sudo make install
+    
+    - name: Install Criterion
+      run: |
+        sudo apt-get install -y libcriterion-dev
+    
+    - name: Build GUI
+      run: |
+        cd gui
+        mkdir -p build
+        cd build
+        cmake ..
+        make -j$(nproc)
+    
+    - name: Run tests
+      run: |
+        cd gui/build
+        ctest --output-on-failure
+    
+    - name: Generate coverage report (if gcov is set up)
+      run: |
+        cd gui/build
+        gcov -r ../**/*.c
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info
+        genhtml coverage.info --output-directory coverage_html
+      continue-on-error: true
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./gui/build/
+        flags: gui
+      continue-on-error: true

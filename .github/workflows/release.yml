@@ -1,0 +1,42 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build all components
+      run: make all
+    
+    - name: Create release archive
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        tar -czf zappy-${VERSION}.tar.gz --transform "s,^,zappy-${VERSION}/," server/zappy_server ai/zappy_ai gui/zappy_gui README.md docs/
+    
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./zappy-${{ github.ref_name }}.tar.gz
+        asset_name: zappy-${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip

@@ -1,0 +1,76 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+    branches: [ dev, main ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pre-commit
+
+    - name: Run pre-commit
+      run: pre-commit run --all-files
+      continue-on-error: true
+
+    - name: Check if changes were made
+      id: verify-changed-files
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Pull Request with pre-commit fixes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: Auto-fix pre-commit issues
+        title: '🤖 Auto-fix: Pre-commit code quality issues'
+        body: |
+          ## 🔧 Automated Pre-commit Fixes
+          
+          This PR contains automatic fixes from pre-commit hooks:
+          
+          - ✂️ Fixed trailing whitespace
+          - 📄 Fixed end-of-file issues  
+          - 🐍 Applied Black Python formatting
+          - 🧹 Other code quality improvements
+          
+          ### What to do:
+          1. Review the changes in the "Files changed" tab
+          2. If everything looks good, merge this PR
+          3. Your next push will pass the pre-commit checks! ✅
+          
+          ---
+          *This PR was created automatically by GitHub Actions*
+        branch: auto-correct-pre-commit
+        delete-branch: true
+        add-paths: |
+          ai/
+          gui/
+          server/
+          docs/
+          *.md
+          *.py
+          *.txt
+        labels: |
+          automated
+          pre-commit
+          code-quality
