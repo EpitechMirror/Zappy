@@ -17,7 +17,7 @@ class Renderer
     private:
         int _screenWidth;
         int _screenHeight;
-        const Map &_map; 
+        const Map &_map;
         CameraController _cameraController;
 };
 
