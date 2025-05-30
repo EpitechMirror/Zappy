@@ -29,11 +29,11 @@ jobs:
     
     - name: Check if changes were made
       id: verify-changed-files
-      run : |
-        if [[ -n $(git status --porcelain ]]; then
-          echo "changed-true" >> $GITHUB_OUTPUT
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
         else
-          echo "changed-false" >> $GITHUB_OUTPUT
+          echo "changed=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Create Pull Request with pre-commit fixes
