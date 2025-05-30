@@ -27,10 +27,42 @@ jobs:
       run: pre-commit run --all-files
       continue-on-error: true
     
-    - name: Commit pre-commit fixes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git diff --staged --quiet || git commit -m "Auto-fix pre-commit issues"
-        git push
+    - name: Check if changes were made
+      id: verify-changed-files
+      run : |
+        if [[ -n $(git status --porcelain ]]; then
+          echo "changed-true" >> $GITHUB_OUTPUT
+        else
+          echo "changed-false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Pull Request with pre-commit fixes
+      if: failure()
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: Auto-fix pre-commit issues
+        title: '🤖 Auto-fix: Pre-commit code quality issues'
+        body: |
+          ## 🔧 Automated Pre-commit Fixes
+          
+          This PR contains automatic fixes from pre-commit hooks:
+          
+          - ✂️ Fixed trailing whitespace
+          - 📄 Fixed end-of-file issues  
+          - 🐍 Applied Black Python formatting
+          - 🧹 Other code quality improvements
+          
+          ### What to do:
+          1. Review the changes in the "Files changed" tab
+          2. If everything looks good, merge this PR
+          3. Your next push will pass the pre-commit checks! ✅
+          
+          ---
+          *This PR was created automatically by GitHub Actions*
+        branch: auto-correct-pre-commit
+        delete-branch: true
+        labels: |
+          automated
+          pre-commit
+          code-quality
