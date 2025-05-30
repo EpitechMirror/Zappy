@@ -63,14 +63,15 @@ jobs:
         branch: auto-correct-pre-commit
         delete-branch: true
         add-paths: |
-          ai/
-          gui/
-          server/
-          docs/
-          *.md
-          *.py
-          *.txt
-          !.github/workflows/
+          - ai/
+          - gui/
+          - server/
+          - docs/
+          - "*.md"
+          - "*.py"
+          - "*.txt"
+          - "!.github/workflows/"
+
         labels: |
           automated
           pre-commit
