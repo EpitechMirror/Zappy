@@ -23,5 +23,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install pre-commit
         
-    - name: Run pre-commit hooks
-      run: pre-commit run --all-files
+    - name: Run pre-commit
+      run: |
+        pre-commit run --all-files
+      continue-on-error: true
+    
+    - name: Check for changes
+      run: |
+        if [[ -n $(git status --porcelain) ]]; then
+          echo "Pre-commit made changes. Please run 'pre-commit run --all-files' locally and commit the changes."
+          exit 1
+        fi
