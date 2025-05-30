@@ -48,7 +48,7 @@ class ZappyAI:
         """Connect to the server and initialize the player"""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
-        
+
         # Handle initial handshake
         welcome = self.receive_message()
         self.send_message(self.team_name)
@@ -56,16 +56,16 @@ class ZappyAI:
         map_size = self.receive_message().split()
         self.map_width = int(map_size[0])
         self.map_height = int(map_size[1])
-        
+
         self.connected = True
-        
+
     def run(self):
         """Main AI loop"""
         while self.connected:
             # Update knowledge
             self.update_inventory()
             self.look_around()
-            
+
             # Make decisions
             if self.food < 3:  # Critical food level
                 self.find_food()
@@ -73,25 +73,25 @@ class ZappyAI:
                 self.prepare_elevation()
             else:
                 self.collect_resources()
-                
+
             # Execute next command
             self.execute_next_command()
-            
+
             # Process server responses
             self.process_responses()
-    
+
     def update_inventory(self):
         """Send inventory command and update internal state"""
         self.send_command("Inventory")
         response = self.get_response()
         # Parse inventory response and update self.inventory
-        
+
     def look_around(self):
         """Send look command and update internal vision"""
         self.send_command("Look")
         response = self.get_response()
         # Parse look response and update self.vision
-        
+
     def find_food(self):
         """Strategy to find and collect food"""
         # Look for food in vision
@@ -101,33 +101,33 @@ class ZappyAI:
         else:
             # Random movement to find food
             self.random_move()
-            
+
     def can_elevate(self):
         """Check if elevation is possible"""
         # Check inventory against requirements for current level
         resources_needed = self.get_elevation_requirements()
         teammates_needed = self.get_teammates_needed()
-        
+
         # Check if we have all resources and enough teammates nearby
         return self.has_required_resources(resources_needed) and self.has_teammates(teammates_needed)
-        
+
     def prepare_elevation(self):
         """Prepare for elevation ritual"""
         # Drop required resources
         for resource, amount in self.get_elevation_requirements().items():
             for _ in range(amount):
                 self.send_command(f"Set {resource}")
-                
+
         # Broadcast to team members
         self.send_command("Broadcast ELEVATION")
-        
+
         # Start incantation when ready
         self.send_command("Incantation")
-        
+
     def collect_resources(self):
         """Collect resources based on current level needs"""
         needed_resources = self.get_needed_resources()
-        
+
         # If resources in vision, go get them
         if self.resources_in_vision(needed_resources):
             self.move_to_resources(needed_resources)
@@ -135,16 +135,16 @@ class ZappyAI:
         else:
             # Explore for resources
             self.random_move()
-    
+
     def send_command(self, command):
         """Send a command to the server and queue it for response"""
         self.send_message(command)
         self.command_queue.append(command)
-    
+
     def get_response(self):
         """Get response from server"""
         return self.receive_message()
-        
+
     def execute_next_command(self):
         """Execute the next command in the queue"""
         if self.command_queue:
@@ -194,7 +194,7 @@ def broadcast_elevation_request(self):
     """Broadcast elevation request with location"""
     message = f"ELEVATION {self.level} AT {self.x} {self.y}"
     self.send_command(f"Broadcast {message}")
-    
+
 def handle_broadcast(self, message, direction):
     """Handle broadcast messages from other players"""
     if message.startswith("ELEVATION"):
@@ -202,7 +202,7 @@ def handle_broadcast(self, message, direction):
         level = int(parts[1])
         x = int(parts[3])
         y = int(parts[4])
-        
+
         if level == self.level:
             # Move towards elevation location
             self.move_towards(x, y)

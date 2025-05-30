@@ -37,7 +37,7 @@ void Renderer::gameLoop() {
                 DrawLine3D(start, end, GRAY);
             }
 
-            
+
             EndMode3D();
 
             DrawRectangle( 10, 10, 320, 93, Fade(SKYBLUE, 0.5f));
