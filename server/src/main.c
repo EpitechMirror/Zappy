@@ -7,10 +7,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-
 #include <stdio.h>
-
 #include <stdio.h>
+#include <string.h>
 
 void print_help()
 {
@@ -28,8 +27,6 @@ void print_help()
     printf("  -f freq        is the reciprocal of time unit for execution "
            "of actions\n");
 }
-
-
 
 int innit_server()
 {
@@ -78,7 +75,17 @@ int innit_server()
 
 int parse(int argc, char **argv)
 {
+    int port;
 
+    printf("inside\n");
+    for (int i = 0; i < argc; i++){
+        printf("%s\n", argv[i]);
+        if (strcmp(argv[i], "-p")){
+            port = atoi(argv[i++]);
+            printf("%i\n", port);
+        }
+    }
+    return 84;
 }
 
 int main(int argc, char **argv)
@@ -86,9 +93,9 @@ int main(int argc, char **argv)
     if(argc < 2){
         return 84;
     }
-    if (strcmp(argv[1], "-h") || strcmp(argv[1], "-help")){
-        print_help();
-        return 0;
-    }
+    //if (strcmp(argv[1], "-h") || strcmp(argv[1], "-help")){
+    //    print_help();
+    //    return 0;
+    //}
     parse(argc, argv);
 }
