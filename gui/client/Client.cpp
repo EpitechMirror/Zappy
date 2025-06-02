@@ -68,6 +68,19 @@ void Client::parseData() {
                 _hasMapSize = true;
             }
         }
+        if (cmd == "bct") {
+            int x, y;
+            Resources res;
+            if (iss >> x >> y) {
+                for (int i = 0; i < RESOURCE_COUNT; ++i) {
+                    if (!(iss >> res.quantities[i])) {
+                        std::cerr << "Invalid bct resource data\n";
+                        break;
+                    }
+                }
+                _map.setTileResources(x, y, res);
+            }
+        }
     }
 }
 

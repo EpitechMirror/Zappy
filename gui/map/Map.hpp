@@ -9,6 +9,7 @@
 #define MAP_HPP_
 #include <iostream>
 #include <vector>
+#include "../ressources/Ressources.hpp"
 
 #pragma once
 
@@ -21,20 +22,23 @@ class Map {
         int getWidth() const;
         int getHeight() const;
 
-        int getFoodCount() const { return 0; }
-        int getLinemateCount() const { return 0; }
-        int getDeraumereCount() const { return 0; }
-        int getSiburCount() const { return 0; }
-        int getMendianeCount() const { return 0; }
-        int getPhirasCount() const { return 0; }
-        int getThystameCount() const { return 0; }
+        void setTileResources(int x, int y, const Resources& resources);
+        const Resources& getTileResources(int x, int y) const;
 
         bool isFullyInitialized() const;
+
+        int getFoodCount() const;
+        int getLinemateCount() const;
+        int getDeraumereCount() const;
+        int getSiburCount() const;
+        int getMendianeCount() const;
+        int getPhirasCount() const;
+        int getThystameCount() const;
 
     private:
         int _width;
         int _height;
-        std::vector<std::vector<int>> _tiles;
+        std::vector<Resources> _tiles;
 };
 
 #endif /* !MAP_HPP_ */
