@@ -45,36 +45,49 @@ bool Client::sendGraphicCommand() {
 }
 
 bool Client::readLine(std::string &line) {
-    line.clear();
-    char ch;
-    while (recv(_socket, &ch, 1, 0) > 0) {
-        if (ch == '\n') break;
-        line += ch;
-    }
-    return !line.empty();
+    size_t pos = _buffer.find('\n');
+    if (pos == std::string::npos)
+        return false;
+
+    line = _buffer.substr(0, pos);
+    _buffer.erase(0, pos + 1);
+    return true;
 }
 
-bool Client::receiveMapSize() {
+void Client::parseData() {
     std::string line;
-
     while (readLine(line)) {
         std::cout << "Received: [" << line << "]" << std::endl;
         std::istringstream iss(line);
+        std::string cmd;
+        if (!(iss >> cmd)) continue;
 
-        std::string prefix;
-        if (!(iss >> prefix)) continue;
-
-        if (prefix == "msz") {
+        if (cmd == "msz") {
             if (iss >> _mapWidth >> _mapHeight) {
-                std::cout << "Parsed map size: " << _mapWidth << " x " << _mapHeight << std::endl;
                 _map.setSize(_mapWidth, _mapHeight);
-                return true;
+                _hasMapSize = true;
             }
         }
     }
+}
 
-    std::cerr << "Failed to receive map size\n";
-    return false;
+void Client::receiveData() {
+    char temp[1024];
+    ssize_t bytesRead = recv(_socket, temp, sizeof(temp) - 1, 0);
+    if (bytesRead > 0) {
+        temp[bytesRead] = '\0';
+        _buffer += temp;
+    }
+    // Ne rien faire si bytesRead < 0 : EAGAIN / EWOULDBLOCK
+}
+
+void Client::update() {
+    receiveData();
+    parseData();
+}
+
+bool Client::isMapReady() const {
+    return _hasMapSize && _map.isFullyInitialized();
 }
 
 void Client::disconnect() {

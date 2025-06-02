@@ -36,7 +36,7 @@ Test(Client, connect_and_receive_map_size) {
     Client client("127.0.0.1", 4242);
     cr_assert(client.connectToServer());
     cr_assert(client.sendGraphicCommand());
-    cr_assert(client.receiveMapSize());
+    cr_assert(client.parseMapData());
     cr_assert_eq(client.getMapWidth(), 10);
     cr_assert_eq(client.getMapHeight(), 20);
 

@@ -30,11 +30,13 @@ class Client {
 
         bool connectToServer();
         bool sendGraphicCommand();
-        bool receiveMapSize();
         int getMapWidth() const;
         int getMapHeight() const;
         const Map &getMap() const;
         void disconnect();
+
+        void update();
+        bool isMapReady() const;
 
     private:
         std::string _host;
@@ -43,7 +45,11 @@ class Client {
         int _mapWidth;
         int _mapHeight;
         Map _map;
+        bool _hasMapSize = false;
+        std::string _buffer;
 
+        void receiveData();
+        void parseData();
         bool readLine(std::string &line);
 };
 
