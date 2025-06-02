@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import socket
-import sys
 import time
-import random
 import random
 import argparse
 from enum import Enum
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Tuple
 
 
 class Direction(Enum):

@@ -42,5 +42,7 @@ jobs:
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
-        directory: ./ai/
+        token: ${{ secrets.CODEDEV_TOKEN }}
+        directory: ./ai
         flags: ai
+        name: ai-client
