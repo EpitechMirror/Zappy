@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2025
+** Zappy
+** File description:
+** main
+*/
+
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -10,13 +17,11 @@
 #include <stdio.h>
 #include <stdio.h>
 #include <string.h>
+#include "flag.h"
 
-void print_help()
+void print_help(void)
 {
-    printf(
-        "USAGE: ./zappy_server -p port -x width -y height "
-        "-n name1 name2 ... -c clientsNb -f freq\n"
-    );
+    printf("USAGE: ./zappy_server -p port -x width -y height -n name1 name2 ... -c clientsNb -f freq\n");
     printf("\n");
     printf("DESCRIPTION:\n");
     printf("  -p port        is the port number\n");
@@ -24,11 +29,10 @@ void print_help()
     printf("  -y height      is the height of the world\n");
     printf("  -n name1 name2 ... is the name of the teams\n");
     printf("  -c clientsNb   is the number of authorized clients per team\n");
-    printf("  -f freq        is the reciprocal of time unit for execution "
-           "of actions\n");
+    printf("  -f freq        is the reciprocal of time unit for execution of actions\n");
 }
 
-int innit_server()
+int init_server(server_config_t *conf)
 {
     int server_fd;
     int new_socket;
@@ -39,33 +43,39 @@ int innit_server()
     char buffer[1024] = {0};
     char hello[] = "hello world!";
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
         perror("socket failed");
-    };
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))){
-        perror("set sock pot\n");
-        exit(84);
-    };
+        return 84;
+    }
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt");
+        close(server_fd);
+        return 84;
+    }
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(8080);
+    address.sin_port = htons(conf->port);
+    printf("Server started on port %d\n", conf->port);
 
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))){
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
-        exit(84);
+        close(server_fd);
+        return 84;
     }
     if (listen(server_fd, 3) < 0) {
         perror("listen");
-        exit(EXIT_FAILURE);
+        close(server_fd);
+        return 84;
     }
-    if ((new_socket
-         = accept(server_fd, (struct sockaddr*)&address,
-                  &arrlen))
-        < 0) {
+    new_socket = accept(server_fd, (struct sockaddr *)&address, &arrlen);
+    if (new_socket < 0) {
         perror("accept");
-        exit(EXIT_FAILURE);
+        close(server_fd);
+        return 84;
     }
-    valread = read(new_socket, buffer, 1024-1);
+    valread = read(new_socket, buffer, 1023);
+    buffer[valread > 0 ? valread : 0] = '\0';
     printf("%s\n", buffer);
     send(new_socket, hello, strlen(hello), 0);
     close(new_socket);
@@ -73,29 +83,15 @@ int innit_server()
     return 0;
 }
 
-int parse(int argc, char **argv)
-{
-    int port;
-
-    printf("inside\n");
-    for (int i = 0; i < argc; i++){
-        printf("%s\n", argv[i]);
-        if (strcmp(argv[i], "-p")){
-            port = atoi(argv[i++]);
-            printf("%i\n", port);
-        }
-    }
-    return 84;
-}
-
 int main(int argc, char **argv)
 {
-    if(argc < 2){
+    server_config_t conf = {0};
+
+    if (argc < 2)
         return 84;
-    }
-    //if (strcmp(argv[1], "-h") || strcmp(argv[1], "-help")){
-    //    print_help();
-    //    return 0;
-    //}
-    parse(argc, argv);
+    if (parse(argc, argv, &conf) == 84)
+        return 84;
+    if (init_server(&conf) == 84)
+        return 84;
+    return 0;
 }

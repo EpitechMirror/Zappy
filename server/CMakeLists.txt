@@ -10,5 +10,6 @@ include_directories(include)
 
 # Add the executable target
 add_executable(zappy_server
-    src/main.cpp
+    src/main.c
+    src/parse.c
 )
