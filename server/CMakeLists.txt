@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(include)
 
 # Add the executable target
-add_executable(zappy_server
-    src/main.c
-    src/parse.c
-)
+file(GLOB SOURCES "src/*.c")
+
+add_executable(zappy_server ${SOURCES})
