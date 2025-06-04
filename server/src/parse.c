@@ -9,14 +9,40 @@
 #include <string.h>
 #include "flag.h"
 #include <stdio.h>
+#include <ctype.h>
 
-int handle_int(int *field, int *i, char **argv) {
-    *field = atoi(argv[++(*i)]);
+int is_number(const char *str)
+{
+    if (!str || *str == '\0')
+        return 0;
+    int i = 0;
+    if (str[0] == '-')
+        return 0;
+    for (; str[i]; i++) {
+        if (!isdigit(str[i]))
+            return 0;
+    }
+    return 1;
+}
+
+int handle_int(int *field, int *i, char **argv)
+{
+    (*i)++;
+    if (!argv[*i] || !is_number(argv[*i])) {
+        fprintf(stderr, "Invalid value for %s: %s\n", argv[*i - 1], argv[*i] ? argv[*i] : "(null)");
+        return 84;
+    }
+    *field = atoi(argv[*i]);
+    if (*field <= 0) {
+        fprintf(stderr, "Value for %s must be positive: %d\n", argv[*i - 1], *field);
+        return 84;
+    }
     printf("Setting %s to %d\n", argv[*i - 1], *field);
     return 0;
 }
 
-int handle_teams(server_config_t *conf, int *i, char **argv) {
+int handle_teams(server_config_t *conf, int *i, char **argv)
+{
     int start = ++(*i);
     int count = 0;
 
@@ -26,7 +52,7 @@ int handle_teams(server_config_t *conf, int *i, char **argv) {
     }
 
     conf->team_count = count;
-    printf("Setting team count to %d\n", conf->team_count);
+    // printf("Setting team count to %d\n", conf->team_count);
     conf->team_names = malloc(sizeof(char *) * (count + 1));
     if (!conf->team_names)
         return 84;
@@ -47,11 +73,14 @@ int strcmp_flag(char **argv, server_config_t *conf, int *i, flag_entry_t *flag_t
 {
     for (int j = 0; flag_table[j].flag; j++) {
         if (strcmp(argv[*i], flag_table[j].flag) == 0) {
+            int ret;
             if (flag_table[j].field) {
-                flag_table[j].handler(flag_table[j].field, i, argv);
+                ret = flag_table[j].handler(flag_table[j].field, i, argv);
             } else {
-                flag_table[j].handler(conf, i, argv);
+                ret = flag_table[j].handler(conf, i, argv);
             }
+            if (ret == 84)
+                return -1;
             return 1;
         }
     }
@@ -71,7 +100,10 @@ int parse(int argc, char **argv, server_config_t *conf)
     };
 
     for (int i = 1; i < argc; i++) {
-        if (!strcmp_flag(argv, conf, &i, flag_table))
+        int ret = strcmp_flag(argv, conf, &i, flag_table);
+        if (ret == -1)
+            return 84;
+        if (ret == 0)
             return 84;
     }
     return 0;
