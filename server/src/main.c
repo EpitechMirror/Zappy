@@ -24,12 +24,16 @@ void print_help(void)
 int main(int argc, char **argv)
 {
     server_config_t conf = {0};
+    int server_fd;
 
     if (argc < 2)
         return 84;
     if (parse(argc, argv, &conf) == 84)
         return 84;
-    if (init_server(&conf) == 84)
+    server_fd = create_server_socket(conf.port);
+    if (server_fd < 0)
         return 84;
+    accept_clients_loop(server_fd, &conf);
+    close(server_fd);
     return 0;
 }

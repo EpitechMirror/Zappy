@@ -21,7 +21,17 @@
 #include <stdio.h>
 #include <stdio.h>
 #include <string.h>
+#include "Client_Info.h"
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <stdbool.h>
 
-int init_server(server_config_t *conf);
+//int init_server(server_config_t *conf);
+
+int create_server_socket(int port);
+void handle_new_connection(int server_fd, client_t **clients, server_config_t *conf);
+void remove_client(client_t **clients, int fd);
+void accept_clients_loop(int server_fd, server_config_t *conf);
 
 #endif /* !SERVER_H_ */

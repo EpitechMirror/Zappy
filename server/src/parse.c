@@ -37,7 +37,7 @@ int handle_int(int *field, int *i, char **argv)
         fprintf(stderr, "Value for %s must be positive: %d\n", argv[*i - 1], *field);
         return 84;
     }
-    printf("Setting %s to %d\n", argv[*i - 1], *field);
+    //printf("Setting %s to %d\n", argv[*i - 1], *field);
     return 0;
 }
 
@@ -60,11 +60,11 @@ int handle_teams(server_config_t *conf, int *i, char **argv)
     for (int j = 0; j < count; j++)
         conf->team_names[j] = strdup(argv[start + j]);
     conf->team_names[count] = NULL;
-    printf("Teams: ");
-    for (int j = 0; j < count; j++) {
-        printf("%s ", conf->team_names[j]);
-    }
-    printf("\n");
+    // printf("Teams: ");
+    // for (int j = 0; j < count; j++) {
+    //     printf("%s ", conf->team_names[j]);
+    // }
+    // printf("\n");
     (*i)--;
     return 0;
 }
