@@ -24,6 +24,7 @@ class Renderer
         void unloadShaders();
         void loadModels();
         void loadTextures();
+        void unloadTextures();
         void RenderPlayers();
         void applyShaders();
         void initLights();

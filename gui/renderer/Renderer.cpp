@@ -31,10 +31,19 @@ void Renderer::unloadShaders() {
 
 void Renderer::loadTextures() {
     //Ici on charge les textures
-    Texture2D floorSand = LoadTexture("../resources/textures/floor/brick_pavement_sand.jpg");
+    Texture2D floorAlbedo = LoadTexture("../resources/textures/bitume/bitume_diff.jpg");
+    Texture2D floorNormal = LoadTexture("../resources/textures/bitume/bitume_disp.png");
+    Texture2D floorMRA = LoadTexture("../resources/textures/bitume/bitume_nor.exr");
+    Texture2D floorEmissive = LoadTexture("../resources/textures/bitume/bitume_rough.exr");
 
     // Et on les associe au modèle concerné (ici le sol)
-    _floorModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = floorSand;
+    for (int i = 0; i < _floorModel.materialCount; ++i) {
+        _floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
+        _floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = floorNormal;
+        _floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = floorMRA;
+        _floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = floorEmissive;
+    }
+
 
     //texture joueur (lampe)
     Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
@@ -51,10 +60,28 @@ void Renderer::loadTextures() {
     }
 }
 
+void Renderer::unloadTextures() {
+    // Libère les textures du sol
+    for (int i = 0; i < _floorModel.materialCount; ++i) {
+        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
+        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
+        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
+        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
+    }
+    // Libère les textures du joueur
+    for (int i = 0; i < _playerModel.materialCount; ++i) {
+        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
+        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
+        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
+        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
+    }
+}
+
 void Renderer::applyShaders() {
-    // Ici on applique les shaders aux modèlesù
+    // Ici on applique les shaders aux modèles
     Shader& pbr = _shaders.getPBR();
-    _floorModel.materials[0].shader = pbr;
+    for (int i = 0; i < _floorModel.materialCount; ++i)
+        _floorModel.materials[i].shader = pbr;
 
     // PLusieurs textures donc on applique les shaders pour chacune d'elles
     for (int i = 0; i < _playerModel.materialCount; ++i)
@@ -91,10 +118,14 @@ void Renderer::drawFloor() {
     int width = _map.getWidth();
     int height = _map.getHeight();
 
+    Shader& pbr = _shaders.getPBR();
+    int tilingLoc = GetShaderLocation(pbr, "tiling");
+    Vector2 tiling = {1.0f, 1.0f}; // 1 répétition par case
+    SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             Vector3 pos = { x * cellSize + cellSize/2, 0.0f, y * cellSize + cellSize/2 };
-            // A voir ici pour varier la texture du sol en fonction de la case
             DrawModel(_floorModel, pos, cellSize, WHITE);
         }
     }
@@ -198,6 +229,10 @@ void Renderer::renderWindow(Client &client) {
     SetTargetFPS(60);
 
     gameLoop(client);
+
+    unloadTextures();
+    unloadModels();
+    unloadShaders();
 
     CloseWindow();
     client.disconnect();
