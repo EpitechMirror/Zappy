@@ -13,7 +13,7 @@ Renderer::Renderer(int width, int height, const Map &map) : _screenWidth(width),
 // Charge les modèles nécessaires pour le rendu
 void Renderer::loadModels() {
     _floorModel = LoadModel("../resources/models/plane.glb");
-    _playerModel = LoadModel("../resources/models/robot.glb");
+    _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
 }
 
 void Renderer::unloadModels() {
@@ -35,13 +35,30 @@ void Renderer::loadTextures() {
 
     // Et on les associe au modèle concerné (ici le sol)
     _floorModel.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = floorSand;
+
+    //texture joueur (lampe)
+    Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
+    Texture2D lampNormal = LoadTexture("../resources/models/pixar_lamp/PixarLamp_normal.jpeg");
+    Texture2D lampMRA = LoadTexture("../resources/models/pixar_lamp/PixarLamp_metallicRoughness.jpeg");
+    Texture2D lampEmissive = LoadTexture("../resources/models/pixar_lamp/PixarLamp_emissive.jpeg");
+
+    //associé au modèle joueur (si on a plusieurs textures on fait une boucle)
+    for (int i = 0; i < _playerModel.materialCount; ++i) {
+        _playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = lampAlbedo;
+        _playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = lampNormal;
+        _playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = lampMRA;
+        _playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = lampEmissive;
+    }
 }
 
 void Renderer::applyShaders() {
     // Ici on applique les shaders aux modèlesù
     Shader& pbr = _shaders.getPBR();
     _floorModel.materials[0].shader = pbr;
-    _playerModel.materials[0].shader = pbr;
+
+    // PLusieurs textures donc on applique les shaders pour chacune d'elles
+    for (int i = 0; i < _playerModel.materialCount; ++i)
+        _playerModel.materials[i].shader = pbr;
 }
 
 void Renderer::initLights() {
@@ -109,7 +126,6 @@ void Renderer::gameLoop(Client &client) {
             BeginMode3D(_cameraController.getCamera());
             // Charge les modèles
             // Dessine le sol (a voir plus tard pour adapter le dessin du sol a la bonne position)
-            //DrawModel(_floorModel, {0, 0, 0}, 1.0f, WHITE);
             drawFloor();
             DrawGrid();
 
@@ -117,18 +133,20 @@ void Renderer::gameLoop(Client &client) {
             drawItems();
 
             // Dessine les joueurs (besoin d'enregistrer le nombre de joueurs)
-            // Exemple de joueur sous forme de robot,  a voir pour mettre la texture
+            // Exemple de joueur sous forme de lampe, essayer de faire en sorte qu'en fonction de la team on change les couleurs
             //faire une boucle pour chaque joueur
-            DrawModel(_playerModel, {0, 0, 0}, 1.0f, BLACK);
+
+            //Ici on dessine le jouer avec une rotation a l'aide de drawModelEx
+            Vector3 lampPos = {0, 0, 0};
+            Vector3 lampAxis = {1, 0, 0};
+            float lampAngle = -180.0f;
+
+            DrawModelEx(_playerModel, lampPos, lampAxis, lampAngle, {1.0f, 1.0f, 1.0f}, RED);
 
             // Dessine les lights (optionnel : sphères pour debug)
-            for (const Light& l : _lights)
-                DrawSphere(l.getPosition(), 0.2f, YELLOW);
+             for (const Light& l : _lights)
+                 DrawSphere(l.getPosition(), 0.2f, YELLOW);
             
-            
-
-            //DrawSphereBasic(GOLD);
-
             EndMode3D();
             InfoBoard();
         EndDrawing();
