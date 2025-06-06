@@ -10,5 +10,5 @@ include_directories(include)
 
 # Add the executable target
 file(GLOB SOURCES "src/*.c")
-
-add_executable(zappy_server ${SOURCES})
+file(GLOB SOURCES_FUNCTIONAL "src/functional/*.c")
+add_executable(zappy_server ${SOURCES} ${SOURCES_FUNCTIONAL})
