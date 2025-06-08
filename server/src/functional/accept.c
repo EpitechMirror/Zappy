@@ -7,48 +7,78 @@
 
 #include "server.h"
 
-void accept_clients_loop(int server_fd, server_config_t *conf)
+static void add_last_client_fd(struct pollfd *fds, client_t *clients, int *client_count)
 {
-    client_t *clients = NULL;
-    fd_set readfds;
-    int max_fd;
+    client_t *last = clients;
 
-    while (1) {
-        FD_ZERO(&readfds);
-        FD_SET(server_fd, &readfds);
-        max_fd = server_fd;
-
-        for (client_t *c = clients; c; c = c->next) {
-            FD_SET(c->fd, &readfds);
-            if (c->fd > max_fd)
-                max_fd = c->fd;
+    while (last && last->next)
+        last = last->next;
+    if (last) {
+        for (int i = 0; i < *client_count; i++) {
+            if (fds[i].fd == last->fd)
+                return;
         }
+        fds[*client_count].fd = last->fd;
+        fds[*client_count].events = POLLIN;
+        (*client_count)++;
+        printf("Ajout du fd %d au tableau fds[]\n", last->fd);
+    }
+}
 
-        if (select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0) {
-            perror("select");
-            break;
-        }
+void poll_clients(int server_fd, struct pollfd *fds, int *client_count, client_t **clients, server_config_t *conf)
+{
+    for (int i = 0; i < *client_count; i++) {
+        if (!(fds[i].revents & POLLIN))
+            continue;
 
-        if (FD_ISSET(server_fd, &readfds))
-            handle_new_connection(server_fd, &clients, conf);
-
-        client_t *c = clients, *next;
-        char buffer[1024];
-        while (c) {
-            next = c->next;
-            if (FD_ISSET(c->fd, &readfds)) {
-                ssize_t r = read(c->fd, buffer, sizeof(buffer) - 1);
-                if (r <= 0) {
-                    remove_client(&clients, c->fd);
-                } else {
-                    buffer[r] = '\0';
-                    printf("Client %d: %s\n", c->fd, buffer);
-                    send(c->fd, "hello world!\n", 13, 0);
-                }
+        if (fds[i].fd == server_fd) {
+            handle_new_connection(server_fd, fds, client_count, clients, conf);
+        } else {
+            bool disconnected = handle_client_data(clients, fds[i].fd, conf);
+            if (disconnected) {
+                close(fds[i].fd);
+                for (int j = i; j < *client_count - 1; j++)
+                    fds[j] = fds[j + 1];
+                (*client_count)--;
+                i--;
             }
-            c = next;
         }
     }
+}
+
+void set_non_blocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        perror("fcntl get");
+        return;
+    }
+    if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+        perror("fcntl set");
+    }
+}
+
+
+void accept_clients_loop(int server_fd, server_config_t *conf)
+{
+    set_non_blocking(server_fd);
+
+    struct pollfd fds[MAX_CLIENTS];
+    client_t *clients = NULL;
+    int client_count = 1;
+
+    fds[0].fd = server_fd;
+    fds[0].events = POLLIN;
+
+    while (1) {
+        int poll_count = poll(fds, client_count, -1);
+        if (poll_count == -1) {
+            perror("poll");
+            break;
+        }
+        poll_clients(server_fd, fds, &client_count, &clients, conf);
+    }
+
     while (clients)
         remove_client(&clients, clients->fd);
 }

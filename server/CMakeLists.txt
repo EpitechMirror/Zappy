@@ -9,6 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include_directories(include)
 
 # Add the executable target
-file(GLOB SOURCES "src/*.c")
-file(GLOB SOURCES_FUNCTIONAL "src/functional/*.c")
-add_executable(zappy_server ${SOURCES} ${SOURCES_FUNCTIONAL})
+file(GLOB SERVER_SOURCES "src/*.c")
+file(GLOB FUNCTIONAL_SOURCES "src/functional/*.c")
+add_executable(zappy_server ${SERVER_SOURCES} ${FUNCTIONAL_SOURCES})
