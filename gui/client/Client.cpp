@@ -8,7 +8,7 @@
 #include "Client.hpp"
 
 Client::Client(const std::string &host, int port)
-    : _host(host), _port(port), _socket(-1) {}
+    : _host(host), _port(port), _socket(-1), _hasMapSize(false) {}
 
 Client::~Client() {
     if (_socket != -1)
@@ -22,18 +22,29 @@ bool Client::connectToServer() {
         return false;
     }
 
+    int flags = fcntl(_socket, F_GETFL, 0);
+    if (flags < 0 || fcntl(_socket, F_SETFL, flags | O_NONBLOCK) < 0) {
+        std::cerr << "Failed to set non-blocking mode\n";
+        close(_socket);
+        return false;
+    }
+
     sockaddr_in serv_addr {};
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(_port);
 
     if (inet_pton(AF_INET, _host.c_str(), &serv_addr.sin_addr) <= 0) {
         std::cerr << "Invalid address\n";
+        close(_socket);
         return false;
     }
 
     if (connect(_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        std::cerr << "Connection failed\n";
-        return false;
+        if (errno != EINPROGRESS) {
+            std::cerr << "Connection failed: " << strerror(errno) << "\n";
+            close(_socket);
+            return false;
+        }
     }
 
     return true;
@@ -68,7 +79,7 @@ void Client::parseData() {
                 _hasMapSize = true;
             }
         }
-        if (cmd == "bct") {
+        else if (cmd == "bct") {
             int x, y;
             Resources res;
             if (iss >> x >> y) {
@@ -87,16 +98,33 @@ void Client::parseData() {
 void Client::receiveData() {
     char temp[1024];
     ssize_t bytesRead = recv(_socket, temp, sizeof(temp) - 1, 0);
+
     if (bytesRead > 0) {
         temp[bytesRead] = '\0';
         _buffer += temp;
     }
-    // Ne rien faire si bytesRead < 0 : EAGAIN / EWOULDBLOCK
+    else if (bytesRead == 0) {
+        std::cerr << "Server closed connection\n";
+        close(_socket);
+        _socket = -1;
+    }
+    else {
+        // bytesRead < 0
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Pas de données pour l'instant : c'est OK en mode non-bloquant
+        } else {
+            std::cerr << "Recv error: " << strerror(errno) << "\n";
+            close(_socket);
+            _socket = -1;
+        }
+    }
 }
 
 void Client::update() {
-    receiveData();
-    parseData();
+    if (_socket != -1) {
+        receiveData();
+        parseData();
+    }
 }
 
 bool Client::isMapReady() const {

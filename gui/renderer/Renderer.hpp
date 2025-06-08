@@ -2,6 +2,7 @@
     #define INCLUDED_RENDERER_HPP
 
 #include <iostream>
+#include <random>
 #include "raylib.h"
 #include "Camera/Camera.hpp"
 #include "../map/Map.hpp"
@@ -30,6 +31,7 @@ class Renderer
         void initLights();
         void unloadModels();
         void drawFloor();
+        Color getColorForResource(ResourceType type);
 
     private:
         int _screenWidth;

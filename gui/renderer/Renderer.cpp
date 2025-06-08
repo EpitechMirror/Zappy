@@ -99,17 +99,42 @@ void Renderer::initLights() {
 
 //DOIT dessiner nos différentes pierres
 void Renderer::drawItems() {
-    //recuperer les infos du parsing et adapter la méthode
     int width = _map.getWidth();
     int height = _map.getHeight();
     float cellSize = 1.0f;
+
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             const Resources& res = _map.getTileResources(x, y);
-            Vector3 pos = { x * cellSize + 0.5f, 0.2f, y * cellSize + 0.5f };
-            if (res.quantities[0] > 0)
-                DrawSphere(pos, 0.15f, GREEN); // DESSINE LES SPHERES VERTES, adapter ensuite avec les différentes pierres
+            Vector3 basePos = { x * cellSize + 0.5f, 0.2f, y * cellSize + 0.5f };
+
+            float offsetY = 0.0f;
+            for (int i = 0; i < RESOURCE_COUNT; ++i) {
+                int quantity = res.quantities[i];
+                if (quantity <= 0)
+                    continue;
+
+                for (int q = 0; q < quantity; ++q) {
+                    Vector3 pos = basePos;
+                    pos.y += offsetY;
+                    DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
+                    offsetY += 0.1f;
+                }
+            }
         }
+    }
+}
+
+Color Renderer::getColorForResource(ResourceType type) {
+    switch (type) {
+        case FOOD:      return ORANGE;
+        case LINEMATE:  return SKYBLUE;
+        case DERAUMERE: return GOLD;
+        case SIBUR:     return PURPLE;
+        case MENDIANE:  return RED;
+        case PHIRAS:    return GREEN;
+        case THYSTAME:  return PINK;
+        default:        return WHITE;
     }
 }
 
@@ -141,13 +166,13 @@ void Renderer::gameLoop(Client &client) {
     initLights();
 
     while (!WindowShouldClose()) {
+        client.update();
         float wheel = GetMouseWheelMove();
 
         if (wheel != 0.0f)
             _cameraController.zoom(-wheel);
         
         _cameraController.update();
-        //client.update();
         for (auto& l : _lights)
             l.updateShader(_shaders.getPBR());
 
@@ -185,24 +210,34 @@ void Renderer::gameLoop(Client &client) {
 }
 
 void Renderer::InfoBoard() {
-    DrawRectangle( 10, 10, 200, 215, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines( 10, 10, 200, 215, BLUE);
-    std::string infoText = "Map Size: " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight()) +
-                           "\n\nFood: " + std::to_string(_map.getFoodCount()) +
-                           "\nLinemate: " + std::to_string(_map.getLinemateCount()) +
-                           "\nDeraumere: " + std::to_string(_map.getDeraumereCount()) +
-                           "\nSibur: " + std::to_string(_map.getSiburCount()) +
-                           "\nMendiane: " + std::to_string(_map.getMendianeCount()) +
-                           "\nPhiras: " + std::to_string(_map.getPhirasCount()) +
-                           "\nThystame: " + std::to_string(_map.getThystameCount());
+    DrawRectangle(10, 10, 200, 215, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(10, 10, 200, 215, BLUE);
 
-    DrawText(infoText.c_str(), 20, 20, 20, BLACK);
+    int x = 20;
+    int y = 20;
+    int lineSpacing = 20;
 
-    // Display how to move the camera
+    DrawText(("Map Size: " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
+    y += 2 * lineSpacing;
+
+    DrawText(("Food: " + std::to_string(_map.getFoodCount())).c_str(), x, y, 20, ORANGE);
+    y += lineSpacing;
+    DrawText(("Linemate: " + std::to_string(_map.getLinemateCount())).c_str(), x, y, 20, SKYBLUE);
+    y += lineSpacing;
+    DrawText(("Deraumere: " + std::to_string(_map.getDeraumereCount())).c_str(), x, y, 20, GOLD);
+    y += lineSpacing;
+    DrawText(("Sibur: " + std::to_string(_map.getSiburCount())).c_str(), x, y, 20, PURPLE);
+    y += lineSpacing;
+    DrawText(("Mendiane: " + std::to_string(_map.getMendianeCount())).c_str(), x, y, 20, RED);
+    y += lineSpacing;
+    DrawText(("Phiras: " + std::to_string(_map.getPhirasCount())).c_str(), x, y, 20, GREEN);
+    y += lineSpacing;
+    DrawText(("Thystame: " + std::to_string(_map.getThystameCount())).c_str(), x, y, 20, PINK);
+
     int textWidth = MeasureText("Use ZQSD to move the camera", 20);
-    int x = (_screenWidth - textWidth) / 2;
-    int y = _screenHeight - 30;
-    DrawText("Use ZQSD to move the camera", x, y, 20, RED);
+    int centerX = (_screenWidth - textWidth) / 2;
+    int bottomY = _screenHeight - 30;
+    DrawText("Use ZQSD to move the camera", centerX, bottomY, 20, RED);
 }
 
 void Renderer::DrawGrid() {
