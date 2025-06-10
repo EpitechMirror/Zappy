@@ -28,8 +28,10 @@ int main(int argc, char **argv)
     server_config_t conf = {0};
     int server_fd;
 
-    if (argc < 2)
+    if (argc < 2) {
+        print_help();
         return 84;
+    }
     if (parse(argc, argv, &conf) == 84)
         return 84;
     server_fd = create_server_socket(conf.port);
