@@ -78,7 +78,6 @@ void accept_clients_loop(int server_fd, server_config_t *conf)
         }
         poll_clients(server_fd, fds, &client_count, &clients, conf);
     }
-
     while (clients)
         remove_client(&clients, clients->fd);
 }

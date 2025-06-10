@@ -92,6 +92,6 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
 
     if (client->state == WAITING_NAME) {
         handle_auth(clients, client, fd, conf, buffer);
-    } 
+    }
     return false;
 }
