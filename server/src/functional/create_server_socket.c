@@ -5,7 +5,7 @@
 ** create_server_socket
 */
 
-#include "../../include/server.h"
+#include "server.h"
 
 int create_server_socket(int port)
 {

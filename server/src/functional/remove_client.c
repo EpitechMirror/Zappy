@@ -5,7 +5,7 @@
 ** remove_client
 */
 
-#include "../../include/server.h"
+#include "server.h"
 
 static void free_client(client_t *client)
 {

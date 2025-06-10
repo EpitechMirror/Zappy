@@ -5,7 +5,7 @@
 ** connection
 */
 
-#include "../../include/server.h"
+#include "server.h"
 
 void handle_new_connection(int server_fd, struct pollfd *fds, int *client_count, client_t **clients, server_config_t *conf)
 {

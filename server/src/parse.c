@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "../include/flag.h"
+#include "flag.h"
 #include <stdio.h>
 #include <ctype.h>
 

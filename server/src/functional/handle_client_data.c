@@ -5,7 +5,7 @@
 ** handle_client_data
 */
 
-#include "../../include/server.h"
+#include "server.h"
 
 static int find_team_index(server_config_t *conf, const char *team_name)
 {

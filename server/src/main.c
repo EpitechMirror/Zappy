@@ -5,8 +5,8 @@
 ** main
 */
 
-#include "../include/flag.h"
-#include "../include/server.h"
+#include "flag.h"
+#include "server.h"
 
 void print_help(void)
 {
