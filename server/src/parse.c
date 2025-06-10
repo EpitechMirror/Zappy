@@ -106,5 +106,17 @@ int parse(int argc, char **argv, server_config_t *conf)
         if (ret == 0)
             return 84;
     }
+    printf("===============Zappy Server===============\n");
+    printf("Port: %d\n", conf->port);
+    printf("Width: %d\n", conf->width);
+    printf("Height: %d\n", conf->height);
+    printf("Clients per team: %d\n", conf->clients_nb);
+    printf("Frequency: %d\n", conf->freq);
+    printf("Teams: ");
+    for (int i = 0; i < conf->team_count; i++) {
+        printf("%s ", conf->team_names[i]);
+    }
+    printf("\n");
+    printf("==========================================\n");
     return 0;
 }
