@@ -61,9 +61,9 @@ void handle_new_connection(poll_context_t *ctx)
             close(new_fd);
             continue;
         }
-        add_client_to_list(ctx->clients, new_client);
+        add_client_to_list(&ctx->clients, new_client);
         send_welcome_message(new_fd);
-        add_client_to_fds(ctx->fds, ctx->client_count, new_fd);
+        add_client_to_fds(ctx->fds, &ctx->client_count, new_fd);
         addrlen = sizeof(client_addr);
     }
     if (errno != EAGAIN && errno != EWOULDBLOCK) {
