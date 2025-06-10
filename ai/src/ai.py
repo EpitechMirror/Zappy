@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import socket
+import sys
 import time
 import random
 import argparse
@@ -475,13 +476,23 @@ class ZappyAI:
                 self.socket.close()
 
 
+def helper():
+    print("Usage: zappy_ai.py -p <port> -n <team_name> [-h <hostname>]")
+    print("Options:")
+    print("  -p, --port       Port number to connect to the Zappy server")
+    print("  -n, --name       Team name for the Zappy AI")
+    print("  -H, --hostname   Hostname of the Zappy server (default: localhost)")
+    print("  --help           Show this help message and exit")
+
 def main():
     parser = argparse.ArgumentParser(description="Zappy AI Client")
     parser.add_argument("-p", "--port", type=int, required=True, help="Port number")
     parser.add_argument("-n", "--name", type=str, required=True, help="Team name")
-    parser.add_argument(
-        "-h", "--hostname", type=str, default="localhost", help="Server hostname"
-    )
+    parser.add_argument("-H", "--hostname", type=str, default="localhost", help="Server hostname")
+
+    if any(arg in ["--help"] for arg in sys.argv):
+        helper()
+        return
 
     args = parser.parse_args()
 
