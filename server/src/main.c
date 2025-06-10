@@ -10,7 +10,8 @@
 
 void print_help(void)
 {
-    printf("USAGE: ./zappy_server -p port -x width -y height -n name1 name2 ... -c clientsNb -f freq\n");
+    printf("USAGE: ./zappy_server -p port -x width -y height");
+    printf(" -n name1 name2 ... -c clientsNb -f freq\n");
     printf("\n");
     printf("DESCRIPTION:\n");
     printf("  -p port        is the port number\n");
@@ -18,7 +19,8 @@ void print_help(void)
     printf("  -y height      is the height of the world\n");
     printf("  -n name1 name2 ... is the name of the teams\n");
     printf("  -c clientsNb   is the number of authorized clients per team\n");
-    printf("  -f freq        is the reciprocal of time unit for execution of actions\n");
+    printf("  -f freq        is the reciprocal of time unit");
+    printf(" for execution of actions\n");
 }
 
 int main(int argc, char **argv)

@@ -25,23 +25,37 @@ static void add_last_client_fd(struct pollfd *fds, client_t *clients, int *clien
     }
 }
 
-void poll_clients(int server_fd, struct pollfd *fds, int *client_count, client_t **clients, server_config_t *conf)
+static void handle_server_connection(poll_context_t *ctx)
 {
-    for (int i = 0; i < *client_count; i++) {
-        if (!(fds[i].revents & POLLIN))
-            continue;
+    handle_new_connection(ctx);
+}
 
-        if (fds[i].fd == server_fd) {
-            handle_new_connection(server_fd, fds, client_count, clients, conf);
+static void handle_client_disconnection(struct pollfd *fds, int *client_count, int i)
+{
+    close(fds[i].fd);
+    for (int j = i; j < *client_count - 1; j++)
+        fds[j] = fds[j + 1];
+    (*client_count)--;
+}
+
+static void handle_existing_client(poll_context_t *ctx, int *i)
+{
+    bool disconnected = handle_client_data(ctx->clients, ctx->fds[*i].fd, ctx->conf);
+    if (disconnected) {
+        handle_client_disconnection(ctx->fds, ctx->client_count, *i);
+        (*i)--;
+    }
+}
+
+void poll_clients(poll_context_t *ctx)
+{
+    for (int i = 0; i < ctx->client_count; i++) {
+        if (!(ctx->fds[i].revents & POLLIN))
+            continue;
+        if (ctx->fds[i].fd == ctx->server_fd) {
+            handle_server_connection(ctx);
         } else {
-            bool disconnected = handle_client_data(clients, fds[i].fd, conf);
-            if (disconnected) {
-                close(fds[i].fd);
-                for (int j = i; j < *client_count - 1; j++)
-                    fds[j] = fds[j + 1];
-                (*client_count)--;
-                i--;
-            }
+            handle_existing_client(ctx, &i);
         }
     }
 }
@@ -61,23 +75,23 @@ void set_non_blocking(int fd)
 
 void accept_clients_loop(int server_fd, server_config_t *conf)
 {
+    poll_context_t ctx = {
+        .server_fd = server_fd,
+        .conf = conf,
+        .clients = NULL,
+        .client_count = 1,
+    };
     set_non_blocking(server_fd);
-
-    struct pollfd fds[MAX_CLIENTS];
-    client_t *clients = NULL;
-    int client_count = 1;
-
-    fds[0].fd = server_fd;
-    fds[0].events = POLLIN;
-
+    ctx.fds[0].fd = server_fd;
+    ctx.fds[0].events = POLLIN;
     while (1) {
-        int poll_count = poll(fds, client_count, -1);
+        int poll_count = poll(ctx.fds, ctx.client_count, -1);
         if (poll_count == -1) {
             perror("poll");
             break;
         }
-        poll_clients(server_fd, fds, &client_count, &clients, conf);
+        poll_clients(&ctx);
     }
-    while (clients)
-        remove_client(&clients, clients->fd);
+    while (ctx.clients)
+        remove_client(&ctx.clients, ctx.clients->fd);
 }

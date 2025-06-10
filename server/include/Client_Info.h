@@ -6,8 +6,8 @@
 */
 
 #ifndef CLIENT_INFO_H_
-#define CLIENT_INFO_H_
-#include <stdbool.h>
+    #define CLIENT_INFO_H_
+    #include <stdbool.h>
 
 typedef enum {
     WAITING_NAME,
