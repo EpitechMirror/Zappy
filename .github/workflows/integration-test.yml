@@ -21,6 +21,7 @@ jobs:
         sudo apt-get install -y build-essential gcc g++ cmake
         python -m pip install --upgrade pip
         pip install -r ai/requirements.txt
+        ./raylib_install.sh
     
     - name: Build all components
       run: ./build.sh
