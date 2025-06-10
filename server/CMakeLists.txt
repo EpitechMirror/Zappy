@@ -1,14 +1,40 @@
 cmake_minimum_required(VERSION 3.10)
+project(zappy_server)
 
-project(ZappyServer)
+# Enable C11
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+# Include directories
+include_directories(
 
-# Include header files
-include_directories(include)
+)
 
-# Add the executable target
-file(GLOB SERVER_SOURCES "src/*.c")
-file(GLOB FUNCTIONAL_SOURCES "src/functional/*.c")
-add_executable(zappy_server ${SERVER_SOURCES} ${FUNCTIONAL_SOURCES})
+link_directories()
+
+# Collect all source files
+file(GLOB SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+)
+
+add_executable(zappy_server ${SOURCES})
+
+# Link against Raylib and pthread
+target_link_libraries(zappy_server pthread)
+
+# Set output directory to project root (one level above build)
+set_target_properties(zappy_server PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_NAME "zappy_server"
+)
+
+# Compiler warnings
+if (MSVC)
+    target_compile_options(zappy_server PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(zappy_server PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Optional install
+install(TARGETS zappy_server RUNTIME DESTINATION bin)
