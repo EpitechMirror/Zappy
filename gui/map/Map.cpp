@@ -11,12 +11,6 @@ Map::Map() : _width(0), _height(0) {}
 
 Map::~Map() {}
 
-void Map::setSize(int width, int height) {
-    _width = width;
-    _height = height;
-    _tiles.resize(_width * _height); 
-}
-
 int Map::getWidth() const {
     return _width;
 }
@@ -29,8 +23,14 @@ bool Map::isFullyInitialized() const {
     return static_cast<int>(_tiles.size()) == _width * _height;
 }
 
+void Map::setSize(int width, int height) {
+    _width = width;
+    _height = height;
+    _tiles.resize(width * height);
+}
+
 void Map::setTileResources(int x, int y, const Resources& resources) {
-    if (x < 0 || y < 0 || x >= _width || y >= _height)
+    if (x < 0 || x >= _width || y < 0 || y >= _height)
         return;
     _tiles[y * _width + x] = resources;
 }
@@ -94,6 +94,14 @@ int Map::getThystameCount() const {
     int count = 0;
     for (const auto& resources : _tiles) {
         count += resources.quantities[THYSTAME];
+    }
+    return count;
+}
+
+int Map::getEggsCount() const {
+    int count = 0;
+    for (const auto& resources : _tiles) {
+        count += resources.quantities[EGG];
     }
     return count;
 }

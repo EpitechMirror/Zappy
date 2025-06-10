@@ -18,6 +18,7 @@ enum ResourceType {
     MENDIANE,
     PHIRAS,
     THYSTAME,
+    EGG,
     RESOURCE_COUNT
 };
 

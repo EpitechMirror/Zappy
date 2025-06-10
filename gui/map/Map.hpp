@@ -10,6 +10,7 @@
 #include <iostream>
 #include <vector>
 #include "../ressources/Ressources.hpp"
+#include "raylib.h"
 
 #pragma once
 
@@ -34,6 +35,8 @@ class Map {
         int getMendianeCount() const;
         int getPhirasCount() const;
         int getThystameCount() const;
+
+        int getEggsCount() const;
 
     private:
         int _width;
