@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # Include directories
 include_directories(
-
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
 link_directories()
@@ -16,6 +16,7 @@ link_directories()
 file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/functional/*.c"
 )
 
 add_executable(zappy_server ${SOURCES})

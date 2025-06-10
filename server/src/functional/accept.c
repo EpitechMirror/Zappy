@@ -5,7 +5,7 @@
 ** accept
 */
 
-#include "server.h"
+#include "../../include/server.h"
 
 static void add_last_client_fd(struct pollfd *fds, client_t *clients, int *client_count)
 {
