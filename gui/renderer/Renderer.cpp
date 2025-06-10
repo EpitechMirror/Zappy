@@ -10,7 +10,6 @@
 Renderer::Renderer(int width, int height, const Map &map) : _screenWidth(width), _screenHeight(height), _map(map) {
 }
 
-// Charge les modèles nécessaires pour le rendu
 void Renderer::loadModels() {
     _floorModel = LoadModel("../resources/models/plane.glb");
     _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
@@ -154,10 +153,25 @@ void Renderer::drawFloor() {
             DrawModel(_floorModel, pos, cellSize, WHITE);
         }
     }
+    _mapInitialized = true;
+}
+
+void Renderer::showLoadingScreen(const std::string &message) {
+    BeginDrawing();
+        ClearBackground(BLACK);
+        int textSize = 40;
+        int textWidth = MeasureText(message.c_str(), textSize);
+        int posX = (_screenWidth - textWidth) / 2;
+        int posY = _screenHeight / 2;
+        DrawText(message.c_str(), posX, posY, textSize, WHITE);
+    EndDrawing();
 }
 
 void Renderer::gameLoop(Client &client) {
-    (void)client;
+    if (!_mapInitialized) {
+        showLoadingScreen("Loading...");
+    }
+
     //on init tout (a mettre dans une fonction init et meme dnas les classes associées)
     loadModels();
     loadTextures();
@@ -233,6 +247,12 @@ void Renderer::InfoBoard() {
     DrawText(("Phiras: " + std::to_string(_map.getPhirasCount())).c_str(), x, y, 20, GREEN);
     y += lineSpacing;
     DrawText(("Thystame: " + std::to_string(_map.getThystameCount())).c_str(), x, y, 20, PINK);
+
+    int timeInt = static_cast<int>(GetTime());
+    std::string timeStr = "Time: " + std::to_string(timeInt);
+    int timeTextWidth = MeasureText(timeStr.c_str(), 20);
+    int timeCenterX = (_screenWidth - timeTextWidth) / 2;
+    DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
 
     int textWidth = MeasureText("Use ZQSD to move the camera", 20);
     int centerX = (_screenWidth - textWidth) / 2;

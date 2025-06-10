@@ -31,6 +31,7 @@ class Renderer
         void initLights();
         void unloadModels();
         void drawFloor();
+        void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
 
     private:
@@ -43,6 +44,7 @@ class Renderer
         Model _floorModel;
         Model _playerModel;
         ShadersManager _shaders;
+        bool _mapInitialized = false;
 };
 
 #endif
