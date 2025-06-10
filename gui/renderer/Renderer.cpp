@@ -216,7 +216,6 @@ void Renderer::gameLoop(Client &client) {
             // Dessine les lights (optionnel : sphères pour debug)
              for (const Light& l : _lights)
                  DrawSphere(l.getPosition(), 0.2f, YELLOW);
-            
             EndMode3D();
             InfoBoard();
         EndDrawing();

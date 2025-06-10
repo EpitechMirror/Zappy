@@ -53,7 +53,7 @@ The Zappy AI Client is an autonomous player for the Zappy network game. It conne
 #### `Direction` (Enum)
 Represents the four cardinal directions with server protocol values:
 - `NORTH = 1`
-- `EAST = 2` 
+- `EAST = 2`
 - `SOUTH = 3`
 - `WEST = 4`
 
@@ -142,7 +142,7 @@ def connect(self):
     # Socket creation and connection
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.connect((self.hostname, self.port))
-    
+
     # Protocol handshake
     welcome = self.receive_message()
     self.send_message(self.team_name)
@@ -229,12 +229,12 @@ if self.state.inventory.get("food", 0) < 20:
 #### 2. Reproduction Strategy
 ```python
 def should_reproduce(self) -> bool:
-    return (self.state.inventory.get("food", 0) > 50 and 
-            self.state.team_slots > 0 and 
+    return (self.state.inventory.get("food", 0) > 50 and
+            self.state.team_slots > 0 and
             self.reproduction_cooldown <= 0 and
             self.state.level >= 2)
 ```
-- **Conditions**: 
+- **Conditions**:
   - Food > 50 units
   - Team has available slots
   - Not in cooldown period
@@ -350,11 +350,11 @@ def turn_left(self):
 ```python
 def process_response(self, response: str):
     response = response.strip()
-    
+
     if response.startswith("[") and response.endswith("]"):
         # Handle look or inventory results
     elif response.startswith("message"):
-        # Handle broadcast messages  
+        # Handle broadcast messages
     elif response in ["ok", "ko"]:
         # Handle command confirmations
     elif response == "dead":
@@ -381,10 +381,10 @@ def __init__(self, port: int, team_name: str, hostname: str = "localhost"):
 ```python
 def connect(self) -> bool:
     """Establish connection to Zappy server"""
-    
+
 def send_message(self, message: str):
     """Send raw message to server"""
-    
+
 def receive_message(self) -> str:
     """Receive message from server"""
 ```
@@ -393,34 +393,34 @@ def receive_message(self) -> str:
 ```python
 def look_around(self):
     """Execute Look command"""
-    
+
 def move_forward(self):
     """Execute Forward command"""
-    
+
 def turn_right(self):
     """Execute Right command"""
-    
+
 def turn_left(self):
     """Execute Left command"""
-    
+
 def take_object(self, obj: str):
     """Execute Take command"""
-    
+
 def set_object(self, obj: str):
     """Execute Set command"""
-    
+
 def check_inventory(self):
     """Execute Inventory command"""
-    
+
 def broadcast_message(self, message: str):
     """Execute Broadcast command"""
-    
+
 def start_incantation(self):
     """Execute Incantation command"""
-    
+
 def fork_player(self):
     """Execute Fork command"""
-    
+
 def eject_players(self):
     """Execute Eject command"""
 ```
@@ -429,13 +429,13 @@ def eject_players(self):
 ```python
 def calculate_needed_resources(self) -> Dict[str, int]:
     """Calculate resources needed for next elevation"""
-    
+
 def decide_next_action(self):
     """Main decision-making logic"""
-    
+
 def execute_goal(self):
     """Execute current goal strategy"""
-    
+
 def should_reproduce(self) -> bool:
     """Determine if reproduction is advisable"""
 ```
@@ -444,13 +444,13 @@ def should_reproduce(self) -> bool:
 ```python
 def parse_look_result(self, result: str) -> List[List[str]]:
     """Parse look command response"""
-    
+
 def parse_inventory(self, inv_str: str):
     """Parse inventory response"""
-    
+
 def find_resources_in_vision(self, tiles: List[List[str]]) -> List[Tuple[int, str]]:
     """Locate resources in vision field"""
-    
+
 def navigate_to_tile(self, target_tile: int):
     """Navigate to specific tile"""
 ```
@@ -470,7 +470,7 @@ state.position: Position           # World coordinates
 state.direction: Direction         # Current facing direction
 state.food_units: int             # Current food count
 
-# World information  
+# World information
 state.world_width: int            # World width
 state.world_height: int           # World height
 state.team_slots: int             # Available team connections
@@ -528,7 +528,7 @@ f"ELEVATE_L{level}"              # Request elevation at specific level
 f"NEED_{resource}_{quantity}"    # Request specific resources
 f"HAVE_{resource}_{quantity}"    # Announce available resources
 
-# Strategic coordination (potential extension)  
+# Strategic coordination (potential extension)
 f"DEFEND_{x}_{y}"               # Coordinate defense
 f"ATTACK_{team}"                # Coordinate offense
 ```
@@ -616,7 +616,7 @@ logging.error(f"AI error: {e}")
 
 #### 1. Separation of Concerns
 - **Communication**: Socket handling and protocol implementation
-- **Strategy**: Decision-making and goal management  
+- **Strategy**: Decision-making and goal management
 - **State**: Game state tracking and management
 - **Utility**: Helper functions and data processing
 
@@ -665,13 +665,13 @@ import unittest
 class TestZappyAI(unittest.TestCase):
     def setUp(self):
         self.ai = ZappyAI(4242, "TestTeam")
-    
+
     def test_parse_look_result(self):
         result = "[player,food,,linemate]"
         parsed = self.ai.parse_look_result(result)
         expected = [["player"], ["food"], [], ["linemate"]]
         self.assertEqual(parsed, expected)
-    
+
     def test_calculate_needed_resources(self):
         self.ai.state.level = 2
         self.ai.state.inventory = {"linemate": 0, "deraumere": 0, "sibur": 1}
@@ -728,12 +728,12 @@ class ZappyAI:
     def __init__(self, ...):
         self.response_thread = threading.Thread(target=self.response_handler)
         self.command_thread = threading.Thread(target=self.command_handler)
-    
+
     def response_handler(self):
         while self.running:
             response = self.receive_message()
             self.process_response(response)
-    
+
     def command_handler(self):
         while self.running:
             self.decide_next_action()
@@ -750,11 +750,11 @@ class LearningAI(ZappyAI):
     def __init__(self, ...):
         super().__init__(...)
         self.experience = self.load_experience()
-    
+
     def update_strategy(self, situation, action, result):
         # Update strategy based on outcomes
         self.experience[situation] = (action, result)
-    
+
     def save_experience(self):
         with open('ai_experience.pkl', 'wb') as f:
             pickle.dump(self.experience, f)
@@ -765,10 +765,10 @@ class LearningAI(ZappyAI):
 def coordinate_elevation(self):
     """Advanced elevation coordination"""
     required_players = self.ELEVATION_REQUIREMENTS[self.state.level]["players"]
-    
+
     # Broadcast availability
     self.broadcast_message(f"READY_L{self.state.level}_{self.position.x}_{self.position.y}")
-    
+
     # Wait for responses and coordinate meeting point
     # ... implementation details
 ```

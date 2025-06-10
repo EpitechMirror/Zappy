@@ -18,14 +18,10 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential gcc make
+        sudo apt-get install -y build-essential gcc g++ cmake libcriterion-dev
         python -m pip install --upgrade pip
         pip install -r ai/requirements.txt
+        ./raylib_install.sh
     
     - name: Build all components
-      run: make all
-    
-    - name: Run integration tests
-      run: |
-        cd scripts
-        ./run_integration_tests.sh
+      run: ./build.sh
