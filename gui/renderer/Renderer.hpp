@@ -2,7 +2,7 @@
     #define INCLUDED_RENDERER_HPP
 
 #include <iostream>
-#include "raylib.h"
+#include <raylib.h>
 #include "Camera/Camera.hpp"
 #include "../map/Map.hpp"
 
