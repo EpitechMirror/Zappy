@@ -6,6 +6,7 @@
 */
 
 #include "Client.hpp"
+#include "../renderer/Player/Player.hpp"
 
 Client::Client(const std::string &host, int port)
     : _host(host), _port(port), _socket(-1), _hasMapSize(false) {}
@@ -90,6 +91,25 @@ void Client::parseData() {
                     }
                 }
                 _map.setTileResources(x, y, res);
+            }
+        }
+        else if (cmd == "tna") {
+            std::string teamName;
+            if (iss >> teamName) {
+                Player::addTeamName(teamName);
+            }
+        }
+        else if (cmd == "enw") {
+            std::string eggIdStr, playerIdStr;
+            int x, y;
+        
+            if (iss >> eggIdStr >> playerIdStr >> x >> y) {
+                int eggId    = std::stoi(eggIdStr.substr(1));
+                int playerId = std::stoi(playerIdStr.substr(1));
+            
+                _map.addEgg(eggId, x, y);
+            } else {
+                std::cerr << "Invalid enw format\n";
             }
         }
     }
