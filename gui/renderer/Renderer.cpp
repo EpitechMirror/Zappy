@@ -232,12 +232,14 @@ void Renderer::gameLoop(Client &client) {
              for (const Light& l : _lights)
                  DrawSphere(l.getPosition(), 0.2f, YELLOW);
             EndMode3D();
-            InfoBoard();
+            InfoItemsBoard();
+            InfoTeamsBoard();
+            InfoPlayersBoard();
         EndDrawing();
     }
 }
 
-void Renderer::InfoBoard() {
+void Renderer::InfoItemsBoard() {
     DrawRectangle(10, 10, 200, 215, Fade(SKYBLUE, 0.5f));
     DrawRectangleLines(10, 10, 200, 215, BLUE);
 
@@ -274,6 +276,64 @@ void Renderer::InfoBoard() {
     int centerX = (_screenWidth - textWidth) / 2;
     int bottomY = _screenHeight - 30;
     DrawText("Use ZQSD to move the camera", centerX, bottomY, 20, RED);
+}
+
+void Renderer::InfoTeamsBoard() {
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    int maxTextWidth = MeasureText("Teams : ", titleSize);
+    for (const std::string& teamName : teamNames) {
+        int w = MeasureText(teamName.c_str(), titleSize);
+        if (w > maxTextWidth)
+            maxTextWidth = w;
+    }
+
+    int boxWidth = maxTextWidth + 2 * padding;
+    int boxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+
+    int boxX = _screenWidth - boxWidth - 10;
+    int boxY = 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText("Teams : ", x, y, titleSize, BLACK);
+    y += lineSpacing;
+
+    for (const std::string& teamName : teamNames) {
+        DrawText(teamName.c_str(), x, y, titleSize, WHITE);
+        y += lineSpacing;
+    }
+}
+
+void Renderer::InfoPlayersBoard() {
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    int boxWidth = 150;
+    int boxHeight = lineSpacing + 2 * padding;
+
+    int boxX = _screenWidth - boxWidth - 10;
+    // Place it just below the teams board
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+    int boxY = 10 + teamsBoxHeight + 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText("Player : ", x, y, titleSize, BLACK);
 }
 
 void Renderer::DrawGrid() {

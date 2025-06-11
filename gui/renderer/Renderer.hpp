@@ -18,7 +18,9 @@ class Renderer
         Renderer(int width, int height, const Map & map);
         void renderWindow(Client &client);
         void gameLoop(Client &client);
-        void InfoBoard();
+        void InfoItemsBoard();
+        void InfoTeamsBoard();
+        void InfoPlayersBoard();
         void DrawGrid();
         void drawItems();
         void loadShaders();
