@@ -99,9 +99,13 @@ int Map::getThystameCount() const {
 }
 
 int Map::getEggsCount() const {
-    int count = 0;
-    for (const auto& resources : _tiles) {
-        count += resources.quantities[EGG];
-    }
-    return count;
+    return static_cast<int>(_eggs.size());
+}
+
+void Map::addEgg(int eggId, int x, int y) {
+    _eggs.push_back({eggId, x, y});
+}
+
+const std::vector<Egg> &Map::getEggs() const {
+    return _eggs;
 }

@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2025
+** Zappy
+** File description:
+** Renderer
+*/
+
 #ifndef INCLUDED_RENDERER_HPP
     #define INCLUDED_RENDERER_HPP
 
@@ -23,6 +30,7 @@ class Renderer
         void InfoPlayersBoard();
         void DrawGrid();
         void drawItems();
+        void DrawEggs();
         void loadShaders();
         void unloadShaders();
         void loadModels();

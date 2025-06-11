@@ -14,6 +14,12 @@
 
 #pragma once
 
+struct Egg {
+    int id;
+    int x;
+    int y;
+};
+
 class Map {
     public:
         Map();
@@ -37,11 +43,14 @@ class Map {
         int getThystameCount() const;
 
         int getEggsCount() const;
+        void addEgg(int eggId, int x, int y);
+        const std::vector<Egg> &getEggs() const;
 
     private:
         int _width;
         int _height;
         std::vector<Resources> _tiles;
+        std::vector<Egg> _eggs;
 };
 
 #endif /* !MAP_HPP_ */

@@ -139,6 +139,13 @@ void Renderer::drawItems() {
     }
 }
 
+void Renderer::DrawEggs() {
+    for (const Egg& egg : _map.getEggs()) {
+        Vector3 pos = { static_cast<float>(egg.x) + 0.5f, 0.1f, static_cast<float>(egg.y) + 0.5f };
+        DrawSphere(pos, 0.13f, WHITE);
+    }
+}
+
 Color Renderer::getColorForResource(ResourceType type) {
     switch (type) {
         case FOOD:      return ORANGE;
@@ -214,8 +221,8 @@ void Renderer::gameLoop(Client &client) {
             drawFloor();
             DrawGrid();
 
-            // Dessine les ressources sur chaque case
             drawItems();
+            DrawEggs();
 
             // Dessine les joueurs (besoin d'enregistrer le nombre de joueurs)
             // Exemple de joueur sous forme de lampe, essayer de faire en sorte qu'en fonction de la team on change les couleurs
@@ -240,8 +247,8 @@ void Renderer::gameLoop(Client &client) {
 }
 
 void Renderer::InfoItemsBoard() {
-    DrawRectangle(10, 10, 200, 215, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines(10, 10, 200, 215, BLUE);
+    DrawRectangle(10, 10, 200, 235, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(10, 10, 200, 235, BLUE);
 
     int x = 20;
     int y = 20;
@@ -263,6 +270,7 @@ void Renderer::InfoItemsBoard() {
     DrawText(("Phiras : " + std::to_string(_map.getPhirasCount())).c_str(), x, y, 20, GREEN);
     y += lineSpacing;
     DrawText(("Thystame : " + std::to_string(_map.getThystameCount())).c_str(), x, y, 20, PINK);
+    y += lineSpacing;
     y += lineSpacing;
     DrawText(("Eggs : " + std::to_string(_map.getEggsCount())).c_str(), x, y, 20, WHITE);
 
