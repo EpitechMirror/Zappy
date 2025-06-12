@@ -114,23 +114,23 @@ void Renderer::drawItems() {
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             const Resources& res = _map.getTileResources(x, y);
-            
+
             for (int i = 0; i < RESOURCE_COUNT; ++i) {
                 int quantity = res.quantities[i];
                 if (quantity <= 0) continue;
 
                 int baseHash = resourceHash(x, y, i);
-                
+
                 for (int q = 0; q < quantity; ++q) {
                     int slot = (baseHash + q) % (gridSize * gridSize);
                     int gridX = slot % gridSize;
                     int gridZ = slot / gridSize;
-                    
+
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
-                    
+
                     float posY = 0.2f + (q * 0.01f);
-                    
+
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
                 }
@@ -207,7 +207,7 @@ void Renderer::gameLoop(Client &client) {
 
         if (wheel != 0.0f)
             _cameraController.zoom(-wheel);
-        
+
         _cameraController.update();
         for (auto& l : _lights)
             l.updateShader(_shaders.getPBR());

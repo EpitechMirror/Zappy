@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include <poll.h>
 #include <fcntl.h>
-#include <errno.h> 
+#include <errno.h>
 
 
 #define MAX_CLIENTS 1024
