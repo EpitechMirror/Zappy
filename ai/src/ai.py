@@ -122,6 +122,7 @@ class ZappyAI:
             "phiras": 2,
             "thystame": 1,
         },
+        # TODO: add level 8 info
     }
 
     def __init__(self, port: int, team_name: str, hostname: str = "localhost"):

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "raylib.h"
+#include "raymath.h"
 
 class CameraController
 {
@@ -13,6 +14,7 @@ class CameraController
         CameraController();
         void update();
         Camera& getCamera();
+        void zoom(float delta);
 };
 
 #endif
