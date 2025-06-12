@@ -30,10 +30,17 @@
 typedef struct poll_context {
     struct pollfd fds[MAX_CLIENTS];
     client_t *clients;
-    int client_count;
+    int *client_count;
     int server_fd;
     server_config_t *conf;
 } poll_context_t;
+
+typedef struct {
+    client_t **clients;
+    client_t *client;
+    server_config_t *conf;
+} auth_context_t;
+
 
 int create_server_socket(int port);
 void handle_new_connection(poll_context_t *ctx);

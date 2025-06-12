@@ -7,6 +7,10 @@
 
 #ifndef FLAG_H_
     #define FLAG_H_
+    
+#include "ressources.h"
+struct tile_s;
+struct client_s;
 
 typedef struct server_config_s {
     int port;
@@ -16,6 +20,8 @@ typedef struct server_config_s {
     int freq;
     int team_count;
     char **team_names;
+    struct tile_s **map;
+    struct client_s *clients;
 } server_config_t;
 
 typedef struct {

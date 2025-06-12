@@ -34,9 +34,14 @@ int main(int argc, char **argv)
     }
     if (parse(argc, argv, &conf) == 84)
         return 84;
+    conf.map = malloc(sizeof(tile_t *) * conf.height);
+    for (int y = 0; y < conf.height; y++)
+        conf.map[y] = calloc(conf.width, sizeof(tile_t));
+    generate_map_resources(&conf);
     server_fd = create_server_socket(conf.port);
     if (server_fd < 0)
         return 84;
+    conf.clients = calloc(MAX_CLIENTS, sizeof(client_t));
     accept_clients_loop(server_fd, &conf);
     close(server_fd);
     return 0;
