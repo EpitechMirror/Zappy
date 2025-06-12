@@ -5,41 +5,62 @@
 ** ressouces
 */
 
+#include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <string.h>
+#include <unistd.h>
 #include "ressources.h"
 #include "server.h"
 
-void generate_map_resources(server_config_t *conf)
+static void clear_map_resources(server_config_t *conf)
 {
-    srand(time(NULL));
     for (int y = 0; y < conf->height; y++)
-        for (int x = 0; x < conf->width; x++)
-            generate_tile_resources(&conf->map[y][x]);
+        for (int x = 0; x < conf->width; x++) {
+            tile_t *tile = &conf->map[y][x];
+            tile->food = 0;
+            tile->linemate = 0;
+            tile->deraumere = 0;
+            tile->sibur = 0;
+            tile->mendiane = 0;
+            tile->phiras = 0;
+            tile->thystame = 0;
+        }
 }
 
-void send_whole_map(int fd, server_config_t *conf)
+static void place_resource_randomly(server_config_t *conf, int resource_offset, int quantity)
 {
-    printf("sending whole map to fd %d\n", fd);
-    for (int y = 0; y < conf->height; y++) {
-        for (int x = 0; x < conf->width; x++) {
-            send_tile_content(fd, x, y, &conf->map[y][x]);
-        }
+    int w = conf->width;
+    int h = conf->height;
+    for (int i = 0; i < quantity; i++) {
+        int x = rand() % w;
+        int y = rand() % h;
+        tile_t *tile = &conf->map[y][x];
+        int *resource_ptr = ((int *)tile) + resource_offset;
+        (*resource_ptr)++;
     }
 }
 
-void generate_tile_resources(tile_t *tile)
+void generate_map_resources(server_config_t *conf)
 {
-    if (!tile)
-        return;
-    tile->food = rand() % 5;
-    tile->linemate = rand() % 3;
-    tile->deraumere = rand() % 2;
-    tile->sibur = rand() % 2;
-    tile->mendiane = rand() % 2;
-    tile->phiras = rand() % 2;
-    tile->thystame = rand() % 1;
+    int total_tiles = conf->width * conf->height;
+    int food_qty = total_tiles * 0.5;
+    int linemate_qty = total_tiles * 0.3;
+    int deraumere_qty = total_tiles * 0.15;
+    int sibur_qty = total_tiles * 0.1;
+    int mendiane_qty = total_tiles * 0.1;
+    int phiras_qty = total_tiles * 0.08;
+    int thystame_qty = total_tiles * 0.05;
+
+    srand(time(NULL));
+    clear_map_resources(conf);
+    place_resource_randomly(conf, 0, food_qty);
+    place_resource_randomly(conf, 1, linemate_qty);
+    place_resource_randomly(conf, 2, deraumere_qty);
+    place_resource_randomly(conf, 3, sibur_qty);
+    place_resource_randomly(conf, 4, mendiane_qty);
+    place_resource_randomly(conf, 5, phiras_qty);
+    place_resource_randomly(conf, 6, thystame_qty);
 }
 
 void send_tile_content(int fd, int x, int y, tile_t *tile)
@@ -53,5 +74,13 @@ void send_tile_content(int fd, int x, int y, tile_t *tile)
         x, y, tile->food, tile->linemate, tile->deraumere,
         tile->sibur, tile->mendiane, tile->phiras, tile->thystame);
     send(fd, msg, strlen(msg), 0);
-    printf("[DEBUG] send_tile_content: %s", msg);
+}
+
+void send_whole_map(int fd, server_config_t *conf)
+{
+    for (int y = 0; y < conf->height; y++) {
+        for (int x = 0; x < conf->width; x++) {
+            send_tile_content(fd, x, y, &conf->map[y][x]);
+        }
+    }
 }
