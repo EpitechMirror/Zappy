@@ -26,6 +26,9 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/map/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Camera/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Light/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Shaders/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Player/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
@@ -52,10 +55,18 @@ enable_testing()
 add_executable(unit_tests
     tests/test_client.cpp
     tests/test_map.cpp
+    tests/test_player.cpp
+    tests/test_shader.cpp
+    tests/test_camera.cpp
     client/Client.cpp
     map/Map.cpp
+    renderer/Player/Player.cpp
+    renderer/Camera/Camera.cpp
+    renderer/Light/Light.cpp
+    renderer/Shaders/ShadersManager.cpp
+    client/ProtocolHandler.cpp
 )
 target_link_libraries(unit_tests
-    criterion pthread
+    criterion pthread raylib
 )
 add_test(NAME client_tests COMMAND unit_tests)
