@@ -102,11 +102,11 @@ void Client::parseData() {
         else if (cmd == "enw") {
             std::string eggIdStr, playerIdStr;
             int x, y;
-        
+
             if (iss >> eggIdStr >> playerIdStr >> x >> y) {
                 int eggId    = std::stoi(eggIdStr.substr(1));
                 int playerId = std::stoi(playerIdStr.substr(1));
-            
+
                 _map.addEgg(eggId, x, y);
             } else {
                 std::cerr << "Invalid enw format\n";

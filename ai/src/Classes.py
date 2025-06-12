@@ -13,11 +13,13 @@ from enum import Enum
 from typing import Dict, List
 from dataclasses import dataclass
 
+
 class Direction(Enum):
     NORTH = 1
     EAST = 2
     SOUTH = 3
     WEST = 4
+
 
 class ResourceType(Enum):
     FOOD = "food"
@@ -27,6 +29,7 @@ class ResourceType(Enum):
     MENDIANE = "mendiane"
     PHIRAS = "phiras"
     THYSTAME = "thystame"
+
 
 class ActionType(Enum):
     MOVE_FORWARD = 0
@@ -41,14 +44,16 @@ class ActionType(Enum):
     EJECT = 9
     INVENTORY = 10
 
+
 @dataclass
 class Position:
     x: int
     y: int
 
-    def distance_to(self, other: 'Position') -> float:
-        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
-    
+    def distance_to(self, other: "Position") -> float:
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+
 @dataclass
 class GameState:
     level: int = 1
@@ -75,6 +80,7 @@ class GameState:
             }
         if self.position is None:
             self.position = Position(0, 0)
+
 
 @dataclass
 class Experience:
