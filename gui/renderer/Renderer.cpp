@@ -102,25 +102,47 @@ void Renderer::drawItems() {
     int height = _map.getHeight();
     float cellSize = 1.0f;
 
+    const int gridSize = 3;
+    const float gridStep = cellSize / gridSize;
+    const float offset = gridStep / 2.0f;
+
+    //hash pour positionner les ressources de manière pseudo-aléatoire
+    auto resourceHash = [](int x, int y, int type) -> int {
+        return (x * 73856093) ^ (y * 19349663) ^ (type * 83492791);
+    };
+
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             const Resources& res = _map.getTileResources(x, y);
-            Vector3 basePos = { x * cellSize + 0.5f, 0.2f, y * cellSize + 0.5f };
-
-            float offsetY = 0.0f;
+            
             for (int i = 0; i < RESOURCE_COUNT; ++i) {
                 int quantity = res.quantities[i];
-                if (quantity <= 0)
-                    continue;
+                if (quantity <= 0) continue;
 
+                int baseHash = resourceHash(x, y, i);
+                
                 for (int q = 0; q < quantity; ++q) {
-                    Vector3 pos = basePos;
-                    pos.y += offsetY;
+                    int slot = (baseHash + q) % (gridSize * gridSize);
+                    int gridX = slot % gridSize;
+                    int gridZ = slot / gridSize;
+                    
+                    float posX = x * cellSize + gridX * gridStep + offset;
+                    float posZ = y * cellSize + gridZ * gridStep + offset;
+                    
+                    float posY = 0.2f + (q * 0.01f);
+                    
+                    Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
-                    offsetY += 0.1f;
                 }
             }
         }
+    }
+}
+
+void Renderer::DrawEggs() {
+    for (const Egg& egg : _map.getEggs()) {
+        Vector3 pos = { static_cast<float>(egg.x) + 0.5f, 0.1f, static_cast<float>(egg.y) + 0.5f };
+        DrawSphere(pos, 0.13f, WHITE);
     }
 }
 
@@ -199,8 +221,8 @@ void Renderer::gameLoop(Client &client) {
             drawFloor();
             DrawGrid();
 
-            // Dessine les ressources sur chaque case
             drawItems();
+            DrawEggs();
 
             // Dessine les joueurs (besoin d'enregistrer le nombre de joueurs)
             // Exemple de joueur sous forme de lampe, essayer de faire en sorte qu'en fonction de la team on change les couleurs
@@ -217,38 +239,43 @@ void Renderer::gameLoop(Client &client) {
              for (const Light& l : _lights)
                  DrawSphere(l.getPosition(), 0.2f, YELLOW);
             EndMode3D();
-            InfoBoard();
+            InfoItemsBoard();
+            InfoTeamsBoard();
+            InfoPlayersBoard();
         EndDrawing();
     }
 }
 
-void Renderer::InfoBoard() {
-    DrawRectangle(10, 10, 200, 215, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines(10, 10, 200, 215, BLUE);
+void Renderer::InfoItemsBoard() {
+    DrawRectangle(10, 10, 200, 235, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(10, 10, 200, 235, BLUE);
 
     int x = 20;
     int y = 20;
     int lineSpacing = 20;
 
-    DrawText(("Map Size: " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
+    DrawText(("Map Size : " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
     y += 2 * lineSpacing;
 
-    DrawText(("Food: " + std::to_string(_map.getFoodCount())).c_str(), x, y, 20, ORANGE);
+    DrawText(("Food : " + std::to_string(_map.getFoodCount())).c_str(), x, y, 20, ORANGE);
     y += lineSpacing;
-    DrawText(("Linemate: " + std::to_string(_map.getLinemateCount())).c_str(), x, y, 20, SKYBLUE);
+    DrawText(("Linemate : " + std::to_string(_map.getLinemateCount())).c_str(), x, y, 20, SKYBLUE);
     y += lineSpacing;
-    DrawText(("Deraumere: " + std::to_string(_map.getDeraumereCount())).c_str(), x, y, 20, GOLD);
+    DrawText(("Deraumere : " + std::to_string(_map.getDeraumereCount())).c_str(), x, y, 20, GOLD);
     y += lineSpacing;
-    DrawText(("Sibur: " + std::to_string(_map.getSiburCount())).c_str(), x, y, 20, PURPLE);
+    DrawText(("Sibur : " + std::to_string(_map.getSiburCount())).c_str(), x, y, 20, PURPLE);
     y += lineSpacing;
-    DrawText(("Mendiane: " + std::to_string(_map.getMendianeCount())).c_str(), x, y, 20, RED);
+    DrawText(("Mendiane : " + std::to_string(_map.getMendianeCount())).c_str(), x, y, 20, RED);
     y += lineSpacing;
-    DrawText(("Phiras: " + std::to_string(_map.getPhirasCount())).c_str(), x, y, 20, GREEN);
+    DrawText(("Phiras : " + std::to_string(_map.getPhirasCount())).c_str(), x, y, 20, GREEN);
     y += lineSpacing;
-    DrawText(("Thystame: " + std::to_string(_map.getThystameCount())).c_str(), x, y, 20, PINK);
+    DrawText(("Thystame : " + std::to_string(_map.getThystameCount())).c_str(), x, y, 20, PINK);
+    y += lineSpacing;
+    y += lineSpacing;
+    DrawText(("Eggs : " + std::to_string(_map.getEggsCount())).c_str(), x, y, 20, WHITE);
 
     int timeInt = static_cast<int>(GetTime());
-    std::string timeStr = "Time: " + std::to_string(timeInt);
+    std::string timeStr = "Time : " + std::to_string(timeInt);
     int timeTextWidth = MeasureText(timeStr.c_str(), 20);
     int timeCenterX = (_screenWidth - timeTextWidth) / 2;
     DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
@@ -257,6 +284,64 @@ void Renderer::InfoBoard() {
     int centerX = (_screenWidth - textWidth) / 2;
     int bottomY = _screenHeight - 30;
     DrawText("Use ZQSD to move the camera", centerX, bottomY, 20, RED);
+}
+
+void Renderer::InfoTeamsBoard() {
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    int maxTextWidth = MeasureText("Teams : ", titleSize);
+    for (const std::string& teamName : teamNames) {
+        int w = MeasureText(teamName.c_str(), titleSize);
+        if (w > maxTextWidth)
+            maxTextWidth = w;
+    }
+
+    int boxWidth = maxTextWidth + 2 * padding;
+    int boxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+
+    int boxX = _screenWidth - boxWidth - 10;
+    int boxY = 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText("Teams : ", x, y, titleSize, BLACK);
+    y += lineSpacing;
+
+    for (const std::string& teamName : teamNames) {
+        DrawText(teamName.c_str(), x, y, titleSize, WHITE);
+        y += lineSpacing;
+    }
+}
+
+void Renderer::InfoPlayersBoard() {
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    int boxWidth = 150;
+    int boxHeight = lineSpacing + 2 * padding;
+
+    int boxX = _screenWidth - boxWidth - 10;
+    // Place it just below the teams board
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+    int boxY = 10 + teamsBoxHeight + 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText("Player : ", x, y, titleSize, BLACK);
 }
 
 void Renderer::DrawGrid() {

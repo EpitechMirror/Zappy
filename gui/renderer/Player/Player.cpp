@@ -7,8 +7,19 @@
 
 #include "Player.hpp"
 
+std::vector<std::string> Player::_teamNames;
+
 Player::Player(int id, Vector3 pos, int orientation, int level, const std::string& team)
     : _id(id), _position(pos), _orientation(orientation), _level(level), _team(team) {}
+
+
+void Player::addTeamName(const std::string &name) {
+    _teamNames.push_back(name);
+}
+
+const std::vector<std::string> &Player::getTeamNames() {
+    return _teamNames;
+}
 
 int Player::getId() const {
     return _id;

@@ -8,6 +8,7 @@
 #include "raylib.h"
 #include "client/Client.hpp"
 #include "renderer/Renderer.hpp"
+#include <ctime>
 
 constexpr int SCREEN_WIDTH = 1280;
 constexpr int SCREEN_HEIGHT = 720;
@@ -29,6 +30,7 @@ void printData(const Map &map) {
 
 int main(int argc, char** argv) {
     std::string host = "localhost";
+    std::srand(std::time(nullptr));
     int port = 0;
     int opt;
 

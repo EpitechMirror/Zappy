@@ -6,9 +6,10 @@
 */
 
 #include "Client.hpp"
+#include "../renderer/Player/Player.hpp"
 
 Client::Client(const std::string &host, int port)
-    : _host(host), _port(port), _socket(-1), _hasMapSize(false) {}
+    : _host(host), _port(port), _socket(-1), _hasMapSize(false), _protocolHandler(_map) {}
 
 Client::~Client() {
     if (_socket != -1)
@@ -69,29 +70,7 @@ void Client::parseData() {
     std::string line;
     while (readLine(line)) {
         std::cout << "Received: [" << line << "]" << std::endl;
-        std::istringstream iss(line);
-        std::string cmd;
-        if (!(iss >> cmd)) continue;
-
-        if (cmd == "msz") {
-            if (iss >> _mapWidth >> _mapHeight) {
-                _map.setSize(_mapWidth, _mapHeight);
-                _hasMapSize = true;
-            }
-        }
-        else if (cmd == "bct") {
-            int x, y;
-            Resources res;
-            if (iss >> x >> y) {
-                for (int i = 0; i < RESOURCE_COUNT; ++i) {
-                    if (!(iss >> res.quantities[i])) {
-                        std::cerr << "Invalid bct resource data\n";
-                        break;
-                    }
-                }
-                _map.setTileResources(x, y, res);
-            }
-        }
+        _protocolHandler.handleLine(line);
     }
 }
 
@@ -128,7 +107,7 @@ void Client::update() {
 }
 
 bool Client::isMapReady() const {
-    return _hasMapSize && _map.isFullyInitialized();
+    return _protocolHandler.isMapReady();
 }
 
 void Client::disconnect() {
