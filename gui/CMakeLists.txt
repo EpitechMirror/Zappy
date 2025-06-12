@@ -58,6 +58,7 @@ add_executable(unit_tests
     client/Client.cpp
     map/Map.cpp
     renderer/Player/Player.cpp
+    client/ProtocolHandler.cpp
 )
 target_link_libraries(unit_tests
     criterion pthread

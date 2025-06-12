@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "../map/Map.hpp"
+#include "ProtocolHandler.hpp"
 
 class Client {
     public:
@@ -49,6 +50,7 @@ class Client {
         Map _map;
         bool _hasMapSize = false;
         std::string _buffer;
+        ProtocolHandler _protocolHandler;
 
         void receiveData();
         void parseData();
