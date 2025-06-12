@@ -20,6 +20,13 @@ void CameraController::update() {
     UpdateCamera(&_camera, CAMERA_FIRST_PERSON);
 }
 
+void CameraController::zoom(float delta)
+{
+    Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
+    dir = Vector3Normalize(dir);
+    _camera.position = Vector3Add(_camera.position, Vector3Scale(dir, delta));
+}
+
 Camera& CameraController::getCamera() {
     return _camera;
 }
