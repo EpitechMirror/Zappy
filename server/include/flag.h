@@ -20,6 +20,7 @@ typedef struct server_config_s {
     int freq;
     int team_count;
     char **team_names;
+    int *team_slots;
     struct tile_s **map;
     struct client_s *clients;
 } server_config_t;

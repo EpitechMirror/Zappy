@@ -15,9 +15,13 @@
 
 static void clear_map_resources(server_config_t *conf)
 {
-    for (int y = 0; y < conf->height; y++)
-        for (int x = 0; x < conf->width; x++) {
-            tile_t *tile = &conf->map[y][x];
+    int y = 0;
+    int x = 0;
+    tile_t *tile;
+
+    for (y = 0; y < conf->height; y++) {
+        for (x = 0; x < conf->width; x++) {
+            tile = &conf->map[y][x];
             tile->food = 0;
             tile->linemate = 0;
             tile->deraumere = 0;
@@ -26,17 +30,25 @@ static void clear_map_resources(server_config_t *conf)
             tile->phiras = 0;
             tile->thystame = 0;
         }
+    }
 }
 
-static void place_resource_randomly(server_config_t *conf, int resource_offset, int quantity)
+static void place_resource_randomly(server_config_t *conf,
+    int resource_offset, int quantity)
 {
     int w = conf->width;
     int h = conf->height;
-    for (int i = 0; i < quantity; i++) {
-        int x = rand() % w;
-        int y = rand() % h;
-        tile_t *tile = &conf->map[y][x];
-        int *resource_ptr = ((int *)tile) + resource_offset;
+    int i = 0;
+    int x;
+    int y;
+    tile_t *tile;
+    int *resource_ptr;
+
+    for (i = 0; i < quantity; i++) {
+        x = rand() % w;
+        y = rand() % h;
+        tile = &conf->map[y][x];
+        resource_ptr = ((int *)tile) + resource_offset;
         (*resource_ptr)++;
     }
 }
@@ -78,8 +90,11 @@ void send_tile_content(int fd, int x, int y, tile_t *tile)
 
 void send_whole_map(int fd, server_config_t *conf)
 {
-    for (int y = 0; y < conf->height; y++) {
-        for (int x = 0; x < conf->width; x++) {
+    int y = 0;
+    int x = 0;
+
+    for (y = 0; y < conf->height; y++) {
+        for (x = 0; x < conf->width; x++) {
             send_tile_content(fd, x, y, &conf->map[y][x]);
         }
     }

@@ -60,7 +60,14 @@ static void handle_player_auth(client_t *client, int fd,
     server_config_t *conf, char *team)
 {
     char msg[128];
+    int team_idx = find_team_index(conf, team);
 
+    if (team_idx == -1 || conf->team_slots[team_idx] <= 0) {
+        send(fd, "ko\n", 3, 0);
+        remove_client(&conf->clients, fd);
+        return;
+    }
+    conf->team_slots[team_idx]--;
     client->is_graphic = false;
     snprintf(msg, sizeof(msg),
         "Bienvenue joueur de l'équipe %s\n%d\n%d %d\n",
