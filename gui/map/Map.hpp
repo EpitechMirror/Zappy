@@ -11,6 +11,7 @@
 #include <vector>
 #include "../ressources/Ressources.hpp"
 #include "raylib.h"
+#include <algorithm>
 
 #pragma once
 
@@ -44,6 +45,7 @@ class Map {
 
         int getEggsCount() const;
         void addEgg(int eggId, int x, int y);
+        void removeEgg(int eggId);
         const std::vector<Egg> &getEggs() const;
 
     private:

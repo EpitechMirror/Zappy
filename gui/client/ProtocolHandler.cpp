@@ -18,6 +18,8 @@ void ProtocolHandler::registerHandlers() {
     _handlers["bct"] = [this](std::istringstream &iss) { handleBct(iss); };
     _handlers["tna"] = [this](std::istringstream &iss) { handleTna(iss); };
     _handlers["enw"] = [this](std::istringstream &iss) { handleEnw(iss); };
+    _handlers["ebo"] = [this](std::istringstream &iss) { handleEboAndEdi(iss); };
+    _handlers["edi"] = [this](std::istringstream &iss) { handleEboAndEdi(iss); };
 }
 
 void ProtocolHandler::handleLine(const std::string &line) {
@@ -78,5 +80,15 @@ void ProtocolHandler::handleEnw(std::istringstream &iss) {
         _map.addEgg(eggId, x, y);
     } else {
         std::cerr << "Invalid enw format\n";
+    }
+}
+
+void ProtocolHandler::handleEboAndEdi(std::istringstream &iss) {
+    std::string eggIdStr;
+    if (iss >> eggIdStr) {
+        int eggId = std::stoi(eggIdStr.substr(1));
+        _map.removeEgg(eggId);
+    } else {
+        std::cerr << "Invalid ebo format\n";
     }
 }

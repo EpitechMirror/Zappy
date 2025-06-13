@@ -106,6 +106,18 @@ void Map::addEgg(int eggId, int x, int y) {
     _eggs.push_back({eggId, x, y});
 }
 
+void Map::removeEgg(int eggId) {
+    auto it = std::find_if(_eggs.begin(), _eggs.end(), [eggId](const Egg &egg) {
+        return egg.id == eggId;
+    });
+
+    if (it != _eggs.end()) {
+        _eggs.erase(it);
+    } else {
+        std::cerr << "Warning: Tried to remove non-existent egg #" << eggId << "\n";
+    }
+}
+
 const std::vector<Egg> &Map::getEggs() const {
     return _eggs;
 }

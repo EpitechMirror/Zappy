@@ -36,6 +36,7 @@ private:
     void handleBct(std::istringstream &iss);
     void handleTna(std::istringstream &iss);
     void handleEnw(std::istringstream &iss);
+    void handleEboAndEdi(std::istringstream &iss);
 };
 
 
