@@ -52,3 +52,12 @@ void Player::setOrientation(int orientation) {
 void Player::setLevel(int level) {
     _level = level;
 }
+
+const int *Player::getInventory() const {
+    return _inventory;
+}
+
+void Player::setInventory(const int inventory[RESOURCE_COUNT]) {
+    for (int i = 0; i < RESOURCE_COUNT; ++i)
+        _inventory[i] = inventory[i];
+}
