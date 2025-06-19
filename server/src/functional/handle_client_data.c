@@ -117,6 +117,7 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
     }
     buffer[r] = '\0';
     printf("[DEBUG] Data from fd %d: %s\n", fd, buffer);
+    respond_to_server_fd(fd, conf, buffer, client);
     if (client->state == WAITING_NAME)
         handle_auth(&ctx, buffer);
     return false;

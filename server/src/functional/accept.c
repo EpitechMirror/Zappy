@@ -47,7 +47,7 @@ static void handle_existing_client(poll_context_t *ctx, int *i)
 {
     bool disconnected = false;
 
-    disconnected = handle_client_data(ctx->clients,
+    disconnected = handle_client_data(&ctx->clients,
         ctx->fds[*i].fd, ctx->conf);
     if (disconnected) {
         handle_client_disconnection(ctx->fds, ctx->client_count, *i);
@@ -100,7 +100,7 @@ static void setup_poll_context(poll_context_t *ctx, int server_fd,
 {
     ctx->server_fd = server_fd;
     ctx->conf = conf;
-    ctx->clients = &conf->clients;
+    ctx->clients = conf->clients;
     ctx->client_count = client_count;
     init_pollfds(ctx->fds);
     set_non_blocking(server_fd);
