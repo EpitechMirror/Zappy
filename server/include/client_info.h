@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2025
 ** Zappy
 ** File description:
-** Client_Info
+** client_info
 */
 
 #ifndef CLIENT_INFO_H_
