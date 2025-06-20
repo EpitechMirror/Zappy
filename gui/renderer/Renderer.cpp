@@ -16,16 +16,28 @@ Renderer::Renderer(int width, int height, const Map &map)
       _music({}),
       _floorModel({}),
       _playerModel({})
-{}
+{
+
+}
 
 void Renderer::loadModels() {
+    float cellSize = 1.0f;
+    float roomWidth = _map.getWidth() * cellSize;
+    float roomDepth = _map.getHeight() * cellSize;
+    float roomHeight = 4.0f;
+    float wallThickness = 0.2f;
+
     _floorModel = LoadModel("../resources/models/plane.glb");
     _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
+    _wallLong = LoadModelFromMesh(GenMeshCube(roomWidth + wallThickness, roomHeight, wallThickness));
+    _wallShort = LoadModelFromMesh(GenMeshCube(wallThickness, roomHeight, roomDepth + wallThickness));
 }
 
 void Renderer::unloadModels() {
     UnloadModel(_floorModel);
     UnloadModel(_playerModel);
+    UnloadModel(_wallShort);
+    UnloadModel(_wallLong);
 }
 
 void Renderer::loadShaders() {
@@ -36,28 +48,44 @@ void Renderer::unloadShaders() {
     _shaders.unloadAll();
 }
 
-void Renderer::loadTextures() {
-    //Ici on charge les textures
-    Texture2D floorAlbedo = LoadTexture("../resources/textures/bitume/bitume_diff.jpg");
-    Texture2D floorNormal = LoadTexture("../resources/textures/bitume/bitume_disp.png");
-    Texture2D floorMRA = LoadTexture("../resources/textures/bitume/bitume_nor.exr");
-    Texture2D floorEmissive = LoadTexture("../resources/textures/bitume/bitume_rough.exr");
+void Renderer::drawRoomAndy() {
+    int width = _map.getWidth();
+    int height = _map.getHeight();
+    float cellSize = 1.0f;
 
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
+    float roomHeight = 4.0f;
+    float wallThickness = 0.2f;
+
+    // Mur du fond (z = 0)
+    DrawModel(_wallLong, {roomWidth/2, roomHeight/2, -wallThickness/2}, 1.0f, WHITE);
+    // Mur devant (z = roomDepth)
+    DrawModel(_wallLong, {roomWidth/2, roomHeight/2, roomDepth + wallThickness/2}, 1.0f, WHITE);
+    // Mur gauche (x = 0)
+    DrawModel(_wallShort, {-wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
+    // Mur droite (x = roomWidth)
+    DrawModel(_wallShort, {roomWidth + wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
+}
+
+void Renderer::loadTextures() {
+    //Ici on charge les textures (sol)
+    Texture2D floorAlbedo = LoadTexture("../resources/textures/wood_8.jpg");
+    GenTextureMipmaps(&floorAlbedo);
+    SetTextureFilter(floorAlbedo, TEXTURE_FILTER_ANISOTROPIC_16X);
+    
     // Et on les associe au modèle concerné (ici le sol)
     for (int i = 0; i < _floorModel.materialCount; ++i) {
         _floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
-        _floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = floorNormal;
-        _floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = floorMRA;
-        _floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = floorEmissive;
     }
-
-
+    
+    
     //texture joueur (lampe)
     Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
     Texture2D lampNormal = LoadTexture("../resources/models/pixar_lamp/PixarLamp_normal.jpeg");
     Texture2D lampMRA = LoadTexture("../resources/models/pixar_lamp/PixarLamp_metallicRoughness.jpeg");
     Texture2D lampEmissive = LoadTexture("../resources/models/pixar_lamp/PixarLamp_emissive.jpeg");
-
+    
     //associé au modèle joueur (si on a plusieurs textures on fait une boucle)
     for (int i = 0; i < _playerModel.materialCount; ++i) {
         _playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = lampAlbedo;
@@ -65,6 +93,11 @@ void Renderer::loadTextures() {
         _playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = lampMRA;
         _playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = lampEmissive;
     }
+    
+    
+    Texture2D wallTex = LoadTexture("../resources/room_andy/textures/wallpaper.jpg");
+    _wallLong.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
+    _wallShort.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
 }
 
 void Renderer::loadAudio() {
@@ -95,17 +128,25 @@ void Renderer::unloadTextures() {
         UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
         UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
     }
+
+    for (int i = 0; i < _wallLong.materialCount; ++i) {
+        UnloadTexture(_wallLong.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
+    }
+
+    for (int i = 0; i < _wallShort.materialCount; ++i) {
+        UnloadTexture(_wallShort.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
+    }
 }
 
 void Renderer::applyShaders() {
     // Ici on applique les shaders aux modèles
     Shader& pbr = _shaders.getPBR();
     for (int i = 0; i < _floorModel.materialCount; ++i)
-        _floorModel.materials[i].shader = pbr;
-
+    _floorModel.materials[i].shader = pbr;
+    
     // PLusieurs textures donc on applique les shaders pour chacune d'elles
     for (int i = 0; i < _playerModel.materialCount; ++i)
-        _playerModel.materials[i].shader = pbr;
+    _playerModel.materials[i].shader = pbr;
 }
 
 void Renderer::initLights() {
@@ -187,7 +228,7 @@ void Renderer::drawFloor() {
 
     Shader& pbr = _shaders.getPBR();
     int tilingLoc = GetShaderLocation(pbr, "tiling");
-    Vector2 tiling = {1.0f, 1.0f}; // 1 répétition par case
+    Vector2 tiling = {0.5f, 0.5f};
     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
 
     for (int x = 0; x < width; ++x) {
@@ -238,6 +279,7 @@ void Renderer::gameLoop(Client &client) {
 
             BeginMode3D(_cameraController.getCamera());
                 drawFloor();
+                drawRoomAndy();
                 DrawGrid();
                 drawItems();
                 DrawEggs();
