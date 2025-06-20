@@ -29,6 +29,7 @@ class Renderer
         void InfoItemsBoard();
         void InfoTeamsBoard();
         void InfoPlayersBoard();
+        void InfoBoxBoard();
         void DrawGrid();
         void drawItems();
         void DrawEggs();
@@ -37,6 +38,8 @@ class Renderer
         void loadModels();
         void loadTextures();
         void loadAudio();
+        void playLoadingMusic();
+        void playMainMusic();
         void unloadAudio();
         void unloadTextures();
         void DrawPlayers();
@@ -51,7 +54,7 @@ class Renderer
         const std::vector<Player>& getPlayers() const { return _players; }
 
     private:
-        Music _music;
+        Music _mainMusic;
         int _screenWidth;
         int _screenHeight;
         const Map &_map;
@@ -64,6 +67,15 @@ class Renderer
         bool _mapInitialized = false;
         Model _wallLong;
         Model _wallShort;
+        std::vector<std::string> _loadingTips = {
+            "Use ZQSD to move around and get a better overview ! ",
+            "Click on a box to find out more about its contents ! ",
+            "Click on a player to find out more about their inventory ! ",
+            "Nice is a beautiful city, isn't it ? ",
+            "Did you know? Eggs hatch into players ! ",
+            "Legend says no one ever reached level 8... Yet. "
+        };
+        Font _toyFont;
 };
 
 #endif

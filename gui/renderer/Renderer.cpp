@@ -8,7 +8,7 @@
 #include "Renderer.hpp"
 
 Renderer::Renderer(int width, int height, const Map &map)
-    : _music({}), 
+    : _mainMusic({}), 
       _screenWidth(width),
       _screenHeight(height),
       _map(map),
@@ -29,6 +29,7 @@ void Renderer::loadModels() {
     _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
     _wallLong = LoadModelFromMesh(GenMeshCube(roomWidth + wallThickness, roomHeight, wallThickness));
     _wallShort = LoadModelFromMesh(GenMeshCube(wallThickness, roomHeight, roomDepth + wallThickness));
+    _toyFont = LoadFont("resources/fonts/Woody.ttf");
 }
 
 void Renderer::unloadModels() {
@@ -36,6 +37,7 @@ void Renderer::unloadModels() {
     UnloadModel(_playerModel);
     UnloadModel(_wallShort);
     UnloadModel(_wallLong);
+    UnloadFont(_toyFont);
 }
 
 void Renderer::loadShaders() {
@@ -100,14 +102,16 @@ void Renderer::loadTextures() {
 
 void Renderer::loadAudio() {
     InitAudioDevice();  
-    _music = LoadMusicStream("../resources/music/attente_music.ogg");
-    _music.looping = true;
-    PlayMusicStream(_music);
+    _mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
+    //_loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
+    _mainMusic.looping = true;
+    //_loadingMusic.looping = true;
+    PlayMusicStream(_mainMusic);
 }
 
 void Renderer::unloadAudio() {
-    StopMusicStream(_music);
-    UnloadMusicStream(_music);
+    StopMusicStream(_mainMusic);
+    UnloadMusicStream(_mainMusic);
     CloseAudioDevice();
 }
 
@@ -239,14 +243,72 @@ void Renderer::drawFloor() {
 }
 
 void Renderer::showLoadingScreen(const std::string &message) {
-    BeginDrawing();
-        ClearBackground(BLACK);
-        int textSize = 40;
-        int textWidth = MeasureText(message.c_str(), textSize);
-        int posX = (_screenWidth - textWidth) / 2;
-        int posY = _screenHeight / 2;
-        DrawText(message.c_str(), posX, posY, textSize, WHITE);
-    EndDrawing();
+    float duration = 11.0f;
+    float startTime = GetTime();
+
+    static int lastTipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+    const std::string &tip = _loadingTips[lastTipIndex];
+
+    while ((GetTime() - startTime) < duration && !WindowShouldClose()) {
+        float elapsed = GetTime() - startTime;
+        float progress = elapsed / duration;
+
+        BeginDrawing();
+            ClearBackground(BLACK);
+
+            // === Titre principal : WOODY GUI ===
+            const char* logo = "WOODY GUI";
+            int sizeLogo = 100;
+            float spacing = 5.0f;
+            Vector2 logoTextSize = MeasureTextEx(_toyFont, logo, sizeLogo, spacing);
+            float correction = spacing * 2.0f;
+            Vector2 logoPos;
+            logoPos.x = (_screenWidth - logoTextSize.x + correction) / 3.4f;
+            logoPos.y = (_screenHeight / 2) - 200;
+
+            Color outline = BLUE;
+            for (int dx = -3; dx <= 3; dx += 3) {
+                for (int dy = -3; dy <= 3; dy += 3) {
+                    if (dx == 0 && dy == 0) continue;
+                    Vector2 offsetPos = { logoPos.x + dx, logoPos.y + dy };
+                    DrawTextEx(_toyFont, logo, offsetPos, sizeLogo, spacing, outline);
+                }
+            }
+            DrawTextEx(_toyFont, logo, logoPos, sizeLogo, spacing, YELLOW);
+
+            // === Texte Loading animé ===
+            int loadingFontSize = 40;
+            int charsToShow = std::min((int)(elapsed * 10), (int)message.size());
+            std::string animatedText = message.substr(0, charsToShow);
+            int textWidth = MeasureText(animatedText.c_str(), loadingFontSize);
+            int posX = (_screenWidth - textWidth) / 2;
+            int posY = _screenHeight / 2 - 80;
+            DrawText(animatedText.c_str(), posX, posY, loadingFontSize, WHITE);
+
+            // === Barre de chargement ===
+            int barWidth = 300;
+            int barHeight = 20;
+            int barX = (_screenWidth - barWidth) / 2;
+            int barY = posY + 60;
+
+            DrawRectangle(barX, barY, barWidth, barHeight, GRAY);
+            DrawRectangle(barX, barY, progress * barWidth, barHeight, GREEN);
+            DrawRectangleLines(barX, barY, barWidth, barHeight, DARKGRAY);
+
+            // === Boîte TIPS ===
+            int tipFontSize = 20;
+            int tipBoxWidth = MeasureText(tip.c_str(), tipFontSize) + 40;
+            int tipBoxHeight = 80;
+            int tipBoxX = (_screenWidth - tipBoxWidth) / 2;
+            int tipBoxY = barY + 60;
+
+            DrawRectangle(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, Fade(SKYBLUE, 0.25f));
+            DrawRectangleLines(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, BLUE);
+            DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, DARKBLUE);
+            DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, WHITE);
+
+        EndDrawing();
+    }
 }
 
 void Renderer::gameLoop(Client &client) {
@@ -269,7 +331,11 @@ void Renderer::gameLoop(Client &client) {
         for (auto& l : _lights)
             l.updateShader(_shaders.getPBR());
 
-        UpdateMusicStream(_music);
+        UpdateMusicStream(_mainMusic);
+
+        //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        //    handleMouseClick();
+        //}
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -286,6 +352,7 @@ void Renderer::gameLoop(Client &client) {
             InfoItemsBoard();
             InfoTeamsBoard();
             InfoPlayersBoard();
+            InfoBoxBoard();
         EndDrawing();
     }
 }
@@ -367,11 +434,6 @@ void Renderer::InfoItemsBoard() {
     int timeTextWidth = MeasureText(timeStr.c_str(), 20);
     int timeCenterX = (_screenWidth - timeTextWidth) / 2;
     DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
-
-    int textWidth = MeasureText("Use ZQSD to move the camera", 20);
-    int centerX = (_screenWidth - textWidth) / 2;
-    int bottomY = _screenHeight - 30;
-    DrawText("Use ZQSD to move the camera", centerX, bottomY, 20, RED);
 }
 
 void Renderer::InfoTeamsBoard() {
@@ -432,6 +494,31 @@ void Renderer::InfoPlayersBoard() {
     DrawText("Player : ", x, y, titleSize, BLACK);
 }
 
+void Renderer::InfoBoxBoard() {
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    int boxWidth = 200;
+    int boxHeight = 3 * lineSpacing + 2 * padding;
+
+    int boxX = _screenWidth - boxWidth - 10;
+
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+    int playersBoxHeight = lineSpacing + 2 * padding;
+
+    int boxY = 10 + teamsBoxHeight + 10 + playersBoxHeight + 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText("Info Box : ", x, y, titleSize, BLACK);
+}
+
 void Renderer::DrawGrid() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -452,7 +539,7 @@ void Renderer::DrawGrid() {
 
 void Renderer::renderWindow(Client &client) {
     SetTraceLogLevel(LOG_NONE);
-    InitWindow(_screenWidth, _screenHeight, "ZAPPY GUI");
+    InitWindow(_screenWidth, _screenHeight, "WOODY GUI");
     SetTargetFPS(60);
 
     gameLoop(client);
