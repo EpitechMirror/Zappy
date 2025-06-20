@@ -8,17 +8,15 @@
 #include "Renderer.hpp"
 
 Renderer::Renderer(int width, int height, const Map &map)
-    : _screenWidth(width),
+    : _music({}), 
+      _screenWidth(width),
       _screenHeight(height),
       _map(map),
       _cameraController(map.getWidth(), map.getHeight()),
-      _mapInitialized(false),
-      _music({}),
       _floorModel({}),
-      _playerModel({})
-{
-
-}
+      _playerModel({}),
+      _mapInitialized(false)
+{}
 
 void Renderer::loadModels() {
     float cellSize = 1.0f;
@@ -266,7 +264,6 @@ void Renderer::gameLoop(Client &client) {
 
     while (!WindowShouldClose()) {
         client.update();
-        float wheel = GetMouseWheelMove();
         
         _cameraController.update();
         for (auto& l : _lights)

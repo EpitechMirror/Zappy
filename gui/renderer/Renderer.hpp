@@ -44,6 +44,7 @@ class Renderer
         void initLights();
         void unloadModels();
         void drawFloor();
+        void drawRoomAndy();
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
 
@@ -61,6 +62,8 @@ class Renderer
         Model _playerModel;
         ShadersManager _shaders;
         bool _mapInitialized = false;
+        Model _wallLong;
+        Model _wallShort;
 };
 
 #endif
