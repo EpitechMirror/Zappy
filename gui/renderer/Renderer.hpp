@@ -36,6 +36,8 @@ class Renderer
         void unloadShaders();
         void loadModels();
         void loadTextures();
+        void loadAudio();
+        void unloadAudio();
         void unloadTextures();
         void DrawPlayers();
         void applyShaders();
@@ -48,6 +50,7 @@ class Renderer
         const std::vector<Player>& getPlayers() const { return _players; }
 
     private:
+        Music _music;
         int _screenWidth;
         int _screenHeight;
         const Map &_map;

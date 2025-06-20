@@ -59,6 +59,19 @@ void Renderer::loadTextures() {
     }
 }
 
+void Renderer::loadAudio() {
+    InitAudioDevice();  
+    _music = LoadMusicStream("../resources/music/attente_music.ogg");
+    _music.looping = true;
+    PlayMusicStream(_music);
+}
+
+void Renderer::unloadAudio() {
+    StopMusicStream(_music);
+    UnloadMusicStream(_music);
+    CloseAudioDevice();
+}
+
 void Renderer::unloadTextures() {
     // Libère les textures du sol
     for (int i = 0; i < _floorModel.materialCount; ++i) {
@@ -199,6 +212,7 @@ void Renderer::gameLoop(Client &client) {
     loadTextures();
     loadShaders();
     applyShaders();
+    loadAudio();
     initLights();
 
     while (!WindowShouldClose()) {
@@ -211,6 +225,8 @@ void Renderer::gameLoop(Client &client) {
         _cameraController.update();
         for (auto& l : _lights)
             l.updateShader(_shaders.getPBR());
+
+        UpdateMusicStream(_music);
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -400,6 +416,7 @@ void Renderer::renderWindow(Client &client) {
     unloadTextures();
     unloadModels();
     unloadShaders();
+    unloadAudio();
 
     CloseWindow();
     client.disconnect();
