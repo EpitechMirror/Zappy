@@ -16,7 +16,7 @@
     #include <sys/types.h>
     #include <unistd.h>
     #include <stdio.h>
-    #include "Client_Info.h"
+    #include "client_info.h"
     #include <sys/time.h>
     #include <sys/select.h>
     #include <stdbool.h>
@@ -51,6 +51,7 @@ int add_client_fd(struct pollfd *fds, int client_fd, int count);
 bool handle_client_data(client_t **clients, int fd, server_config_t *conf);
 void poll_clients(poll_context_t *ctx);
 void accept_clients_loop(int server_fd, server_config_t *conf);
-int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client);
+int respond_to_server_fd(int fd, server_config_t *conf,
+    char *client_message, client_t *client);
 
 #endif /* !SERVER_H_ */

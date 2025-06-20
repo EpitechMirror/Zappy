@@ -7,8 +7,8 @@
 
 #ifndef FLAG_H_
     #define FLAG_H_
-    
-#include "ressources.h"
+    #include "ressources.h"
+
 struct tile_s;
 struct client_s;
 

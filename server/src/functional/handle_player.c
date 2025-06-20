@@ -8,29 +8,53 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include "Client_Info.h"
+#include "client_info.h"
 #include "flag.h"
 #include "server.h"
 
-void move_player(client_t *client, server_config_t *conf, direction_t direction)
+static void move_north(client_t *client, server_config_t *conf)
 {
-    if (direction == NORTH) {
-        if (client->y > 0)
-            client->y -= 1;
-    } else if (direction == EAST) {
-        if (client->x < conf->width - 1)
-            client->x += 1;
-    } else if (direction == SOUTH) {
-        if (client->y < conf->height - 1)
-            client->y += 1;
-    } else if (direction == WEST) {
-        if (client->x > 0)
-            client->x -= 1;
-    }
+    if (client->y > 0)
+        client->y -= 1;
 }
 
-int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
+static void move_east(client_t *client, server_config_t *conf)
 {
+    if (client->x < conf->width - 1)
+        client->x += 1;
+}
+
+static void move_south(client_t *client, server_config_t *conf)
+{
+    if (client->y < conf->height - 1)
+        client->y += 1;
+}
+
+static void move_west(client_t *client, server_config_t *conf)
+{
+    if (client->x > 0)
+        client->x -= 1;
+}
+
+void move_player(client_t *client, server_config_t *conf,
+    direction_t direction)
+{
+    static void (*move_functions[])(client_t *, server_config_t *) = {
+        move_north,
+        move_east,
+        move_south,
+        move_west
+    };
+
+    if (direction >= 0 && direction < 4)
+        move_functions[direction](client, conf);
+}
+
+int respond_to_server_fd(int fd, server_config_t *conf,
+    char *client_message, client_t *client)
+{
+    char inventory[256];
+
     if (strncmp(client_message, "Forward", 7) == 0) {
         move_player(client, conf, client->direction);
         send(fd, "ok\n", 3, 0);
@@ -44,8 +68,8 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
         send(fd, "ok\n", 3, 0);
     }
     if (strncmp(client_message, "Inventory", 9) == 0) {
-        char inventory[256];
-        snprintf(inventory, sizeof(inventory), "Inventory: %d items\n", client->id);
+        snprintf(inventory, sizeof(inventory),
+            "Inventory: %d items\n", client->id);
         send(fd, inventory, strlen(inventory), 0);
     }
     return 0;
