@@ -5,6 +5,7 @@
 ** handle_client_data
 */
 
+#include <stdbool.h>
 #include "server.h"
 
 static int find_team_index(server_config_t *conf, const char *team_name)
@@ -74,6 +75,8 @@ static void handle_player_auth(client_t *client, int fd,
         team, conf->clients_nb, conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
     client->state = AUTHENTICATED;
+    client->direction = NORTH;
+    client->level = 1;
     printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
@@ -117,7 +120,8 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
     }
     buffer[r] = '\0';
     printf("[DEBUG] Data from fd %d: %s\n", fd, buffer);
-    respond_to_server_fd(fd, conf, buffer, client);
+    if (client->is_graphic == false)
+        respond_to_server_fd(fd, conf, buffer, client);
     if (client->state == WAITING_NAME)
         handle_auth(&ctx, buffer);
     return false;
