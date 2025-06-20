@@ -53,4 +53,3 @@ Test(Client, connect_and_receive_map_size) {
 
     server.join();
 }*/
- 
