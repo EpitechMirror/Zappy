@@ -160,7 +160,6 @@ void Renderer::initLights() {
     _lights.push_back(Light(LIGHT_POINT, { 1.0f, 1.0f, -2.0f }, { 0, 0, 0 }, BLUE, 2.0f, pbr, 3));
 }
 
-//DOIT dessiner nos différentes pierres
 void Renderer::drawItems() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -245,13 +244,20 @@ void Renderer::drawFloor() {
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
     float startTime = GetTime();
-
-    static int lastTipIndex = GetRandomValue(0, _loadingTips.size() - 1);
-    const std::string &tip = _loadingTips[lastTipIndex];
+    float nextTipTime = 3.0f; 
+    
+    int tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+    std::string tip = _loadingTips[tipIndex];
 
     while ((GetTime() - startTime) < duration && !WindowShouldClose()) {
         float elapsed = GetTime() - startTime;
         float progress = elapsed / duration;
+
+        if (elapsed >= nextTipTime) {
+            tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+            tip = _loadingTips[tipIndex];
+            nextTipTime += 3.0f;
+        }
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -304,8 +310,14 @@ void Renderer::showLoadingScreen(const std::string &message) {
 
             DrawRectangle(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, Fade(SKYBLUE, 0.25f));
             DrawRectangleLines(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, BLUE);
-            DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, DARKBLUE);
-            DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, WHITE);
+            
+            float tipAlpha = 1.0f;
+            if (nextTipTime - elapsed < 0.5f) {
+                tipAlpha = (nextTipTime - elapsed) * 2.0f;
+            }
+
+            DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, ColorAlpha(DARKBLUE, tipAlpha));
+            DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
 
         EndDrawing();
     }
@@ -333,9 +345,9 @@ void Renderer::gameLoop(Client &client) {
 
         UpdateMusicStream(_mainMusic);
 
-        //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        //    handleMouseClick();
-        //}
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            handleMouseClick();
+        }
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -480,7 +492,6 @@ void Renderer::InfoPlayersBoard() {
     int boxHeight = lineSpacing + 2 * padding;
 
     int boxX = _screenWidth - boxWidth - 10;
-    // Place it just below the teams board
     const std::vector<std::string>& teamNames = Player::getTeamNames();
     int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
     int boxY = 10 + teamsBoxHeight + 10;
@@ -499,16 +510,47 @@ void Renderer::InfoBoxBoard() {
     int lineSpacing = 20;
     int padding = 10;
 
-    int boxWidth = 200;
-    int boxHeight = 3 * lineSpacing + 2 * padding;
+    std::string title = "Info Box : ";
+    if (_selectedTile) {
+        int tx = static_cast<int>(_selectedTile->x);
+        int ty = static_cast<int>(_selectedTile->y);
+        title += std::to_string(tx) + "," + std::to_string(ty);
+    }
 
-    int boxX = _screenWidth - boxWidth - 10;
+    int titleWidth = MeasureText(title.c_str(), titleSize);
+    int boxWidth = titleWidth + 2 * padding;
+    int boxHeight = 3 * lineSpacing + 2 * padding;
 
     const std::vector<std::string>& teamNames = Player::getTeamNames();
     int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
     int playersBoxHeight = lineSpacing + 2 * padding;
-
+    int boxX = _screenWidth - boxWidth - 10;
     int boxY = 10 + teamsBoxHeight + 10 + playersBoxHeight + 10;
+
+    std::vector<std::pair<std::string, Color>> resourceLines;
+
+    if (_selectedTile) {
+        int tx = static_cast<int>(_selectedTile->x);
+        int ty = static_cast<int>(_selectedTile->y);
+        const auto& res = _map.getTileResources(tx, ty);
+        
+        if (res.quantities[FOOD] > 0)
+            resourceLines.push_back({TextFormat("Food: %d", res.quantities[FOOD]), ORANGE});
+        if (res.quantities[LINEMATE] > 0)
+            resourceLines.push_back({TextFormat("Linemate: %d", res.quantities[LINEMATE]), SKYBLUE});
+        if (res.quantities[DERAUMERE] > 0)
+            resourceLines.push_back({TextFormat("Deraumere: %d", res.quantities[DERAUMERE]), GOLD});
+        if (res.quantities[SIBUR] > 0)
+            resourceLines.push_back({TextFormat("Sibur: %d", res.quantities[SIBUR]), PURPLE});
+        if (res.quantities[MENDIANE] > 0)
+            resourceLines.push_back({TextFormat("Mendiane: %d", res.quantities[MENDIANE]), RED});
+        if (res.quantities[PHIRAS] > 0)
+            resourceLines.push_back({TextFormat("Phiras: %d", res.quantities[PHIRAS]), GREEN});
+        if (res.quantities[THYSTAME] > 0)
+            resourceLines.push_back({TextFormat("Thystame: %d", res.quantities[THYSTAME]), PINK});
+        
+        boxHeight = (1 + resourceLines.size()) * lineSpacing + 2 * padding;
+    }
 
     DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
     DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
@@ -516,7 +558,21 @@ void Renderer::InfoBoxBoard() {
     int x = boxX + padding;
     int y = boxY + padding;
 
-    DrawText("Info Box : ", x, y, titleSize, BLACK);
+    DrawText(title.c_str(), x, y, titleSize, BLACK);
+    y += lineSpacing;
+    
+    if (_selectedTile) {
+        if (resourceLines.empty()) {
+            DrawText("Empty tile", x, y, titleSize, DARKGRAY);
+        } else {
+            for (const auto& [text, color] : resourceLines) {
+                DrawText(text.c_str(), x, y, titleSize, color);
+                y += lineSpacing;
+            }
+        }
+    } else {
+        DrawText(" ", x, y, titleSize, DARKGRAY);
+    }
 }
 
 void Renderer::DrawGrid() {
@@ -551,4 +607,43 @@ void Renderer::renderWindow(Client &client) {
 
     CloseWindow();
     client.disconnect();
+}
+
+void Renderer::handleMouseClick() {
+    Ray ray = GetMouseRay(GetMousePosition(), _cameraController.getCamera());
+    _selectedTile.reset();
+    _selectedPlayerId.reset();
+
+    // Box
+    Vector3 hit;
+    if (GetRayGroundIntersection(ray, hit)) {
+        int tx = int(floor(hit.x));
+        int ty = int(floor(hit.z));
+        if (tx >= 0 && tx < _map.getWidth() && ty >= 0 && ty < _map.getHeight()) {
+            _selectedTile = Vector2{ float(tx), float(ty) };
+            return;
+        }
+    }
+
+    // Player
+    //for (const Player& p : _map.getPlayers()) {
+    //    Vector3 pos = {
+    //        p.getPosition().x + 0.5f,
+    //        0.5f,
+    //        p.getPosition().z + 0.5f
+    //    };
+    //    float radius = 0.5f * (p.getLevel() / 8.0f + 0.5f); // adapte si besoin
+    //    if (CheckCollisionRaySphere(ray, pos, radius)) {
+    //        _selectedPlayerId = p.getId();
+    //        return;
+    //    }
+    //}
+}
+
+bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
+    if (ray.direction.y == 0) return false;
+    float t = -ray.position.y / ray.direction.y;
+    if (t < 0) return false;
+    outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
+    return true;
 }

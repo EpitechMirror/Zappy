@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <random>
+#include <optional>
 #include "raylib.h"
 #include "rlgl.h"
 #include "Camera/Camera.hpp"
@@ -48,6 +49,8 @@ class Renderer
         void unloadModels();
         void drawFloor();
         void drawRoomAndy();
+        void handleMouseClick();
+        bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
 
@@ -76,6 +79,7 @@ class Renderer
             "Legend says no one ever reached level 8... Yet. "
         };
         Font _toyFont;
+        std::optional<Vector2> _selectedTile;    
+        std::optional<int>_selectedPlayerId;
 };
-
 #endif
