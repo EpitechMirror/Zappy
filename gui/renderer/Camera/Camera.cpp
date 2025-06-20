@@ -17,14 +17,24 @@ CameraController::CameraController()
 }
 
 void CameraController::update() {
-    UpdateCamera(&_camera, CAMERA_FIRST_PERSON);
+    UpdateCamera(&_camera, CAMERA_FREE);
+    if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
+        DisableCursor();
+    } else {
+        EnableCursor();
+    }
+    if (_camera.position.y < 1.0f)
+        _camera.position.y = 1.0f;
 }
 
 void CameraController::zoom(float delta)
 {
     Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
-    dir = Vector3Normalize(dir);
-    _camera.position = Vector3Add(_camera.position, Vector3Scale(dir, delta));
+    float dist = Vector3Length(dir);
+    if ((dist > 2.0f && delta > 0) || (dist < 50.0f && delta < 0)) {
+        dir = Vector3Normalize(dir);
+        _camera.position = Vector3Add(_camera.position, Vector3Scale(dir, delta));
+    }
 }
 
 Camera& CameraController::getCamera() {
