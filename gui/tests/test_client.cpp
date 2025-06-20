@@ -28,6 +28,17 @@ void fake_server() {
     close(server_fd);
 }
 
+Test(Client, create_and_disconnect) {
+    Client client("localhost", 4242);
+    client.disconnect();
+    cr_assert(true);
+}
+
+Test(Client, map_access) {
+    Client client("localhost", 4242);
+    const Map& map = client.getMap();
+    cr_assert_eq(map.getWidth(), 0);
+}
 /*
 Test(Client, connect_and_receive_map_size) {
     std::thread server(fake_server);

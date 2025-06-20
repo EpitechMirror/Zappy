@@ -17,7 +17,7 @@
 #include "../renderer/Shaders/ShadersManager.hpp"
 #include "../renderer/Player/Player.hpp"
 #include "../renderer/Light/Light.hpp"
-
+#include "../renderer/Player/Player.hpp"
 
 class Renderer
 {
@@ -36,13 +36,15 @@ class Renderer
         void loadModels();
         void loadTextures();
         void unloadTextures();
-        void RenderPlayers();
+        void DrawPlayers();
         void applyShaders();
         void initLights();
         void unloadModels();
         void drawFloor();
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
+
+        const std::vector<Player>& getPlayers() const { return _players; }
 
     private:
         int _screenWidth;

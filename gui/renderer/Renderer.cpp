@@ -233,16 +233,52 @@ void Renderer::gameLoop(Client &client) {
             Vector3 lampAxis = {1, 0, 0};
             float lampAngle = -180.0f;
 
-            DrawModelEx(_playerModel, lampPos, lampAxis, lampAngle, {1.0f, 1.0f, 1.0f}, RED);
+            //DrawModelEx(_playerModel, lampPos, lampAxis, lampAngle, {1.0f, 1.0f, 1.0f}, RED);
 
             // Dessine les lights (optionnel : sphères pour debug)
              for (const Light& l : _lights)
                  DrawSphere(l.getPosition(), 0.2f, YELLOW);
             EndMode3D();
+            DrawPlayers();
             InfoItemsBoard();
             InfoTeamsBoard();
             InfoPlayersBoard();
         EndDrawing();
+    }
+}
+
+void Renderer::DrawPlayers() {
+    // Récupère la liste
+    const auto& players = _map.getPlayers();
+    float cellSize = 1.0f;
+
+    for (const Player& p : players) {
+        // Position au centre de la case
+        Vector3 pos = {
+            p.getPosition().x * cellSize + cellSize/2,
+            0.0f,  // au sol
+            p.getPosition().z * cellSize + cellSize/2
+        };
+
+        // Orientation : on convertit ton int (1=N,2=E,3=S,4=O) en angle Z
+        float angleY = 0;
+        switch (p.getOrientation()) {
+            case 1: angleY = 0;   break; // Nord
+            case 2: angleY = 90;  break; // Est
+            case 3: angleY = 180; break; // Sud
+            case 4: angleY = 270; break; // Ouest
+        }
+
+        // Couleur selon l’équipe (hash simple)
+        size_t h = std::hash<std::string>{}(p.getTeam());
+        Color teamColor = ColorFromHSV((h % 360), 0.6f, 0.9f);
+
+        // Échelle du modèle (1 case = taille 1)
+        Vector3 scale = { 1.0f, 1.0f, 1.0f };
+        // Axe de rotation Y (vertical)
+        Vector3 axis = { 0, 1, 0 };
+
+        DrawModelEx(_playerModel, pos, axis, angleY, scale, teamColor);
     }
 }
 

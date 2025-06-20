@@ -9,7 +9,7 @@
 #include "../renderer/Player/Player.hpp"
 
 Client::Client(const std::string &host, int port)
-    : _host(host), _port(port), _socket(-1), _hasMapSize(false) {}
+    : _host(host), _port(port), _socket(-1), _hasMapSize(false), _protocolHandler(_map) {}
 
 Client::~Client() {
     if (_socket != -1)
@@ -70,48 +70,7 @@ void Client::parseData() {
     std::string line;
     while (readLine(line)) {
         std::cout << "Received: [" << line << "]" << std::endl;
-        std::istringstream iss(line);
-        std::string cmd;
-        if (!(iss >> cmd)) continue;
-
-        if (cmd == "msz") {
-            if (iss >> _mapWidth >> _mapHeight) {
-                _map.setSize(_mapWidth, _mapHeight);
-                _hasMapSize = true;
-            }
-        }
-        else if (cmd == "bct") {
-            int x, y;
-            Resources res;
-            if (iss >> x >> y) {
-                for (int i = 0; i < RESOURCE_COUNT; ++i) {
-                    if (!(iss >> res.quantities[i])) {
-                        std::cerr << "Invalid bct resource data\n";
-                        break;
-                    }
-                }
-                _map.setTileResources(x, y, res);
-            }
-        }
-        else if (cmd == "tna") {
-            std::string teamName;
-            if (iss >> teamName) {
-                Player::addTeamName(teamName);
-            }
-        }
-        else if (cmd == "enw") {
-            std::string eggIdStr, playerIdStr;
-            int x, y;
-        
-            if (iss >> eggIdStr >> playerIdStr >> x >> y) {
-                int eggId    = std::stoi(eggIdStr.substr(1));
-                int playerId = std::stoi(playerIdStr.substr(1));
-            
-                _map.addEgg(eggId, x, y);
-            } else {
-                std::cerr << "Invalid enw format\n";
-            }
-        }
+        _protocolHandler.handleLine(line);
     }
 }
 
@@ -148,7 +107,7 @@ void Client::update() {
 }
 
 bool Client::isMapReady() const {
-    return _hasMapSize && _map.isFullyInitialized();
+    return _protocolHandler.isMapReady();
 }
 
 void Client::disconnect() {
