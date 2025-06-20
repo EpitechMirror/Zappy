@@ -11,6 +11,7 @@
 #include <iostream>
 #include <random>
 #include "raylib.h"
+#include "rlgl.h"
 #include "Camera/Camera.hpp"
 #include "../map/Map.hpp"
 #include "../client/Client.hpp"

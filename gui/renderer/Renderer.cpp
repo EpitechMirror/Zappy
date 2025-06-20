@@ -216,30 +216,13 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-            // Charge les modèles
-            // Dessine le sol (a voir plus tard pour adapter le dessin du sol a la bonne position)
-            drawFloor();
-            DrawGrid();
-
-            drawItems();
-            DrawEggs();
-
-            // Dessine les joueurs (besoin d'enregistrer le nombre de joueurs)
-            // Exemple de joueur sous forme de lampe, essayer de faire en sorte qu'en fonction de la team on change les couleurs
-            //faire une boucle pour chaque joueur
-
-            //Ici on dessine le jouer avec une rotation a l'aide de drawModelEx
-            Vector3 lampPos = {0, 0, 0};
-            Vector3 lampAxis = {1, 0, 0};
-            float lampAngle = -180.0f;
-
-            //DrawModelEx(_playerModel, lampPos, lampAxis, lampAngle, {1.0f, 1.0f, 1.0f}, RED);
-
-            // Dessine les lights (optionnel : sphères pour debug)
-             for (const Light& l : _lights)
-                 DrawSphere(l.getPosition(), 0.2f, YELLOW);
+                drawFloor();
+                DrawGrid();
+                drawItems();
+                DrawEggs();
+                DrawPlayers();
             EndMode3D();
-            DrawPlayers();
+
             InfoItemsBoard();
             InfoTeamsBoard();
             InfoPlayersBoard();
@@ -248,37 +231,46 @@ void Renderer::gameLoop(Client &client) {
 }
 
 void Renderer::DrawPlayers() {
-    // Récupère la liste
     const auto& players = _map.getPlayers();
     float cellSize = 1.0f;
 
     for (const Player& p : players) {
-        // Position au centre de la case
-        Vector3 pos = {
-            p.getPosition().x * cellSize + cellSize/2,
-            0.0f,  // au sol
-            p.getPosition().z * cellSize + cellSize/2
-        };
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        float py = 0.0f;
 
-        // Orientation : on convertit ton int (1=N,2=E,3=S,4=O) en angle Z
-        float angleY = 0;
+        float yaw = 0;
         switch (p.getOrientation()) {
-            case 1: angleY = 0;   break; // Nord
-            case 2: angleY = 90;  break; // Est
-            case 3: angleY = 180; break; // Sud
-            case 4: angleY = 270; break; // Ouest
+            case 1: yaw =   0; break; // Nord
+            case 2: yaw =  90; break; // Est
+            case 3: yaw = 180; break; // Sud
+            case 4: yaw = 270; break; // Ouest
         }
 
-        // Couleur selon l’équipe (hash simple)
+        float scale = 0.5f;
+        switch (p.getLevel()) {
+            case 1: scale = 1.5f; break; // Niveau 1
+            case 2: scale = 1.8f; break; // Niveau 2
+            case 3: scale = 2.1f; break; // Niveau 3
+            case 4: scale = 2.4f; break; // Niveau 4
+            case 5: scale = 2.7f; break; // Niveau 5
+            case 6: scale = 3.0f; break; // Niveau 6
+            case 7: scale = 3.3f; break; // Niveau 7
+            case 8: scale = 3.6f; break; // Niveau 8
+            default: scale = 1.0f; break;
+        }
+
         size_t h = std::hash<std::string>{}(p.getTeam());
         Color teamColor = ColorFromHSV((h % 360), 0.6f, 0.9f);
 
-        // Échelle du modèle (1 case = taille 1)
-        Vector3 scale = { 1.0f, 1.0f, 1.0f };
-        // Axe de rotation Y (vertical)
-        Vector3 axis = { 0, 1, 0 };
+        rlPushMatrix();
+            rlTranslatef(px, py, pz);
+            rlRotatef(180.0f, 1.0f, 0.0f, 0.0f);
+            rlRotatef(yaw,   0.0f, 1.0f, 0.0f);
+            rlScalef(scale, scale, scale);
 
-        DrawModelEx(_playerModel, pos, axis, angleY, scale, teamColor);
+            DrawModel(_playerModel, { 0.0f, 0.0f, 0.0f }, 1.0f, teamColor);
+        rlPopMatrix();
     }
 }
 
