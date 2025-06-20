@@ -488,8 +488,61 @@ void Renderer::InfoPlayersBoard() {
     int lineSpacing = 20;
     int padding = 10;
 
-    int boxWidth = 150;
-    int boxHeight = lineSpacing + 2 * padding;
+    const Player* selectedPlayer = nullptr;
+    if (_selectedPlayerId) {
+        for (const Player& p : _map.getPlayers()) {
+            if (p.getId() == *_selectedPlayerId) {
+                selectedPlayer = &p;
+                break;
+            }
+        }
+    }
+
+    std::vector<std::string> lines;
+    std::string title = "Player Info";
+    
+    if (selectedPlayer) {
+        title = "Player #" + std::to_string(selectedPlayer->getId());
+        
+        lines.push_back("Level: " + std::to_string(selectedPlayer->getLevel()));
+        lines.push_back("Team: " + selectedPlayer->getTeam());
+        lines.push_back("Position: " + 
+                        std::to_string(static_cast<int>(selectedPlayer->getPosition().x)) + "," +
+                        std::to_string(static_cast<int>(selectedPlayer->getPosition().z)));
+        
+        std::string orientation;
+        switch (selectedPlayer->getOrientation()) {
+            case 1: orientation = "North"; break;
+            case 2: orientation = "East"; break;
+            case 3: orientation = "South"; break;
+            case 4: orientation = "West"; break;
+            default: orientation = "Unknown";
+        }
+        lines.push_back("Orientation: " + orientation);
+        
+        lines.push_back("Inventory:");
+        const int* inventory = selectedPlayer->getInventory();
+        if (inventory) {
+            if (inventory[0] > 0) lines.push_back("  Food: " + std::to_string(inventory[0]));
+            if (inventory[1] > 0) lines.push_back("  Linemate: " + std::to_string(inventory[1]));
+            if (inventory[2] > 0) lines.push_back("  Deraumere: " + std::to_string(inventory[2]));
+            if (inventory[3] > 0) lines.push_back("  Sibur: " + std::to_string(inventory[3]));
+            if (inventory[4] > 0) lines.push_back("  Mendiane: " + std::to_string(inventory[4]));
+            if (inventory[5] > 0) lines.push_back("  Phiras: " + std::to_string(inventory[5]));
+            if (inventory[6] > 0) lines.push_back("  Thystame: " + std::to_string(inventory[6]));
+        }
+    } else {
+        lines.push_back("Click on a player");
+    }
+
+    int maxWidth = MeasureText(title.c_str(), titleSize);
+    for (const auto& line : lines) {
+        int w = MeasureText(line.c_str(), titleSize);
+        if (w > maxWidth) maxWidth = w;
+    }
+    
+    int boxWidth = maxWidth + 2 * padding;
+    int boxHeight = (1 + lines.size()) * lineSpacing + 2 * padding;
 
     int boxX = _screenWidth - boxWidth - 10;
     const std::vector<std::string>& teamNames = Player::getTeamNames();
@@ -502,7 +555,27 @@ void Renderer::InfoPlayersBoard() {
     int x = boxX + padding;
     int y = boxY + padding;
 
-    DrawText("Player : ", x, y, titleSize, BLACK);
+    DrawText(title.c_str(), x, y, titleSize, BLACK);
+    y += lineSpacing;
+
+    for (const auto& line : lines) {
+        Color color = WHITE;
+        
+        if (line == "Click on a player") {
+            color = DARKGRAY;
+        }
+        else if (line.find("Level:") != std::string::npos) color = YELLOW;
+        else if (line.find("Food:") != std::string::npos) color = ORANGE;
+        else if (line.find("Linemate:") != std::string::npos) color = SKYBLUE;
+        else if (line.find("Deraumere:") != std::string::npos) color = GOLD;
+        else if (line.find("Sibur:") != std::string::npos) color = PURPLE;
+        else if (line.find("Mendiane:") != std::string::npos) color = RED;
+        else if (line.find("Phiras:") != std::string::npos) color = GREEN;
+        else if (line.find("Thystame:") != std::string::npos) color = PINK;
+        
+        DrawText(line.c_str(), x, y, titleSize, color);
+        y += lineSpacing;
+    }
 }
 
 void Renderer::InfoBoxBoard() {
@@ -517,15 +590,8 @@ void Renderer::InfoBoxBoard() {
         title += std::to_string(tx) + "," + std::to_string(ty);
     }
 
-    int titleWidth = MeasureText(title.c_str(), titleSize);
-    int boxWidth = titleWidth + 2 * padding;
-    int boxHeight = 3 * lineSpacing + 2 * padding;
-
-    const std::vector<std::string>& teamNames = Player::getTeamNames();
-    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
-    int playersBoxHeight = lineSpacing + 2 * padding;
-    int boxX = _screenWidth - boxWidth - 10;
-    int boxY = 10 + teamsBoxHeight + 10 + playersBoxHeight + 10;
+    int maxWidth = MeasureText(title.c_str(), titleSize);
+    int contentLines = 1;
 
     std::vector<std::pair<std::string, Color>> resourceLines;
 
@@ -534,23 +600,92 @@ void Renderer::InfoBoxBoard() {
         int ty = static_cast<int>(_selectedTile->y);
         const auto& res = _map.getTileResources(tx, ty);
         
-        if (res.quantities[FOOD] > 0)
-            resourceLines.push_back({TextFormat("Food: %d", res.quantities[FOOD]), ORANGE});
-        if (res.quantities[LINEMATE] > 0)
-            resourceLines.push_back({TextFormat("Linemate: %d", res.quantities[LINEMATE]), SKYBLUE});
-        if (res.quantities[DERAUMERE] > 0)
-            resourceLines.push_back({TextFormat("Deraumere: %d", res.quantities[DERAUMERE]), GOLD});
-        if (res.quantities[SIBUR] > 0)
-            resourceLines.push_back({TextFormat("Sibur: %d", res.quantities[SIBUR]), PURPLE});
-        if (res.quantities[MENDIANE] > 0)
-            resourceLines.push_back({TextFormat("Mendiane: %d", res.quantities[MENDIANE]), RED});
-        if (res.quantities[PHIRAS] > 0)
-            resourceLines.push_back({TextFormat("Phiras: %d", res.quantities[PHIRAS]), GREEN});
-        if (res.quantities[THYSTAME] > 0)
-            resourceLines.push_back({TextFormat("Thystame: %d", res.quantities[THYSTAME]), PINK});
+        if (res.quantities[FOOD] > 0) {
+            std::string txt = TextFormat("Food: %d", res.quantities[FOOD]);
+            resourceLines.push_back({txt, ORANGE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[LINEMATE] > 0) {
+            std::string txt = TextFormat("Linemate: %d", res.quantities[LINEMATE]);
+            resourceLines.push_back({txt, SKYBLUE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[DERAUMERE] > 0) {
+            std::string txt = TextFormat("Deraumere: %d", res.quantities[DERAUMERE]);
+            resourceLines.push_back({txt, GOLD});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[SIBUR] > 0) {
+            std::string txt = TextFormat("Sibur: %d", res.quantities[SIBUR]);
+            resourceLines.push_back({txt, PURPLE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[MENDIANE] > 0) {
+            std::string txt = TextFormat("Mendiane: %d", res.quantities[MENDIANE]);
+            resourceLines.push_back({txt, RED});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[PHIRAS] > 0) {
+            std::string txt = TextFormat("Phiras: %d", res.quantities[PHIRAS]);
+            resourceLines.push_back({txt, GREEN});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[THYSTAME] > 0) {
+            std::string txt = TextFormat("Thystame: %d", res.quantities[THYSTAME]);
+            resourceLines.push_back({txt, PINK});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
         
-        boxHeight = (1 + resourceLines.size()) * lineSpacing + 2 * padding;
+        if (resourceLines.empty()) {
+            std::string emptyTxt = "Empty tile";
+            resourceLines.push_back({emptyTxt, DARKGRAY});
+            maxWidth = std::max(maxWidth, MeasureText(emptyTxt.c_str(), titleSize));
+        }
+        
+        contentLines += resourceLines.size();
+    } else {
+        contentLines++;
     }
+
+    int boxWidth = maxWidth + 2 * padding;
+    int boxHeight = contentLines * lineSpacing + 2 * padding;
+
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+    
+    // Calculer la position Y de InfoPlayersBoard
+    int playersBoxY = 10 + teamsBoxHeight + 10;
+    int playersBoxHeight = 0;
+    
+    // Calculer la hauteur réelle de InfoPlayersBoard
+    if (_selectedPlayerId) {
+        const Player* selectedPlayer = nullptr;
+        for (const Player& p : _map.getPlayers()) {
+            if (p.getId() == *_selectedPlayerId) {
+                selectedPlayer = &p;
+                break;
+            }
+        }
+        
+        if (selectedPlayer) {
+            int lines = 5; // Level, Team, Position, Orientation, "Inventory:"
+            const int* inventory = selectedPlayer->getInventory();
+            if (inventory) {
+                for (int i = 0; i < 7; i++) {
+                    if (inventory[i] > 0) lines++;
+                }
+            }
+            playersBoxHeight = (1 + lines) * lineSpacing + 2 * padding;
+        } else {
+            playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding; // Titre + "Click on a player"
+        }
+    } else {
+        playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding; // Titre + "Click on a player"
+    }
+
+    // Positionner en dessous de InfoPlayersBoard
+    int boxX = _screenWidth - boxWidth - 10;
+    int boxY = playersBoxY + playersBoxHeight + 10;
 
     DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
     DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
@@ -562,13 +697,9 @@ void Renderer::InfoBoxBoard() {
     y += lineSpacing;
     
     if (_selectedTile) {
-        if (resourceLines.empty()) {
-            DrawText("Empty tile", x, y, titleSize, DARKGRAY);
-        } else {
-            for (const auto& [text, color] : resourceLines) {
-                DrawText(text.c_str(), x, y, titleSize, color);
-                y += lineSpacing;
-            }
+        for (const auto& [text, color] : resourceLines) {
+            DrawText(text.c_str(), x, y, titleSize, color);
+            y += lineSpacing;
         }
     } else {
         DrawText(" ", x, y, titleSize, DARKGRAY);
@@ -626,18 +757,47 @@ void Renderer::handleMouseClick() {
     }
 
     // Player
-    //for (const Player& p : _map.getPlayers()) {
-    //    Vector3 pos = {
-    //        p.getPosition().x + 0.5f,
-    //        0.5f,
-    //        p.getPosition().z + 0.5f
-    //    };
-    //    float radius = 0.5f * (p.getLevel() / 8.0f + 0.5f); // adapte si besoin
-    //    if (CheckCollisionRaySphere(ray, pos, radius)) {
-    //        _selectedPlayerId = p.getId();
-    //        return;
-    //    }
-    //}
+    for (const Player& p : _map.getPlayers()) {
+        float cellSize = 1.0f;
+        Vector3 playerPos = {
+            p.getPosition().x * cellSize + cellSize/2,
+            0.0f,
+            p.getPosition().z * cellSize + cellSize/2
+        };
+        
+        // Calculer la taille de la bounding box en fonction du niveau
+        float playerScale = 0.5f;
+        switch (p.getLevel()) {
+            case 1: playerScale = 1.5f; break;
+            case 2: playerScale = 1.8f; break;
+            case 3: playerScale = 2.1f; break;
+            case 4: playerScale = 2.4f; break;
+            case 5: playerScale = 2.7f; break;
+            case 6: playerScale = 3.0f; break;
+            case 7: playerScale = 3.3f; break;
+            case 8: playerScale = 3.6f; break;
+        }
+        
+        // Créer une bounding box adaptée à la lampe Pixar
+        BoundingBox playerBox = {
+            { // Min corner
+                playerPos.x - 0.4f * playerScale,
+                playerPos.y,
+                playerPos.z - 0.4f * playerScale
+            },
+            { // Max corner
+                playerPos.x + 0.4f * playerScale,
+                playerPos.y + 2.0f * playerScale, // Hauteur de la lampe
+                playerPos.z + 0.4f * playerScale
+            }
+        };
+        
+        RayCollision collision = GetRayCollisionBox(ray, playerBox);
+        if (collision.hit) {
+            _selectedPlayerId = p.getId();
+            return;
+        }
+    }
 }
 
 bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {

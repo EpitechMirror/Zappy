@@ -20,6 +20,7 @@
 #include "../renderer/Player/Player.hpp"
 #include "../renderer/Light/Light.hpp"
 #include "../renderer/Player/Player.hpp"
+#include <cmath>
 
 class Renderer
 {
@@ -39,8 +40,6 @@ class Renderer
         void loadModels();
         void loadTextures();
         void loadAudio();
-        void playLoadingMusic();
-        void playMainMusic();
         void unloadAudio();
         void unloadTextures();
         void DrawPlayers();
