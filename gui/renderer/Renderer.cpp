@@ -7,8 +7,16 @@
 
 #include "Renderer.hpp"
 
-Renderer::Renderer(int width, int height, const Map &map) : _screenWidth(width), _screenHeight(height), _map(map) {
-}
+Renderer::Renderer(int width, int height, const Map &map)
+    : _screenWidth(width),
+      _screenHeight(height),
+      _map(map),
+      _cameraController(map.getWidth(), map.getHeight()),
+      _mapInitialized(false),
+      _music({}),
+      _floorModel({}),
+      _playerModel({})
+{}
 
 void Renderer::loadModels() {
     _floorModel = LoadModel("../resources/models/plane.glb");
@@ -218,9 +226,6 @@ void Renderer::gameLoop(Client &client) {
     while (!WindowShouldClose()) {
         client.update();
         float wheel = GetMouseWheelMove();
-
-        if (wheel != 0.0f)
-            _cameraController.zoom(-wheel);
         
         _cameraController.update();
         for (auto& l : _lights)

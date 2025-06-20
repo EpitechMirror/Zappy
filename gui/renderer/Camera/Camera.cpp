@@ -2,39 +2,47 @@
 ** EPITECH PROJECT, 2025
 ** Zappy
 ** File description:
-** Client
+** Camera
 */
 
 #include "Camera.hpp"
 
-CameraController::CameraController()
+CameraController::CameraController(float mapWidth, float mapDepth)
+  : _angleDeg(45.0f), _distance(15.0f), _height(10.0f)
 {
-    _camera.position = {0.0f, 10.0f, 10.0f};
-    _camera.target = {0.0f, 0.0f, 0.0f};
-    _camera.up = {0.0f, 1.0f, 0.0f};
-    _camera.fovy = 45.0f;
+    _target = { mapWidth * 0.5f, 0.0f, mapDepth * 0.5f };
+
+    _camera.target     = _target;
+    _camera.up         = { 0.0f, 1.0f, 0.0f };
+    _camera.fovy       = 45.0f;
     _camera.projection = CAMERA_PERSPECTIVE;
+
+    float rad = _angleDeg * DEG2RAD;
+    _camera.position.x = _target.x + cosf(rad) * _distance;
+    _camera.position.z = _target.z + sinf(rad) * _distance;
+    _camera.position.y = _height;
 }
 
 void CameraController::update() {
-    UpdateCamera(&_camera, CAMERA_FREE);
-    if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
-        DisableCursor();
-    } else {
-        EnableCursor();
-    }
-    if (_camera.position.y < 1.0f)
-        _camera.position.y = 1.0f;
-}
+    float dt = GetFrameTime();
 
-void CameraController::zoom(float delta)
-{
-    Vector3 dir = Vector3Subtract(_camera.target, _camera.position);
-    float dist = Vector3Length(dir);
-    if ((dist > 2.0f && delta > 0) || (dist < 50.0f && delta < 0)) {
-        dir = Vector3Normalize(dir);
-        _camera.position = Vector3Add(_camera.position, Vector3Scale(dir, delta));
-    }
+    // Tourner autour du centre : Q/A ←, D →
+    if (IsKeyDown(KEY_Q) || IsKeyDown(KEY_A)) _angleDeg -= _angleSpeed * dt;
+    if (IsKeyDown(KEY_D))                     _angleDeg += _angleSpeed * dt;
+
+    // Zoom avant/arrière : Z/W ←, S →
+    if (IsKeyDown(KEY_Z) || IsKeyDown(KEY_W)) _distance -= _zoomSpeed * dt;
+    if (IsKeyDown(KEY_S))                     _distance += _zoomSpeed * dt;
+
+    if (_distance < _minDist) _distance = _minDist;
+    if (_distance > _maxDist) _distance = _maxDist;
+
+    float rad = _angleDeg * DEG2RAD;
+    _camera.position.x = _target.x + cosf(rad) * _distance;
+    _camera.position.z = _target.z + sinf(rad) * _distance;
+    _camera.position.y = _height;
+
+    _camera.target = _target;
 }
 
 Camera& CameraController::getCamera() {
