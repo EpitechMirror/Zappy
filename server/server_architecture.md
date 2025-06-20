@@ -80,21 +80,21 @@ int main(int argc, char **argv)
 {
     // Parse command line arguments
     parse_args(argc, argv);
-    
+
     // Initialize server
     init_server();
-    
+
     // Main loop
     while (1) {
         // Prepare file descriptor sets for select()
         prepare_fd_sets();
-        
+
         // Calculate next timeout for timed events
         struct timeval timeout = calculate_next_timeout();
-        
+
         // Wait for socket activity or timeout
         select(max_fd + 1, &read_fds, &write_fds, NULL, &timeout);
-        
+
         // Handle new connections
         if (FD_ISSET(server_socket, &read_fds))
             handle_new_connection();
@@ -103,21 +103,21 @@ int main(int argc, char **argv)
         for (each client socket) {
             if (FD_ISSET(client_socket, &read_fds))
                 read_client_command(client_socket);
-            
+
             if (FD_ISSET(client_socket, &write_fds))
                 send_pending_responses(client_socket);
         }
-        
+
         // Execute pending commands that are due
         execute_pending_commands();
-        
+
         // Handle timed events (resource spawn, egg hatching, etc.)
         handle_timed_events();
-        
+
         // Clean up disconnected clients
         clean_disconnected_clients();
     }
-    
+
     return 0;
 }
 ```
@@ -136,11 +136,11 @@ Commands should be executed based on their specified time requirements. For exam
 void schedule_command(t_player *player, char *command, int time_units)
 {
     t_command *cmd = malloc(sizeof(t_command));
-    
+
     cmd->player = player;
     cmd->command_str = strdup(command);
     cmd->execution_time = current_time + (time_units / world.freq);
-    
+
     // Add to priority queue ordered by execution_time
     queue_add(command_queue, cmd);
 }
@@ -149,7 +149,7 @@ void execute_pending_commands()
 {
     while (!queue_empty(command_queue)) {
         t_command *cmd = queue_peek(command_queue);
-        
+
         if (cmd->execution_time <= current_time) {
             queue_pop(command_queue);
             execute_command(cmd);
@@ -169,7 +169,7 @@ Resources need to be spawned at start and periodically:
 void spawn_resources()
 {
     int total_tiles = world.width * world.height;
-    
+
     // Calculate quantities based on density and map size
     int food_qty = total_tiles * 0.5;
     int linemate_qty = total_tiles * 0.3;
@@ -178,7 +178,7 @@ void spawn_resources()
     int mendiane_qty = total_tiles * 0.1;
     int phiras_qty = total_tiles * 0.08;
     int thystame_qty = total_tiles * 0.05;
-    
+
     // Place resources randomly on the map
     place_resource(FOOD, food_qty);
     place_resource(LINEMATE, linemate_qty);
