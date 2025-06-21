@@ -9,7 +9,11 @@
 #include "../renderer/Player/Player.hpp"
 
 Client::Client(const std::string &host, int port)
-    : _host(host), _port(port), _socket(-1), _hasMapSize(false), _protocolHandler(_map) {}
+    : _host(host),
+    _port(port),
+    _socket(-1),
+    _protocolHandler(_map),
+    _hasMapSize(false) {}
 
 Client::~Client() {
     if (_socket != -1)

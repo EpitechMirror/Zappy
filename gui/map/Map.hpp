@@ -10,7 +10,9 @@
 #include <iostream>
 #include <vector>
 #include "../ressources/Ressources.hpp"
+#include "../renderer/Player/Player.hpp"
 #include "raylib.h"
+#include <algorithm>
 
 #pragma once
 
@@ -44,13 +46,23 @@ class Map {
 
         int getEggsCount() const;
         void addEgg(int eggId, int x, int y);
+        void removeEgg(int eggId);
         const std::vector<Egg> &getEggs() const;
+
+        const std::vector<Player> &getPlayers() const;
+        Player *getPlayerById(int id);
+        void addPlayer(const Player &player);
+        void removePlayerById(int id);
+        void updatePlayerPosition(int id, Vector3 pos, int orientation);
+        void updatePlayerLevel(int id, int level);
+        void updatePlayerInventory(int id, const int inventory[RESOURCE_COUNT]);
 
     private:
         int _width;
         int _height;
         std::vector<Resources> _tiles;
         std::vector<Egg> _eggs;
+        std::vector<Player> _players;
 };
 
 #endif /* !MAP_HPP_ */

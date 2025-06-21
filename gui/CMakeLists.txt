@@ -58,11 +58,14 @@ add_executable(unit_tests
     tests/test_player.cpp
     tests/test_shader.cpp
     tests/test_camera.cpp
+    tests/test_light.cpp
+    tests/test_renderer.cpp
     client/Client.cpp
     map/Map.cpp
     renderer/Player/Player.cpp
     renderer/Camera/Camera.cpp
     renderer/Light/Light.cpp
+    renderer/Renderer.cpp
     renderer/Shaders/ShadersManager.cpp
     client/ProtocolHandler.cpp
 )
