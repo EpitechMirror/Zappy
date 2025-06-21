@@ -8,7 +8,7 @@
 #include "server.h"
 #include "ressources.h"
 
-static void add_egg_to_list(server_config_t *conf, egg_t *egg)
+void add_egg_to_list(server_config_t *conf, egg_t *egg)
 {
     if (!egg || !conf)
         return;
@@ -56,7 +56,7 @@ egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx)
     return NULL;
 }
 
-static egg_t *create_egg(int team_idx, int x, int y)
+egg_t *create_egg(int team_idx, int x, int y)
 {
     egg_t *egg = malloc(sizeof(egg_t));
 

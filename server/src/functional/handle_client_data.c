@@ -8,6 +8,15 @@
 #include "server.h"
 #include "flag.h"
 
+void strip_newline(char *str)
+{
+    size_t len = strlen(str);
+    if (len > 0 && (str[len-1] == '\n' || str[len-1] == '\r'))
+        str[len-1] = '\0';
+    if (len > 1 && str[len-2] == '\r')
+        str[len-2] = '\0';
+}
+
 static int find_team_index(server_config_t *conf, const char *team_name)
 {
     int i = 0;
@@ -83,6 +92,7 @@ static void handle_player_auth(client_t *client, int fd,
 
 bool handle_auth(auth_context_t *ctx, char *buffer)
 {
+    strip_newline(buffer);
     if (strcmp(buffer, "GRAPHIC") == 0) {
         handle_graphic_auth(ctx->client, ctx->client->fd, ctx->conf);
         ctx->client->is_graphic = true;
