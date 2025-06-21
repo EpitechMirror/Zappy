@@ -7,6 +7,7 @@
 
 #ifndef RESSOURCES_H_
     #define RESSOURCES_H_
+
     #include "flag.h"
 
 typedef struct tile_s {

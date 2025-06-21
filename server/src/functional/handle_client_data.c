@@ -7,6 +7,16 @@
 
 #include <stdbool.h>
 #include "server.h"
+#include "flag.h"
+
+void strip_newline(char *str)
+{
+    size_t len = strlen(str);
+    if (len > 0 && (str[len-1] == '\n' || str[len-1] == '\r'))
+        str[len-1] = '\0';
+    if (len > 1 && str[len-2] == '\r')
+        str[len-2] = '\0';
+}
 
 static int find_team_index(server_config_t *conf, const char *team_name)
 {
@@ -44,17 +54,15 @@ static int count_team_members(client_t *clients, const char *team_name)
     return count;
 }
 
-static void handle_graphic_auth(client_t *client,
-    int fd, server_config_t *conf)
+static void send_ebo_to_graphics(client_t *clients, int egg_id)
 {
-    char msg[64];
+    client_t *tmp = clients;
 
-    client->is_graphic = true;
-    snprintf(msg, sizeof(msg), "msz %d %d\n", conf->width, conf->height);
-    send(fd, msg, strlen(msg), 0);
-    send_whole_map(fd, conf);
-    client->state = AUTHENTICATED;
-    printf("Client %d authenticated as GRAPHIC\n", fd);
+    while (tmp) {
+        if (tmp->is_graphic)
+            send_ebo(tmp->fd, egg_id);
+        tmp = tmp->next;
+    }
 }
 
 static void handle_player_auth(client_t *client, int fd,
@@ -62,6 +70,7 @@ static void handle_player_auth(client_t *client, int fd,
 {
     char msg[128];
     int team_idx = find_team_index(conf, team);
+    egg_t *egg = NULL;
 
     if (team_idx == -1 || conf->team_slots[team_idx] <= 0) {
         send(fd, "ko\n", 3, 0);
@@ -75,29 +84,26 @@ static void handle_player_auth(client_t *client, int fd,
         team, conf->clients_nb, conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
     client->state = AUTHENTICATED;
+    egg = get_unused_egg_for_team(conf, team_idx);
+    if (egg) {
+        egg->used = 1;
+        send_ebo_to_graphics(conf->clients, egg->id);
+    }
     client->direction = NORTH;
     client->level = 1;
     printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
-static bool handle_auth(auth_context_t *ctx, char *buffer)
+bool handle_auth(auth_context_t *ctx, char *buffer)
 {
-    char *team = NULL;
-
-    buffer[strcspn(buffer, "\r\n")] = 0;
-    team = strdup(buffer);
-    printf("[DEBUG] team received: '%s'\n", team);
-    if (!team) {
-        perror("strdup");
-        remove_client(ctx->clients, ctx->client->fd);
-        return false;
-    }
-    ctx->client->team_name = team;
-    if (strcmp(team, "GRAPHIC") == 0) {
+    strip_newline(buffer);
+    if (strcmp(buffer, "GRAPHIC") == 0) {
         handle_graphic_auth(ctx->client, ctx->client->fd, ctx->conf);
+        ctx->client->is_graphic = true;
+        ctx->client->state = AUTHENTICATED;
         return true;
     }
-    handle_player_auth(ctx->client, ctx->client->fd, ctx->conf, team);
+    handle_player_auth(ctx->client, ctx->client->fd, ctx->conf, buffer);
     return true;
 }
 

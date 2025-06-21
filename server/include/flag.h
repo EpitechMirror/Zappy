@@ -9,8 +9,18 @@
     #define FLAG_H_
     #include "ressources.h"
 
+typedef struct egg_s {
+    int id;
+    int x;
+    int y;
+    int team_idx;
+    int used;
+    struct egg_s *next;
+} egg_t;
+
 struct tile_s;
 struct client_s;
+
 
 typedef struct server_config_s {
     int port;
@@ -18,6 +28,7 @@ typedef struct server_config_s {
     int height;
     int clients_nb;
     int freq;
+    egg_t *eggs;
     int team_count;
     char **team_names;
     int *team_slots;
