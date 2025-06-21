@@ -62,7 +62,7 @@ static void accept_and_register_client(poll_context_t *ctx, int new_fd)
         close(new_fd);
         return;
     }
-    add_client_to_list(ctx->clients, new_client);
+    add_client_to_list(&ctx->clients, new_client);
     send_welcome_message(new_fd);
     add_client_to_fds(ctx->fds, ctx->client_count, new_fd);
 }

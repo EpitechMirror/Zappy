@@ -5,6 +5,7 @@
 ** handle_client_data
 */
 
+#include <stdbool.h>
 #include "server.h"
 #include "flag.h"
 
@@ -88,6 +89,9 @@ static void handle_player_auth(client_t *client, int fd,
         egg->used = 1;
         send_ebo_to_graphics(conf->clients, egg->id);
     }
+    client->direction = NORTH;
+    client->level = 1;
+    printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
 bool handle_auth(auth_context_t *ctx, char *buffer)
@@ -103,18 +107,29 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
     return true;
 }
 
-bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
+static bool process_client_request(client_t *client, int fd,
+    server_config_t *conf, char *buffer)
+{
+    auth_context_t ctx = {&conf->clients, client, conf};
+
+    if (client->is_graphic == false)
+        respond_to_server_fd(fd, conf, buffer, client);
+    if (client->state == WAITING_NAME)
+        handle_auth(&ctx, buffer);
+    return false;
+}
+
+bool handle_client_data(client_t **clients, int fd,
+    server_config_t *conf)
 {
     char buffer[1024];
     ssize_t r;
     client_t *client = *clients;
-    auth_context_t ctx = {clients, NULL, conf};
 
     while (client && client->fd != fd)
         client = client->next;
     if (!client)
         return true;
-    ctx.client = client;
     r = read(fd, buffer, sizeof(buffer) - 1);
     if (r <= 0) {
         remove_client(clients, fd);
@@ -122,7 +137,5 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
     }
     buffer[r] = '\0';
     printf("[DEBUG] Data from fd %d: %s\n", fd, buffer);
-    if (client->state == WAITING_NAME)
-        handle_auth(&ctx, buffer);
-    return false;
+    return process_client_request(client, fd, conf, buffer);
 }

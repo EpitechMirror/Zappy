@@ -2,6 +2,7 @@
 ** EPITECH PROJECT, 2025
 ** Zappy
 ** File description:
+
 ** client_info
 */
 
@@ -14,6 +15,14 @@ typedef enum {
     AUTHENTICATED
 } client_state_t;
 
+
+typedef enum {
+    NORTH,
+    EAST,
+    SOUTH,
+    WEST
+} direction_t;
+
 typedef struct client_s {
     int fd;
     bool connected;
@@ -22,6 +31,9 @@ typedef struct client_s {
     int x, y, id;
     char *team_name;
     bool is_graphic;
+    int level;
+    direction_t direction;
+
     client_state_t state;
     struct client_s *next;
 } client_t;
