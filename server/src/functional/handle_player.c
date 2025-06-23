@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include "client_info.h"
 #include "flag.h"
+#include "ressources.h"
 #include "server.h"
 
 static void move_north(client_t *client, server_config_t *conf)
@@ -36,8 +37,166 @@ static void move_west(client_t *client, server_config_t *conf)
         client->x -= 1;
 }
 
-void move_player(client_t *client, server_config_t *conf,
-    direction_t direction)
+void get_tile_contents(int x, int y, client_t *client, char *inventory)
+{
+    snprintf(inventory, 256,
+        "linemate %d, deraumere %d, sibur %d, mendiane %d, phiras %d, thystame %d, food %d\n",
+        client->inventory.linemate,
+        client->inventory.deraumere,
+        client->inventory.sibur,
+        client->inventory.mendiane,
+        client->inventory.phiras,
+        client->inventory.thystame,
+        client->inventory.food
+    );
+}
+
+char* parse_resource_name(char *client_message)
+{
+    char *resource = client_message + 5;
+    char *end = strchr(resource, '\n');
+
+    if (end)
+        *end = '\0';
+    end = strchr(resource, '\r');
+    if (end)
+        *end = '\0';
+    while (*resource == ' ' || *resource == '\t') resource++;
+    int len = strlen(resource);
+    while (len > 0 && (resource[len-1] == ' ' || resource[len-1] == '\t')) {
+        resource[--len] = '\0';
+    }
+    return resource;
+}
+
+int try_take_resource(client_t *client, server_config_t *conf, char *resource)
+{
+    tile_t *tile = &conf->map[client->y][client->x];
+
+    if (strcmp(resource, "linemate") == 0 && tile->linemate > 0) {
+        client->inventory.linemate++; tile->linemate--; return 1;
+    } else if (strcmp(resource, "deraumere") == 0 && tile->deraumere > 0) {
+        client->inventory.deraumere++; tile->deraumere--; return 1;
+    } else if (strcmp(resource, "sibur") == 0 && tile->sibur > 0) {
+        client->inventory.sibur++; tile->sibur--; return 1;
+    } else if (strcmp(resource, "mendiane") == 0 && tile->mendiane > 0) {
+        client->inventory.mendiane++; tile->mendiane--; return 1;
+    } else if (strcmp(resource, "phiras") == 0 && tile->phiras > 0) {
+        client->inventory.phiras++; tile->phiras--; return 1;
+    } else if (strcmp(resource, "thystame") == 0 && tile->thystame > 0) {
+        client->inventory.thystame++; tile->thystame--; return 1;
+    } else if (strcmp(resource, "food") == 0 && tile->food > 0) {
+        client->inventory.food++; tile->food--; return 1;
+    }
+    return 0;
+}
+
+void take_object(client_t *client, server_config_t *conf, char *client_message)
+{
+    char *resource = parse_resource_name(client_message);
+
+    if (try_take_resource(client, conf, resource)) {
+        send(client->fd, "ok\n", 3, 0);
+    } else {
+        send(client->fd, "ko\n", 3, 0);
+    }
+}
+
+void add_resource_to_buffer(char *buffer, char *name, int count, int *first)
+{
+    for (int i = 0; i < count; i++) {
+        if (!*first) strcat(buffer, " ");
+        strcat(buffer, name);
+        *first = 0;
+    }
+}
+
+void get_tile_content_string(server_config_t *conf, int x, int y, char *buffer, int buffer_size)
+{
+    if (x < 0 || x >= conf->width || y < 0 || y >= conf->height) {
+        strcpy(buffer, "");
+        return;
+    }
+
+    tile_t *tile = &conf->map[y][x];
+    char temp[512] = "";
+    int first = 1;
+    add_resource_to_buffer(temp, "food", tile->food, &first);
+    add_resource_to_buffer(temp, "linemate", tile->linemate, &first);
+    add_resource_to_buffer(temp, "deraumere", tile->deraumere, &first);
+    add_resource_to_buffer(temp, "sibur", tile->sibur, &first);
+    add_resource_to_buffer(temp, "mendiane", tile->mendiane, &first);
+    add_resource_to_buffer(temp, "phiras", tile->phiras, &first);
+    add_resource_to_buffer(temp, "thystame", tile->thystame, &first);
+    strncpy(buffer, temp, buffer_size - 1);
+    buffer[buffer_size - 1] = '\0';
+}
+
+void add_players_to_tile(server_config_t *conf, int x, int y, char *buffer, int buffer_size, client_t *current_client)
+{
+    char temp[512];
+    strcpy(temp, buffer);
+    if (x == current_client->x && y == current_client->y) {
+        if (strlen(temp) > 0) {
+            strcat(temp, " ");
+        }
+        strcat(temp, "player");
+    }
+    strncpy(buffer, temp, buffer_size - 1);
+    buffer[buffer_size - 1] = '\0';
+}
+
+void get_look_coordinates(client_t *client, int distance, int side_offset, int *x, int *y)
+{
+    *x = client->x;
+    *y = client->y;
+
+    switch (client->direction) {
+        case NORTH:
+            *y -= distance;
+            *x += side_offset;
+            break;
+        case EAST:
+            *x += distance;
+            *y += side_offset;
+            break;
+        case SOUTH:
+            *y += distance;
+            *x -= side_offset;
+            break;
+        case WEST:
+            *x -= distance;
+            *y -= side_offset;
+            break;
+    }
+}
+
+void look_around(client_t *client, server_config_t *conf)
+{
+    char response[2048] = "[";
+    char tile_content[256];
+    int vision_range = client->level;
+
+    for (int distance = 0; distance <= vision_range; distance++) {
+        int tiles_at_distance = (distance == 0) ? 1 : (2 * distance + 1);
+        int start_offset = -distance;
+        for (int i = 0; i < tiles_at_distance; i++) {
+            int side_offset = start_offset + i;
+            int x, y;
+            get_look_coordinates(client, distance, side_offset, &x, &y);
+            get_tile_content_string(conf, x, y, tile_content, sizeof(tile_content));
+            add_players_to_tile(conf, x, y, tile_content, sizeof(tile_content), client);
+            if (strlen(response) > 1) {
+                strcat(response, ",");
+            }
+            strcat(response, tile_content);
+        }
+    }
+    strcat(response, "]\n");
+    send(client->fd, response, strlen(response), 0);
+}
+
+void move_player(client_t *client, server_config_t *conf, direction_t direction)
 {
     static void (*move_functions[])(client_t *, server_config_t *) = {
         move_north,
@@ -50,27 +209,46 @@ void move_player(client_t *client, server_config_t *conf,
         move_functions[direction](client, conf);
 }
 
-int respond_to_server_fd(int fd, server_config_t *conf,
-    char *client_message, client_t *client)
+int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
 {
     char inventory[256];
 
     if (strncmp(client_message, "Forward", 7) == 0) {
         move_player(client, conf, client->direction);
         send(fd, "ok\n", 3, 0);
+        return 0;
     }
     if (strncmp(client_message, "Right", 5) == 0) {
         client->direction = (client->direction + 1) % 4;
         send(fd, "ok\n", 3, 0);
+        return 0;
     }
     if (strncmp(client_message, "Left", 4) == 0) {
         client->direction = (client->direction + 3) % 4;
         send(fd, "ok\n", 3, 0);
+        return 0;
     }
     if (strncmp(client_message, "Inventory", 9) == 0) {
-        snprintf(inventory, sizeof(inventory),
-            "Inventory: %d items\n", client->id);
+        get_tile_contents(client->x, client->y, client, inventory);
+        snprintf(inventory, sizeof(inventory), "[linemate %d, deraumere %d, sibur %d, mendiane %d, phiras %d, thystame %d, food %d]\n",
+            client->inventory.linemate,
+            client->inventory.deraumere,
+            client->inventory.sibur,
+            client->inventory.mendiane,
+            client->inventory.phiras,
+            client->inventory.thystame,
+            client->inventory.food
+        );
         send(fd, inventory, strlen(inventory), 0);
+        return 0;
+    }
+    if (strncmp(client_message, "Take", 4) == 0) {
+        take_object(client, conf, client_message);
+        return 0;
+    }
+    if (strncmp(client_message, "Look", 4) == 0) {
+        look_around(client, conf);
+        return 0;
     }
     return 0;
 }

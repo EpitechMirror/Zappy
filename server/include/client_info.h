@@ -23,6 +23,16 @@ typedef enum {
     WEST
 } direction_t;
 
+typedef struct tilecp_s {
+    int linemate;
+    int deraumere;
+    int sibur;
+    int mendiane;
+    int phiras;
+    int thystame;
+    int food;
+} tilecp_t;
+
 typedef struct client_s {
     int fd;
     bool connected;
@@ -32,6 +42,7 @@ typedef struct client_s {
     char *team_name;
     bool is_graphic;
     int level;
+    tilecp_t inventory;
     direction_t direction;
 
     client_state_t state;
