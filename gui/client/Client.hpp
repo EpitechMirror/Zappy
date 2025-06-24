@@ -25,6 +25,7 @@
 #include <errno.h>
 #include "../map/Map.hpp"
 #include "ProtocolHandler.hpp"
+#include "../player/Player.hpp"
 
 class Client {
     public:
@@ -41,20 +42,25 @@ class Client {
         void update();
         bool isMapReady() const;
 
-    private:
         std::string _host;
         int _port;
         int _socket;
+        std::string _buffer;
+        Map _map;
+        ProtocolHandler _protocolHandler;
+        bool readLine(std::string &line);
+        void parseData();
+        void receiveData();
+        
+        bool isConnected() const {
+            return _socket != -1;
+        }
+
+    private:
         int _mapWidth;
         int _mapHeight;
-        Map _map;
         bool _hasMapSize = false;
-        std::string _buffer;
-        ProtocolHandler _protocolHandler;
 
-        void receiveData();
-        void parseData();
-        bool readLine(std::string &line);
 };
 
 #endif /* !CLIENT_HPP_ */

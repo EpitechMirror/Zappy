@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 #include "../ressources/Ressources.hpp"
-#include "../renderer/Player/Player.hpp"
+#include "../player/Player.hpp"
 #include "raylib.h"
 #include <algorithm>
 
