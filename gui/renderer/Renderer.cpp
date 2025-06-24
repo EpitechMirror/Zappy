@@ -14,7 +14,8 @@ Renderer::Renderer(int width, int height, const Map &map)
       _screenHeight(height),
       _map(map),
       _cameraController(map.getWidth(), map.getHeight()),
-      _mapInitialized(false)
+      _mapInitialized(false),
+      _disconnectTimer(0.0f)
 {}
 
 void Renderer::drawRoomAndy() {
@@ -205,50 +206,6 @@ void Renderer::showLoadingScreen(const std::string &message) {
             DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, ColorAlpha(DARKBLUE, tipAlpha));
             DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
 
-        EndDrawing();
-    }
-}
-
-void Renderer::gameLoop(Client &client) {
-    _assets.loadFonts();
-    _assets.loadAudio();
-    if (!_mapInitialized) {
-        showLoadingScreen("Loading...");
-    }
-
-    _assets.loadAllResources();
-    _assets.applyShaders();
-    initLights();
-
-    while (!WindowShouldClose()) {
-        client.update();
-        
-        _cameraController.update();
-        for (auto& l : _lights)
-            l.updateShader(_assets.shaders.getPBR());
-
-        UpdateMusicStream(_assets.mainMusic);
-
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            handleMouseClick();
-        }
-
-        BeginDrawing();
-            ClearBackground(BLACK);
-
-            BeginMode3D(_cameraController.getCamera());
-                drawFloor();
-                drawRoomAndy();
-                DrawGrid();
-                drawItems();
-                DrawEggs();
-                DrawPlayers();
-            EndMode3D();
-
-            InfoItemsBoard();
-            InfoTeamsBoard();
-            InfoPlayersBoard();
-            InfoBoxBoard();
         EndDrawing();
     }
 }
@@ -589,6 +546,101 @@ void Renderer::InfoBoxBoard() {
     }
 }
 
+void Renderer::gameLoop(Client &client) {
+    _assets.loadFonts();
+    _assets.loadAudio();
+    if (!_mapInitialized) {
+        showLoadingScreen("Loading...");
+    }
+
+    _assets.loadAllResources();
+    _assets.applyShaders();
+    initLights();
+
+    while (!WindowShouldClose()) {
+        bool wasConnected = client.isConnected();
+        client.update();
+        bool isConnected = client.isConnected();
+        
+        if (wasConnected && !isConnected) {
+            notifyServerDisconnect();
+            disconnected = true;
+        }
+
+        if (_disconnectTimer > 0) {
+            _disconnectTimer -= GetFrameTime();
+        }
+
+        _cameraController.update();
+        for (auto& l : _lights)
+            l.updateShader(_assets.shaders.getPBR());
+
+        UpdateMusicStream(_assets.mainMusic);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            handleMouseClick();
+        }
+
+        BeginDrawing();
+            ClearBackground(BLACK);
+
+            BeginMode3D(_cameraController.getCamera());
+                drawFloor();
+                drawRoomAndy();
+                DrawGrid();
+                drawItems();
+                DrawEggs();
+                DrawPlayers();
+            EndMode3D();
+
+            InfoItemsBoard();
+            InfoTeamsBoard();
+            InfoPlayersBoard();
+            InfoBoxBoard();
+            
+            if (_disconnectTimer > 0) {
+                handleServerDisconnect();
+            }
+        EndDrawing();
+    }
+}
+
+void Renderer::handleServerDisconnect() {
+    static float slideOffset = 0.0f;
+    float targetOffset = (_disconnectTimer > 0) ? 0.0f : 50.0f;
+    slideOffset = Lerp(slideOffset, targetOffset, 0.2f);
+
+    const char* text = "Server disconnected";
+    const float width = MeasureText(text, 20) + 40;
+    const float height = 30.0f;
+    const float posX = (_screenWidth - width) / 2.0f;
+    const float posY = _screenHeight - height - slideOffset;
+
+    DrawRectangleRounded(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10,
+        Fade(MAROON, 0.7f)
+    );
+
+    DrawRectangleRoundedLines(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10, RED);
+
+    DrawText(
+        text,
+        static_cast<int>(posX + (width - MeasureText(text, 20)) / 2),
+        static_cast<int>(posY + 5),
+        20,
+        WHITE
+    );
+}
+
+void Renderer::notifyServerDisconnect() {
+    _disconnectTimer = 5.0f;
+}
+
 void Renderer::DrawGrid() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -687,3 +739,6 @@ bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
     outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     return true;
 }
+
+bool Renderer::firstCall = true;
+bool Renderer::disconnected = false;

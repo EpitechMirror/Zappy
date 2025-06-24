@@ -46,15 +46,19 @@ class Client {
         int _port;
         int _socket;
         std::string _buffer;
+        Map _map;
         ProtocolHandler _protocolHandler;
         bool readLine(std::string &line);
         void parseData();
-        void receiveData();        
+        void receiveData();
+        
+        bool isConnected() const {
+            return _socket != -1;
+        }
 
     private:
         int _mapWidth;
         int _mapHeight;
-        Map _map;
         bool _hasMapSize = false;
 
 };

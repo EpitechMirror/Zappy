@@ -47,6 +47,8 @@ class Renderer
 
         const std::vector<Player>& getPlayers() const { return _players; }
 
+        void handleServerDisconnect();
+
     private:
         AssetsManager _assets;
         int _screenWidth;
@@ -66,5 +68,9 @@ class Renderer
         };
         std::optional<Vector2> _selectedTile;    
         std::optional<int>_selectedPlayerId;
+        static bool firstCall;
+        static bool disconnected;
+        float _disconnectTimer;
+        void notifyServerDisconnect();
 };
 #endif
