@@ -25,6 +25,7 @@
 #include <errno.h>
 #include "../map/Map.hpp"
 #include "ProtocolHandler.hpp"
+#include "../player/Player.hpp"
 
 class Client {
     public:

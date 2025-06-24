@@ -13,19 +13,20 @@
 #include <optional>
 #include "raylib.h"
 #include "rlgl.h"
-#include "Camera/Camera.hpp"
 #include "../map/Map.hpp"
+#include "Camera/Camera.hpp"
 #include "../client/Client.hpp"
 #include "../renderer/Shaders/ShadersManager.hpp"
-#include "../renderer/Player/Player.hpp"
+#include "../player/Player.hpp"
 #include "../renderer/Light/Light.hpp"
-#include "../renderer/Player/Player.hpp"
 #include <cmath>
+#include "AssetsManager/AssetsManager.hpp"
 
 class Renderer
 {
     public:
         Renderer(int width, int height, const Map & map);
+
         void renderWindow(Client &client);
         void gameLoop(Client &client);
         void InfoItemsBoard();
@@ -35,17 +36,8 @@ class Renderer
         void DrawGrid();
         void drawItems();
         void DrawEggs();
-        void loadShaders();
-        void unloadShaders();
-        void loadModels();
-        void loadTextures();
-        void loadAudio();
-        void unloadAudio();
-        void unloadTextures();
         void DrawPlayers();
-        void applyShaders();
         void initLights();
-        void unloadModels();
         void drawFloor();
         void drawRoomAndy();
         void handleMouseClick();
@@ -56,19 +48,14 @@ class Renderer
         const std::vector<Player>& getPlayers() const { return _players; }
 
     private:
-        Music _mainMusic;
+        AssetsManager _assets;
         int _screenWidth;
         int _screenHeight;
         const Map &_map;
         CameraController _cameraController;
         std::vector<Player> _players;
         std::vector<Light> _lights;
-        Model _floorModel;
-        Model _playerModel;
-        ShadersManager _shaders;
         bool _mapInitialized = false;
-        Model _wallLong;
-        Model _wallShort;
         std::vector<std::string> _loadingTips = {
             "Use ZQSD to move around and get a better overview ! ",
             "Click on a box to find out more about its contents ! ",
@@ -77,7 +64,6 @@ class Renderer
             "Did you know? Eggs hatch into players ! ",
             "Legend says no one ever reached level 8... Yet. "
         };
-        Font _toyFont;
         std::optional<Vector2> _selectedTile;    
         std::optional<int>_selectedPlayerId;
 };
