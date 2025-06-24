@@ -6,12 +6,12 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Tue Jun 10 12:46:14 PM 2025 adrien.marette@epitech.eu
-## Last update Fri Jun 12 3:21:11 PM 2025 adrien.marette@epitech.eu
+## Last update Sat Jun 20 9:50:06 AM 2025 adrien.marette@epitech.eu
 ##
 
 import sys
 import argparse
-from ai import ZappyAI
+from main_ai import ZappyAI
 
 def helper():
     print("🤖 Enhanced Zappy AI with Neural Networks and Learning")
