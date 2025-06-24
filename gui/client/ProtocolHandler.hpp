@@ -36,6 +36,12 @@ private:
     void handleBct(std::istringstream &iss);
     void handleTna(std::istringstream &iss);
     void handleEnw(std::istringstream &iss);
+    void handleEboAndEdi(std::istringstream &iss);
+    void handlePnw(std::istringstream &iss);
+    void handlePpo(std::istringstream &iss);
+    void handlePlv(std::istringstream &iss);
+    void handlePin(std::istringstream &iss);
+    void handlePdi(std::istringstream &iss);
 };
 
 

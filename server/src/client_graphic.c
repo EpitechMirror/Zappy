@@ -71,6 +71,7 @@ egg_t *create_egg(int team_idx, int x, int y)
     return egg;
 }
 
+
 void handle_graphic_auth(client_t *client, int fd, server_config_t *conf)
 {
     char msg[128];

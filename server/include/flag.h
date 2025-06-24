@@ -9,6 +9,10 @@
     #define FLAG_H_
     #include "ressources.h"
 
+#ifndef MAX_GRAPHICS
+#define MAX_GRAPHICS 16
+#endif
+
 typedef struct egg_s {
     int id;
     int x;
@@ -34,6 +38,8 @@ typedef struct server_config_s {
     int *team_slots;
     struct tile_s **map;
     struct client_s *clients;
+    int graphic_fds[MAX_GRAPHICS];
+    int nb_graphics;
 } server_config_t;
 
 typedef struct {

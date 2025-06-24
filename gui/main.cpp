@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
         Renderer renderer(SCREEN_WIDTH, SCREEN_HEIGHT, client.getMap());
         renderer.renderWindow(client);
 
-        printData(client.getMap());
+        //printData(client.getMap());
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

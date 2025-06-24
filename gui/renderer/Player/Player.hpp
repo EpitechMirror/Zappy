@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#define RESOURCE_COUNT 7
+
 class Player {
     public:
         Player(int id, Vector3 pos, int orientation, int level, const std::string& team);
@@ -27,6 +29,9 @@ class Player {
         void setOrientation(int orientation);
         void setLevel(int level);
 
+        const int *getInventory() const;
+        void setInventory(const int inventory[RESOURCE_COUNT]);
+
     private:
         int _id;
         Vector3 _position;
@@ -34,6 +39,7 @@ class Player {
         int _level;
         std::string _team;
         static std::vector<std::string> _teamNames;
+        int _inventory[RESOURCE_COUNT] = {0};
 };
 
 #endif /* !PLAYER_HPP_ */

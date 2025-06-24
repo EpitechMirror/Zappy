@@ -54,15 +54,27 @@ static int count_team_members(client_t *clients, const char *team_name)
     return count;
 }
 
-static void send_ebo_to_graphics(client_t *clients, int egg_id)
+
+void send_pnw_to_graphics(client_t *clients, client_t *player, server_config_t *conf)
 {
+    char msg[256];
     client_t *tmp = clients;
 
-    while (tmp) {
-        if (tmp->is_graphic)
-            send_ebo(tmp->fd, egg_id);
-        tmp = tmp->next;
-    }
+    snprintf(msg, sizeof(msg), "pnw #%d %d %d %d %d %s\n",
+        player->fd, player->x, player->y, player->direction + 1, player->level, player->team_name);
+
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
+}
+
+void send_ebo_to_graphics(client_t *clients, int egg_id, server_config_t *conf)
+{
+    char msg[64];
+    client_t *tmp = clients;
+
+    snprintf(msg, sizeof(msg), "ebo #%d\n", egg_id);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
 static void handle_player_auth(client_t *client, int fd,
@@ -84,23 +96,32 @@ static void handle_player_auth(client_t *client, int fd,
         team, conf->clients_nb, conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
     client->state = AUTHENTICATED;
+
     egg = get_unused_egg_for_team(conf, team_idx);
     if (egg) {
         egg->used = 1;
-        send_ebo_to_graphics(conf->clients, egg->id);
+        client->x = egg->x;
+        client->y = egg->y;
+        client->direction = NORTH;
+        client->level = 1;
+        client->team_name = strdup(team);
+
+        send_pnw_to_graphics(conf->clients, client, conf);
+        send_ebo_to_graphics(conf->clients, egg->id, conf);
+
+        // printf("[DEBUG] Nouveau joueur connecté : fd=%d, team=%s, pos=(%d,%d), orientation=%d, level=%d, egg=%d\n",
+        //     client->fd, client->team_name, client->x, client->y, client->direction, client->level, egg->id);
     }
-    client->direction = NORTH;
-    client->level = 1;
-    printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
 bool handle_auth(auth_context_t *ctx, char *buffer)
 {
     strip_newline(buffer);
     if (strcmp(buffer, "GRAPHIC") == 0) {
-        handle_graphic_auth(ctx->client, ctx->client->fd, ctx->conf);
         ctx->client->is_graphic = true;
         ctx->client->state = AUTHENTICATED;
+        ctx->conf->graphic_fds[ctx->conf->nb_graphics++] = ctx->client->fd;
+        handle_graphic_auth(ctx->client, ctx->client->fd, ctx->conf);
         return true;
     }
     handle_player_auth(ctx->client, ctx->client->fd, ctx->conf, buffer);
