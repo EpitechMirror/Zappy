@@ -6,15 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Use pkg-config to find Raylib
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(RAYLIB raylib)
-if(NOT RAYLIB_FOUND)
-    message(FATAL_ERROR "Raylib not found. Install raylib and ensure pkg-config can find it.")
-endif()
-
+include(FetchContent)
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG 5.0
+)
 # Include directories
 include_directories(
-    ${RAYLIB_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/client  # Inclut les headers du dossier client
 )
 
@@ -27,13 +26,16 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/map/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Camera/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Light/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Shaders/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/AssetsManager/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/player/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
 
 # Link against Raylib and pthread
-target_link_libraries(zappy_gui ${RAYLIB_LIBRARIES} pthread)
-
+target_link_libraries(zappy_gui raylib pthread)
 # Set output directory to project root (one level above build)
 set_target_properties(zappy_gui PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -54,10 +56,23 @@ enable_testing()
 add_executable(unit_tests
     tests/test_client.cpp
     tests/test_map.cpp
+    tests/test_player.cpp
+    tests/test_shader.cpp
+    tests/test_camera.cpp
+    tests/test_light.cpp
+    tests/test_assets_manager.cpp
+    tests/test_renderer.cpp
     client/Client.cpp
     map/Map.cpp
+    player/Player.cpp
+    renderer/Camera/Camera.cpp
+    renderer/AssetsManager/AssetsManager.cpp
+    renderer/Light/Light.cpp
+    renderer/Renderer.cpp
+    renderer/Shaders/ShadersManager.cpp
+    client/ProtocolHandler.cpp
 )
 target_link_libraries(unit_tests
-    criterion pthread
+    criterion pthread raylib
 )
 add_test(NAME client_tests COMMAND unit_tests)
