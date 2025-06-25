@@ -6,7 +6,6 @@
 */
 
 #include "Client.hpp"
-#include "../renderer/Player/Player.hpp"
 
 Client::Client(const std::string &host, int port)
     : _host(host),

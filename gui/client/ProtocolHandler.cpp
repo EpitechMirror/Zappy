@@ -6,8 +6,6 @@
 */
 
 #include "ProtocolHandler.hpp"
-#include "../renderer/Player/Player.hpp"
-#include <iostream>
 
 ProtocolHandler::ProtocolHandler(Map &map) : _map(map) {
     registerHandlers();

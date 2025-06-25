@@ -15,6 +15,8 @@
 #include <functional>
 #include <sstream>
 #include "../map/Map.hpp"
+#include "../player/Player.hpp"
+#include <iostream>
 
 class ProtocolHandler {
 public:
