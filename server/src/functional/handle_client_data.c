@@ -100,11 +100,15 @@ static void handle_player_auth(client_t *client, int fd,
     egg = get_unused_egg_for_team(conf, team_idx);
     if (egg) {
         egg->used = 1;
-        send_ebo_to_graphics(conf->clients, egg->id);
+        client->x = egg->x;
+        client->y = egg->y;
+        client->direction = NORTH;
+        client->level = 1;
+        client->team_name = strdup(team);
+
+        send_pnw_to_graphics(conf->clients, client, conf);
+        send_ebo_to_graphics(conf->clients, egg->id, conf);
     }
-    client->direction = NORTH;
-    client->level = 1;
-    printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
 bool handle_auth(auth_context_t *ctx, char *buffer)
