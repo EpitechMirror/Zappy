@@ -23,6 +23,12 @@ void ProtocolHandler::registerHandlers() {
     _handlers["plv"] = [this](std::istringstream &iss) { handlePlv(iss); };
     _handlers["pin"] = [this](std::istringstream &iss) { handlePin(iss); };
     _handlers["pdi"] = [this](std::istringstream &iss) { handlePdi(iss); };
+    _handlers["pgt"] = [this](std::istringstream &iss) { handlePgt(iss); };
+    _handlers["pdr"] = [this](std::istringstream &iss) { handlePdr(iss); };
+    _handlers["pfk"] = [this](std::istringstream &iss) { handlePfk(iss); };
+    _handlers["smg"] = [this](std::istringstream &iss) { handleSmg(iss); };
+    _handlers["suc"] = [this](std::istringstream &iss) { handleSuc(iss); };
+    _handlers["sbp"] = [this](std::istringstream &iss) { handleSbp(iss); };
 }
 
 void ProtocolHandler::handleLine(const std::string &line) {
@@ -43,6 +49,7 @@ bool ProtocolHandler::isMapReady() const {
     return _hasMapSize && _map.isFullyInitialized();
 }
 
+//---Map size
 void ProtocolHandler::handleMsz(std::istringstream &iss) {
     int w, h;
     if (iss >> w >> h) {
@@ -51,6 +58,7 @@ void ProtocolHandler::handleMsz(std::istringstream &iss) {
     }
 }
 
+//---Tile resources
 void ProtocolHandler::handleBct(std::istringstream &iss) {
     int x, y;
     Resources res;
@@ -65,6 +73,7 @@ void ProtocolHandler::handleBct(std::istringstream &iss) {
     }
 }
 
+//---Team name
 void ProtocolHandler::handleTna(std::istringstream &iss) {
     std::string teamName;
     if (iss >> teamName) {
@@ -72,19 +81,20 @@ void ProtocolHandler::handleTna(std::istringstream &iss) {
     }
 }
 
+//---An egg was laid by a player
 void ProtocolHandler::handleEnw(std::istringstream &iss) {
     std::string eggIdStr, playerIdStr;
     int x, y;
 
     if (iss >> eggIdStr >> playerIdStr >> x >> y) {
         int eggId = std::stoi(eggIdStr.substr(1));
-        // playerId non utilisé ici sauf si besoin
         _map.addEgg(eggId, x, y);
     } else {
         std::cerr << "Invalid enw format\n";
     }
 }
 
+//---Egg die
 void ProtocolHandler::handleEboAndEdi(std::istringstream &iss) {
     std::string eggIdStr;
     if (iss >> eggIdStr) {
@@ -95,6 +105,7 @@ void ProtocolHandler::handleEboAndEdi(std::istringstream &iss) {
     }
 }
 
+//---New player
 void ProtocolHandler::handlePnw(std::istringstream &iss) {
     std::string idStr;
     int x, y, orientation, level;
@@ -115,6 +126,7 @@ void ProtocolHandler::handlePnw(std::istringstream &iss) {
     }
 }
 
+//---Player's position
 void ProtocolHandler::handlePpo(std::istringstream &iss) {
     std::string idStr;
     int x, y, orientation;
@@ -131,6 +143,7 @@ void ProtocolHandler::handlePpo(std::istringstream &iss) {
     }
 }
 
+//---Player's level
 void ProtocolHandler::handlePlv(std::istringstream &iss) {
     std::string idStr;
     int level;
@@ -143,6 +156,7 @@ void ProtocolHandler::handlePlv(std::istringstream &iss) {
     }
 }
 
+//---Player's inventory
 void ProtocolHandler::handlePin(std::istringstream &iss) {
     std::string idStr;
     int x, y;
@@ -162,6 +176,7 @@ void ProtocolHandler::handlePin(std::istringstream &iss) {
     }
 }
 
+//---Player disconnect
 void ProtocolHandler::handlePdi(std::istringstream &iss) {
     std::string idStr;
     if (iss >> idStr) {
@@ -170,4 +185,120 @@ void ProtocolHandler::handlePdi(std::istringstream &iss) {
     } else {
         std::cerr << "Invalid pdi format\n";
     }
+}
+
+//---Player get a resource
+void ProtocolHandler::handlePgt(std::istringstream &iss) {
+    std::string idStr;
+    int resourceIndex;
+
+    if (!(iss >> idStr >> resourceIndex)) {
+        std::cerr << "Invalid pgt format\n";
+        return;
+    }
+
+    int id = std::stoi(idStr.substr(1));
+    Player* player = _map.getPlayerById(id);
+    if (!player) {
+        std::cerr << "Unknown player id in pgt: " << id << "\n";
+        return;
+    }
+
+    if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
+        std::cerr << "Invalid resource index in pgt: " << resourceIndex << "\n";
+        return;
+    }
+
+    const int* currentInventory = player->getInventory();
+    int updatedInventory[RESOURCE_COUNT];
+    for (int i = 0; i < RESOURCE_COUNT; ++i) {
+        updatedInventory[i] = currentInventory[i];
+    }
+    updatedInventory[resourceIndex]++;
+
+    player->setInventory(updatedInventory);
+}
+
+//---Player drop a resource
+void ProtocolHandler::handlePdr(std::istringstream &iss) {
+    std::string idStr;
+    int resourceIndex;
+
+    if (!(iss >> idStr >> resourceIndex)) {
+        std::cerr << "Invalid pdr format\n";
+        return;
+    }
+
+    int id = std::stoi(idStr.substr(1));
+    Player* player = _map.getPlayerById(id);
+    if (!player) {
+        std::cerr << "Unknown player id in pdr: " << id << "\n";
+        return;
+    }
+
+    if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
+        std::cerr << "Invalid resource index in pdr: " << resourceIndex << "\n";
+        return;
+    }
+
+    const int* currentInventory = player->getInventory();
+    int updatedInventory[RESOURCE_COUNT];
+    for (int i = 0; i < RESOURCE_COUNT; ++i) {
+        updatedInventory[i] = currentInventory[i];
+    }
+
+    if (updatedInventory[resourceIndex] > 0)
+        updatedInventory[resourceIndex]--;
+    else
+        std::cerr << "Warning: Player #" << id << " tried to drop resource " << resourceIndex << " with none in inventory\n";
+
+    player->setInventory(updatedInventory);
+}
+
+//----Player drop an egg
+void ProtocolHandler::handlePfk(std::istringstream &iss) {
+    //std::string idStr;
+//
+    //if (!(iss >> idStr)) {
+    //    std::cerr << "Invalid pfk format\n";
+    //    return;
+    //}
+//
+    //int playerId = std::stoi(idStr.substr(1));
+    //Player* player = _map.getPlayerById(playerId);
+    //if (!player) {
+    //    std::cerr << "Unknown player in pfk: #" << playerId << "\n";
+    //    return;
+    //}
+//
+    //Vector3 pos = player->getPosition();
+    //int x = static_cast<int>(pos.x);
+    //int y = static_cast<int>(pos.z);
+//
+    //_map.addEgg(-1, x, y);
+//
+    //std::cout << "Player #" << playerId << " laid an egg at (" << x << ", " << y << ")\n";
+}
+
+//--- Server message
+void ProtocolHandler::handleSmg(std::istringstream &iss) {
+    std::string message;
+    std::getline(iss, message);
+    if (!message.empty() && message[0] == ' ')
+        message.erase(0, 1);
+
+    std::cout << "[Server Message] " << message << "\n";
+    // Optionnel : stocker dans un historique, afficher?
+}
+
+//---Unknown command
+void ProtocolHandler::handleSuc(std::istringstream &) {
+    std::cerr << "Error: Unknown command sent to server (suc)\n";
+    // Optionnel : Afficher dans l’interface ?
+}
+
+//---Bad parameter
+void ProtocolHandler::handleSbp(std::istringstream &) {
+    std::cerr << "Error: Invalid parameters in command (sbp)\n";
+    // Optionnel : Afficher dans l’interface ?
 }

@@ -18,6 +18,10 @@ Renderer::Renderer(int width, int height, const Map &map)
       _disconnectTimer(0.0f)
 {}
 
+float Renderer::getDesktopY() {
+    return 0.0f;
+}
+
 void Renderer::drawRoomAndy() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -25,17 +29,18 @@ void Renderer::drawRoomAndy() {
 
     float roomWidth = width * cellSize;
     float roomDepth = height * cellSize;
-    float roomHeight = 4.0f;
-    float wallThickness = 0.2f;
 
-    // Mur du fond (z = 0)
-    DrawModel(_assets.wallLong, {roomWidth/2, roomHeight/2, -wallThickness/2}, 1.0f, WHITE);
-    // Mur devant (z = roomDepth)
-    DrawModel(_assets.wallLong, {roomWidth/2, roomHeight/2, roomDepth + wallThickness/2}, 1.0f, WHITE);
-    // Mur gauche (x = 0)
-    DrawModel(_assets.wallShort, {-wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
-    // Mur droite (x = roomWidth)
-    DrawModel(_assets.wallShort, {roomWidth + wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
+    rlPushMatrix();
+        rlTranslatef(roomWidth/2, 0.0f, roomDepth/2);
+        
+        float scaleX = roomWidth / 0.5f;
+        float scaleZ = roomDepth / 1.0f;
+        float scaleY = 1.0f;
+        
+        rlScalef(scaleX, scaleY, scaleZ);
+        
+        DrawModel(_assets.deskModel, {0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+    rlPopMatrix();
 }
 
 void Renderer::initLights() {
@@ -79,7 +84,7 @@ void Renderer::drawItems() {
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
                     
-                    float posY = 0.2f + (q * 0.01f);
+                    float posY = 0.05f + (q * 0.01f);
                     
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
@@ -109,24 +114,27 @@ Color Renderer::getColorForResource(ResourceType type) {
     }
 }
 
-void Renderer::drawFloor() {
-    float cellSize = 1.0f;
-    int width = _map.getWidth();
-    int height = _map.getHeight();
+// void Renderer::drawFloor() {
+//     float cellSize = 1.0f;
+//     int width = _map.getWidth();
+//     int height = _map.getHeight();
 
-    Shader& pbr = _assets.shaders.getPBR();
-    int tilingLoc = GetShaderLocation(pbr, "tiling");
-    Vector2 tiling = {0.5f, 0.5f};
-    SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+//     // pour placer en fonction du bureau
+//     float deskTopY = getDesktopY();
 
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            Vector3 pos = { x * cellSize + cellSize/2, 0.0f, y * cellSize + cellSize/2 };
-            DrawModel(_assets.floorModel, pos, cellSize, WHITE);
-        }
-    }
-    _mapInitialized = true;
-}
+//     Shader& pbr = _assets.shaders.getPBR();
+//     int tilingLoc = GetShaderLocation(pbr, "tiling");
+//     Vector2 tiling = {0.5f, 0.5f};
+//     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+
+//     for (int x = 0; x < width; ++x) {
+//         for (int y = 0; y < height; ++y) {
+//             Vector3 pos = { x * cellSize + cellSize/2, deskTopY, y * cellSize + cellSize/2 };
+//             DrawModel(_assets.floorModel, pos, cellSize, WHITE);
+//         }
+//     }
+//     _mapInitialized = true;
+// }
 
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
@@ -212,12 +220,15 @@ void Renderer::showLoadingScreen(const std::string &message) {
 
 void Renderer::DrawPlayers() {
     const auto& players = _map.getPlayers();
+
     float cellSize = 1.0f;
+
+    float deskTopY = getDesktopY();
 
     for (const Player& p : players) {
         float px = p.getPosition().x * cellSize + cellSize/2;
         float pz = p.getPosition().z * cellSize + cellSize/2;
-        float py = 0.0f;
+        float py = deskTopY;
 
         float yaw = 0;
         switch (p.getOrientation()) {
@@ -585,12 +596,13 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-                drawFloor();
+               // drawFloor();
                 drawRoomAndy();
                 DrawGrid();
                 drawItems();
                 DrawEggs();
                 DrawPlayers();
+                DrawSelectionMarkers();
             EndMode3D();
 
             InfoItemsBoard();
@@ -642,19 +654,21 @@ void Renderer::notifyServerDisconnect() {
 }
 
 void Renderer::DrawGrid() {
+    float cellSize = 1.0f;
     int width = _map.getWidth();
     int height = _map.getHeight();
-    float cellSize = 1.0f;
+
+    float yPos = 0.01f;
 
     for (int x = 0; x <= width; x++) {
-        Vector3 start = { x * cellSize, 0.0f, 0.0f };
-        Vector3 end = { x * cellSize, 0.0f, height * cellSize };
+        Vector3 start = { x * cellSize, yPos, 0.0f };
+        Vector3 end = { x * cellSize, yPos, height * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 
     for (int z = 0; z <= height; z++) {
-        Vector3 start = { 0.0f, 0.0f, z * cellSize };
-        Vector3 end = { width * cellSize, 0.0f, z * cellSize };
+        Vector3 start = { 0.0f, yPos, z * cellSize };
+        Vector3 end = { width * cellSize, yPos, z * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 }
@@ -664,18 +678,49 @@ void Renderer::renderWindow(Client &client) {
     InitWindow(_screenWidth, _screenHeight, "WOODY GUI");
     SetTargetFPS(60);
 
-    gameLoop(client);
+    try {
+        gameLoop(client);
+    } catch (...) {
+        // Handle any exceptions that may occur during the game loop
+        TraceLog(LOG_ERROR, "An error occurred during the game loop.");
+    }
 
     _assets.unloadAllResources();
-
+    
     CloseWindow();
     client.disconnect();
 }
 
 void Renderer::handleMouseClick() {
     Ray ray = GetMouseRay(GetMousePosition(), _cameraController.getCamera());
-    _selectedTile.reset();
-    _selectedPlayerId.reset();
+
+    // Player
+    for (const Player& p : _map.getPlayers()) {
+        float cellSize = 1.0f;
+        
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        
+        float width = 0.4f;
+        float height = 1.0f;
+        float depth = 0.4f;
+        
+        BoundingBox playerBox = {
+            {
+                px - width/2,0.0f, pz - depth/2},
+            {
+                px + width/2,
+                height,
+                pz + depth/2
+            }
+        };
+        
+        RayCollision collision = GetRayCollisionBox(ray, playerBox);
+        if (collision.hit) {
+            _selectedPlayerId = p.getId();
+            return;
+        }
+    }
 
     // Box
     Vector3 hit;
@@ -687,48 +732,41 @@ void Renderer::handleMouseClick() {
             return;
         }
     }
+}
 
-    // Player
-    for (const Player& p : _map.getPlayers()) {
-        float cellSize = 1.0f;
-        Vector3 playerPos = {
-            p.getPosition().x * cellSize + cellSize/2,
-            0.0f,
-            p.getPosition().z * cellSize + cellSize/2
-        };
-        
-        // Calculer la taille de la bounding box en fonction du niveau
-        float playerScale = 0.5f;
-        switch (p.getLevel()) {
-            case 1: playerScale = 1.5f; break;
-            case 2: playerScale = 1.8f; break;
-            case 3: playerScale = 2.1f; break;
-            case 4: playerScale = 2.4f; break;
-            case 5: playerScale = 2.7f; break;
-            case 6: playerScale = 3.0f; break;
-            case 7: playerScale = 3.3f; break;
-            case 8: playerScale = 3.6f; break;
-        }
-        
-        // Créer une bounding box adaptée à la lampe Pixar
-        BoundingBox playerBox = {
-            { // Min corner
-                playerPos.x - 0.4f * playerScale,
-                playerPos.y,
-                playerPos.z - 0.4f * playerScale
-            },
-            { // Max corner
-                playerPos.x + 0.4f * playerScale,
-                playerPos.y + 2.0f * playerScale, // Hauteur de la lampe
-                playerPos.z + 0.4f * playerScale
+void Renderer::DrawSelectionMarkers() {
+    if (_selectedPlayerId) {
+        const Player* p = nullptr;
+        for (const Player& player : _map.getPlayers()) {
+            if (player.getId() == *_selectedPlayerId) {
+                p = &player;
+                break;
             }
-        };
-        
-        RayCollision collision = GetRayCollisionBox(ray, playerBox);
-        if (collision.hit) {
-            _selectedPlayerId = p.getId();
-            return;
         }
+        if (p) {
+            float cellSize = 1.0f;
+            float px = p->getPosition().x * cellSize + cellSize/2;
+            float pz = p->getPosition().z * cellSize + cellSize/2;
+            
+            float width = 0.4f;
+            float height = 1.0f;
+            float depth = 0.4f;
+            
+            BoundingBox playerBox = {
+                { px - width/2, 0.0f, pz - depth/2 },
+                { px + width/2, height, pz + depth/2 }
+            };
+            
+            DrawBoundingBox(playerBox, Fade(GREEN, 0.3f));
+        }
+    }
+    
+    if (_selectedTile) {
+        float tx = _selectedTile->x;
+        float tz = _selectedTile->y;
+        Vector3 center = { tx + 0.5f, 0.1f, tz + 0.5f };
+        
+        DrawCubeWires(center, 1.0f, 0.1f, 1.0f, Fade(RED, 0.5f));
     }
 }
 
