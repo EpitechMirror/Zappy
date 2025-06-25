@@ -52,8 +52,8 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf);
 void poll_clients(poll_context_t *ctx);
 void accept_clients_loop(int server_fd, server_config_t *conf);
 
-void handle_graphic_auth(client_t *client, int fd, server_config_t *conf);
-egg_t *create_egg(int team_idx, int x, int y);
+void handle_graphic_auth(int fd, server_config_t *conf);
+egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y);
 void add_egg_to_list(server_config_t *conf, egg_t *egg);
 void send_enw(int fd, egg_t *egg, int player_id);
 void send_team_names(int fd, server_config_t *conf);

@@ -56,13 +56,13 @@ egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx)
     return NULL;
 }
 
-egg_t *create_egg(int team_idx, int x, int y)
+egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y)
 {
     egg_t *egg = malloc(sizeof(egg_t));
 
     if (!egg)
         return NULL;
-    egg->id = 0;
+    egg->id = conf->next_egg_id++;
     egg->x = x;
     egg->y = y;
     egg->team_idx = team_idx;
@@ -72,7 +72,7 @@ egg_t *create_egg(int team_idx, int x, int y)
 }
 
 
-void handle_graphic_auth(client_t *client, int fd, server_config_t *conf)
+void handle_graphic_auth(int fd, server_config_t *conf)
 {
     char msg[128];
     egg_t *egg = NULL;
@@ -87,7 +87,7 @@ void handle_graphic_auth(client_t *client, int fd, server_config_t *conf)
     send_team_names(fd, conf);
     for (t = 0; t < conf->team_count; t++) {
         for (s = 0; s < conf->clients_nb; s++) {
-            egg = create_egg(t, rand() % conf->width, rand() % conf->height);
+            egg = create_egg(conf, t, rand() % conf->width, rand() % conf->height);
             add_egg_to_list(conf, egg);
             send_enw(fd, egg, -1);
         }
