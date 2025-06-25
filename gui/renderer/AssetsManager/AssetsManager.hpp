@@ -24,6 +24,7 @@ public:
 
     Model floorModel;
     Model playerModel;
+    Model deskModel;
     Model wallLong;
     Model wallShort;
     Font toyFont;

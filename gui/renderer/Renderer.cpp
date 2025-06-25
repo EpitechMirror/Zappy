@@ -18,6 +18,28 @@ Renderer::Renderer(int width, int height, const Map &map)
       _disconnectTimer(0.0f)
 {}
 
+float Renderer::getDesktopY()
+{
+    int width = _map.getWidth();
+    int height = _map.getHeight();
+    float cellSize = 1.0f;
+
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
+
+    float deskModelWidth = 0.5f;
+    float deskModelDepth = 1.0f;
+    float deskModelHeight = 1.0f;
+
+    float scaleX = roomWidth / deskModelWidth;
+    float scaleZ = roomDepth / deskModelDepth;
+    float scaleY = (scaleX + scaleZ) / 2.0f;
+
+    float deskTopY = (deskModelHeight / 2.0f) * scaleY;
+
+    return deskTopY;
+}
+
 void Renderer::drawRoomAndy() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -25,17 +47,25 @@ void Renderer::drawRoomAndy() {
 
     float roomWidth = width * cellSize;
     float roomDepth = height * cellSize;
-    float roomHeight = 4.0f;
-    float wallThickness = 0.2f;
 
-    // Mur du fond (z = 0)
-    DrawModel(_assets.wallLong, {roomWidth/2, roomHeight/2, -wallThickness/2}, 1.0f, WHITE);
-    // Mur devant (z = roomDepth)
-    DrawModel(_assets.wallLong, {roomWidth/2, roomHeight/2, roomDepth + wallThickness/2}, 1.0f, WHITE);
-    // Mur gauche (x = 0)
-    DrawModel(_assets.wallShort, {-wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
-    // Mur droite (x = roomWidth)
-    DrawModel(_assets.wallShort, {roomWidth + wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
+    float deskModelWidth = 0.5f;
+    float deskModelDepth = 1.0f;
+    float deskModelHeight = 1.0f;
+
+    float scaleX = roomWidth / deskModelWidth;
+    float scaleZ = roomDepth / deskModelDepth;
+    float scaleY = (scaleX + scaleZ) / 2.0f;
+
+    // Décale le bureau pour que son dessus soit à y=0
+    float deskY = -(deskModelHeight / 2.0f) * scaleY;
+    float besideOffset = 3.0f;
+
+    rlPushMatrix();
+        rlTranslatef(roomWidth/2, deskY + besideOffset, roomDepth/2);
+        rlRotatef(180, 0, 1, 0); // si besoin selon ton modèle
+        rlScalef(scaleX, scaleY, scaleZ);
+        DrawModel(_assets.deskModel, {-0.5f, 0.0f, 1.3f}, 1.0f, WHITE);
+    rlPopMatrix();
 }
 
 void Renderer::initLights() {
@@ -56,6 +86,8 @@ void Renderer::drawItems() {
     const float gridStep = cellSize / gridSize;
     const float offset = gridStep / 2.0f;
 
+    // pour placer en fonction du bureau
+    float deskTopY = getDesktopY();
     //hash pour positionner les ressources de manière pseudo-aléatoire
     auto resourceHash = [](int x, int y, int type) -> int {
         return (x * 73856093) ^ (y * 19349663) ^ (type * 83492791);
@@ -79,7 +111,7 @@ void Renderer::drawItems() {
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
                     
-                    float posY = 0.2f + (q * 0.01f);
+                    float posY = deskTopY + (q * 0.01f);
                     
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
@@ -90,8 +122,12 @@ void Renderer::drawItems() {
 }
 
 void Renderer::DrawEggs() {
+    // pour placer en fonction du bureau
+    float deskTopY = getDesktopY();
+    // float deskTopY = 2.0f;
+
     for (const Egg& egg : _map.getEggs()) {
-        Vector3 pos = { static_cast<float>(egg.x) + 0.5f, 0.1f, static_cast<float>(egg.y) + 0.5f };
+        Vector3 pos = { static_cast<float>(egg.x) + 0.5f, deskTopY +0.09f , static_cast<float>(egg.y) + 0.5f };
         DrawSphere(pos, 0.13f, WHITE);
     }
 }
@@ -109,24 +145,27 @@ Color Renderer::getColorForResource(ResourceType type) {
     }
 }
 
-void Renderer::drawFloor() {
-    float cellSize = 1.0f;
-    int width = _map.getWidth();
-    int height = _map.getHeight();
+// void Renderer::drawFloor() {
+//     float cellSize = 1.0f;
+//     int width = _map.getWidth();
+//     int height = _map.getHeight();
 
-    Shader& pbr = _assets.shaders.getPBR();
-    int tilingLoc = GetShaderLocation(pbr, "tiling");
-    Vector2 tiling = {0.5f, 0.5f};
-    SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+//     // pour placer en fonction du bureau
+//     float deskTopY = getDesktopY();
 
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            Vector3 pos = { x * cellSize + cellSize/2, 0.0f, y * cellSize + cellSize/2 };
-            DrawModel(_assets.floorModel, pos, cellSize, WHITE);
-        }
-    }
-    _mapInitialized = true;
-}
+//     Shader& pbr = _assets.shaders.getPBR();
+//     int tilingLoc = GetShaderLocation(pbr, "tiling");
+//     Vector2 tiling = {0.5f, 0.5f};
+//     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+
+//     for (int x = 0; x < width; ++x) {
+//         for (int y = 0; y < height; ++y) {
+//             Vector3 pos = { x * cellSize + cellSize/2, deskTopY, y * cellSize + cellSize/2 };
+//             DrawModel(_assets.floorModel, pos, cellSize, WHITE);
+//         }
+//     }
+//     _mapInitialized = true;
+// }
 
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
@@ -212,12 +251,16 @@ void Renderer::showLoadingScreen(const std::string &message) {
 
 void Renderer::DrawPlayers() {
     const auto& players = _map.getPlayers();
+
     float cellSize = 1.0f;
+
+    // pour placer en fonction du bureau
+    float deskTopY = getDesktopY();
 
     for (const Player& p : players) {
         float px = p.getPosition().x * cellSize + cellSize/2;
         float pz = p.getPosition().z * cellSize + cellSize/2;
-        float py = 0.0f;
+        float py = deskTopY;
 
         float yaw = 0;
         switch (p.getOrientation()) {
@@ -585,7 +628,7 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-                drawFloor();
+               // drawFloor();
                 drawRoomAndy();
                 DrawGrid();
                 drawItems();
@@ -643,19 +686,23 @@ void Renderer::notifyServerDisconnect() {
 }
 
 void Renderer::DrawGrid() {
+    float cellSize = 1.0f;
     int width = _map.getWidth();
     int height = _map.getHeight();
-    float cellSize = 1.0f;
+
+    // pour placer en fonction du bureau
+    float deskTopY = getDesktopY();
+    float onDeskOffset = -0.5f; // Décalage pour que les lignes soient au-dessus du bureau
 
     for (int x = 0; x <= width; x++) {
-        Vector3 start = { x * cellSize, 0.0f, 0.0f };
-        Vector3 end = { x * cellSize, 0.0f, height * cellSize };
+        Vector3 start = { x * cellSize, deskTopY + onDeskOffset, 0.0f };
+        Vector3 end = { x * cellSize, deskTopY + onDeskOffset, height * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 
     for (int z = 0; z <= height; z++) {
-        Vector3 start = { 0.0f, 0.0f, z * cellSize };
-        Vector3 end = { width * cellSize, 0.0f, z * cellSize };
+        Vector3 start = { 0.0f, deskTopY + onDeskOffset, z * cellSize };
+        Vector3 end = { width * cellSize, deskTopY + onDeskOffset, z * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 }
