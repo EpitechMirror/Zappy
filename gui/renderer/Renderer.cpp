@@ -678,10 +678,15 @@ void Renderer::renderWindow(Client &client) {
     InitWindow(_screenWidth, _screenHeight, "WOODY GUI");
     SetTargetFPS(60);
 
-    gameLoop(client);
+    try {
+        gameLoop(client);
+    } catch (...) {
+        // Handle any exceptions that may occur during the game loop
+        TraceLog(LOG_ERROR, "An error occurred during the game loop.");
+    }
 
     _assets.unloadAllResources();
-
+    
     CloseWindow();
     client.disconnect();
 }
