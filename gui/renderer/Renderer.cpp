@@ -591,6 +591,7 @@ void Renderer::gameLoop(Client &client) {
                 drawItems();
                 DrawEggs();
                 DrawPlayers();
+                DrawSelectionMarkers();
             EndMode3D();
 
             InfoItemsBoard();
@@ -674,8 +675,34 @@ void Renderer::renderWindow(Client &client) {
 
 void Renderer::handleMouseClick() {
     Ray ray = GetMouseRay(GetMousePosition(), _cameraController.getCamera());
-    _selectedTile.reset();
-    _selectedPlayerId.reset();
+
+    // Player
+    for (const Player& p : _map.getPlayers()) {
+        float cellSize = 1.0f;
+        
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        
+        float width = 0.4f;
+        float height = 1.0f;
+        float depth = 0.4f;
+        
+        BoundingBox playerBox = {
+            {
+                px - width/2,0.0f, pz - depth/2},
+            {
+                px + width/2,
+                height,
+                pz + depth/2
+            }
+        };
+        
+        RayCollision collision = GetRayCollisionBox(ray, playerBox);
+        if (collision.hit) {
+            _selectedPlayerId = p.getId();
+            return;
+        }
+    }
 
     // Box
     Vector3 hit;
@@ -687,48 +714,41 @@ void Renderer::handleMouseClick() {
             return;
         }
     }
+}
 
-    // Player
-    for (const Player& p : _map.getPlayers()) {
-        float cellSize = 1.0f;
-        Vector3 playerPos = {
-            p.getPosition().x * cellSize + cellSize/2,
-            0.0f,
-            p.getPosition().z * cellSize + cellSize/2
-        };
-        
-        // Calculer la taille de la bounding box en fonction du niveau
-        float playerScale = 0.5f;
-        switch (p.getLevel()) {
-            case 1: playerScale = 1.5f; break;
-            case 2: playerScale = 1.8f; break;
-            case 3: playerScale = 2.1f; break;
-            case 4: playerScale = 2.4f; break;
-            case 5: playerScale = 2.7f; break;
-            case 6: playerScale = 3.0f; break;
-            case 7: playerScale = 3.3f; break;
-            case 8: playerScale = 3.6f; break;
-        }
-        
-        // Créer une bounding box adaptée à la lampe Pixar
-        BoundingBox playerBox = {
-            { // Min corner
-                playerPos.x - 0.4f * playerScale,
-                playerPos.y,
-                playerPos.z - 0.4f * playerScale
-            },
-            { // Max corner
-                playerPos.x + 0.4f * playerScale,
-                playerPos.y + 2.0f * playerScale, // Hauteur de la lampe
-                playerPos.z + 0.4f * playerScale
+void Renderer::DrawSelectionMarkers() {
+    if (_selectedPlayerId) {
+        const Player* p = nullptr;
+        for (const Player& player : _map.getPlayers()) {
+            if (player.getId() == *_selectedPlayerId) {
+                p = &player;
+                break;
             }
-        };
-        
-        RayCollision collision = GetRayCollisionBox(ray, playerBox);
-        if (collision.hit) {
-            _selectedPlayerId = p.getId();
-            return;
         }
+        if (p) {
+            float cellSize = 1.0f;
+            float px = p->getPosition().x * cellSize + cellSize/2;
+            float pz = p->getPosition().z * cellSize + cellSize/2;
+            
+            float width = 0.4f;
+            float height = 1.0f;
+            float depth = 0.4f;
+            
+            BoundingBox playerBox = {
+                { px - width/2, 0.0f, pz - depth/2 },
+                { px + width/2, height, pz + depth/2 }
+            };
+            
+            DrawBoundingBox(playerBox, Fade(GREEN, 0.3f));
+        }
+    }
+    
+    if (_selectedTile) {
+        float tx = _selectedTile->x;
+        float tz = _selectedTile->y;
+        Vector3 center = { tx + 0.5f, 0.1f, tz + 0.5f };
+        
+        DrawCubeWires(center, 1.0f, 0.1f, 1.0f, Fade(RED, 0.5f));
     }
 }
 

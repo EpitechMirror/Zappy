@@ -21,6 +21,8 @@
 #include "../renderer/Light/Light.hpp"
 #include <cmath>
 #include "AssetsManager/AssetsManager.hpp"
+#include <ctime>
+#include <cstring>
 
 class Renderer
 {
@@ -72,5 +74,6 @@ class Renderer
         static bool disconnected;
         float _disconnectTimer;
         void notifyServerDisconnect();
+        void DrawSelectionMarkers();
 };
 #endif
