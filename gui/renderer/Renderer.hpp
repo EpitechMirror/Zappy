@@ -38,12 +38,14 @@ class Renderer
         void DrawEggs();
         void DrawPlayers();
         void initLights();
-        void drawFloor();
-        void drawRoomAndy();
+        // void drawFloor();
+        void drawRoomAndy();        
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
+
+        float getDesktopY();
 
         const std::vector<Player>& getPlayers() const { return _players; }
 
