@@ -209,6 +209,28 @@ void move_player(client_t *client, server_config_t *conf, direction_t direction)
         move_functions[direction](client, conf);
 }
 
+int calculate_direction_tile(client_t *sender, client_t *receiver)
+{
+    int dx = sender->x - receiver->x;
+    int dy = sender->y - receiver->y;
+
+    if (dx == 0 && dy == 0)
+        return 0;
+
+    if (dy < 0) {
+        if (dx < 0) return 1; // North-East
+        if (dx == 0) return 2; // North
+        return 3; // North-West
+    } else if (dy == 0) {
+        if (dx < 0) return 8; // East
+        return 4; // West
+    } else {
+        if (dx < 0) return 7; // South-East
+        if (dx == 0) return 6; // South
+        return 5; // South-West
+    }
+}
+
 int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
 {
     char inventory[256];
@@ -248,6 +270,18 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
     }
     if (strncmp(client_message, "Look", 4) == 0) {
         look_around(client, conf);
+        return 0;
+    }
+    if (strncmp(client_message, "Broadcast", 9) == 0) {
+        for (client_t *c = conf->clients; c != NULL; c = c->next) {
+            if (c->is_alive && c->fd != fd && !c->is_graphic) {
+                char broadcast_msg[512];
+                snprintf(broadcast_msg, sizeof(broadcast_msg), "message %d, %s\n",
+                         calculate_direction_tile(client, c), client_message + 10);
+                send(c->fd, broadcast_msg, strlen(broadcast_msg), 0);
+            }
+        }
+        send(fd, "ok\n", 3, 0);
         return 0;
     }
     return 0;

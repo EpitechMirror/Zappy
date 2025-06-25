@@ -62,4 +62,5 @@ void send_ebo(int fd, int egg_id);
 int respond_to_server_fd(int fd, server_config_t *conf,
     char *client_message, client_t *client);
 
+
 #endif /* !SERVER_H_ */

@@ -87,10 +87,11 @@ static void handle_player_auth(client_t *client, int fd,
     egg = get_unused_egg_for_team(conf, team_idx);
     if (egg) {
         egg->used = 1;
-        send_ebo_to_graphics(conf->clients, egg->id);
+        send_ebo_to_graphics(client, egg->id);
     }
     client->direction = NORTH;
     client->level = 1;
+    client->is_alive = 1;
     printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
 }
 
@@ -108,14 +109,17 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
 }
 
 static bool process_client_request(client_t *client, int fd,
-    server_config_t *conf, char *buffer)
+server_config_t *conf, char *buffer)
 {
     auth_context_t ctx = {&conf->clients, client, conf};
-
-    if (client->is_graphic == false)
-        respond_to_server_fd(fd, conf, buffer, client);
-    if (client->state == WAITING_NAME)
+    
+    if (client->state == WAITING_NAME) {
         handle_auth(&ctx, buffer);
+    } else if (client->state == AUTHENTICATED) {
+        if (client->is_graphic == false)
+            respond_to_server_fd(fd, conf, buffer, client);
+    }
+    
     return false;
 }
 
