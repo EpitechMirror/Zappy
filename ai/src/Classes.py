@@ -5,7 +5,7 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Tue Jun 10 1:35:41 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 1:36:48 PM 2025 adrien.marette@epitech.eu
+## Last update Thu Jun 25 11:40:04 AM 2025 adrien.marette@epitech.eu
 ##
 
 import math
@@ -55,9 +55,6 @@ class GameState:
     position: Position = None
     direction: Direction = Direction.NORTH
     inventory: Dict[str, int] = None
-    world_width: int = 0
-    world_height: int = 0
-    team_slots: int = 0
     food_units: int = 0
     turn_count: int = 0
     last_action_reward: float = 0.0

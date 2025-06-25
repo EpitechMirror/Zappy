@@ -1,21 +1,11 @@
 ##
-## ZappyAI.py for Zappy in /home/adrien/Epitech/B-YEP-410/Zappy/ai/src
+## main_ai.py for Zappy in /home/adrien/Epitech/B-YEP-410/Zappy/ai/src
 ##
 ## Made by adrien.marette@epitech.eu
 ## Login   <adrien.marette@epitech.eu>
 ##
-## Started on  Tue Jun 10 2:43:41 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 2:43:43 PM 2025 adrien.marette@epitech.eu
-##
-
-##
-## ai.py for Zappy in /home/adrien/Epitech/B-YEP-410/Zappy/ai/src
-##
-## Made by adrien.marette@epitech.eu
-## Login   <adrien.marette@epitech.eu>
-##
-## Started on  Tue Jun 10 1:22:09 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 2:43:37 PM 2025 adrien.marette@epitech.eu
+## Started on  Wed Jun 25 11:39:38 AM 2025 adrien.marette@epitech.eu
+## Last update Thu Jun 25 11:39:51 AM 2025 adrien.marette@epitech.eu
 ##
 
 import json
@@ -86,15 +76,8 @@ class ZappyAI:
                 raise Exception(f"Expected WELCOME, got: {welcome}")
 
             self.send_message(self.team_name)
-            client_num = self.receive_message()
-            world_dims = self.receive_message()
 
-            self.state.team_slots = int(client_num)
-            dims = world_dims.split()
-            self.state.world_width = int(dims[0])
-            self.state.world_height = int(dims[1])
-
-            print(f"Enhanced AI connected. Team slots: {self.state.team_slots}, World: {self.state.world_width}x{self.state.world_height}")
+            print(f"Enhanced AI connected successfully!")
             return True
         except Exception as e:
             print(f"Connection failed: {e}")
@@ -499,9 +482,6 @@ class ZappyAI:
                     position=Position(self.state.position.x, self.state.position.y),
                     direction=self.state.direction,
                     inventory=self.state.inventory.copy(),
-                    world_width=self.state.world_width,
-                    world_height=self.state.world_height,
-                    team_slots=self.state.team_slots,
                     food_units=self.state.food_units,
                     turn_count=self.state.turn_count
                 )
