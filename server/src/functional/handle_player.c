@@ -306,11 +306,14 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
         return 0;
     }
     if (strncmp(client_message, "Broadcast", 9) == 0) {
-        for (client_t *c = conf->clients; c != NULL; c = c->next) {
-            if (c->is_alive && c->fd != fd && !c->is_graphic) {
+        char *message = client_message + 10;
+
+        for (client_t *c = client; c != NULL; c = c->next) {
+            if (c != client) {
+                int direction_tile = calculate_direction_tile(client, c);
                 char broadcast_msg[512];
-                snprintf(broadcast_msg, sizeof(broadcast_msg), "message %d, %s\n",
-                         calculate_direction_tile(client, c), client_message + 10);
+                snprintf(broadcast_msg, sizeof(broadcast_msg), "message %d, %s\n", 
+                         direction_tile, message);
                 send(c->fd, broadcast_msg, strlen(broadcast_msg), 0);
             }
         }
