@@ -64,10 +64,7 @@ static int setup_server(int argc, char **argv, server_config_t *conf)
     if (alloc_map(conf) == 84)
         return 84;
     generate_map_resources(conf);
-    // conf->clients = calloc(MAX_CLIENTS, sizeof(client_t));
     conf->next_egg_id = 1;
-    // if (!conf->clients)
-    //     return 84;
     return 0;
 }
 
@@ -75,11 +72,8 @@ int main(int argc, char **argv)
 {
     server_config_t conf = {0};
     int server_fd;
-    // pthread_t tick_thread;
-    printf("avant setup_server\n");
     if (setup_server(argc, argv, &conf) == 84)
         return 84;
-    printf("apres setup_server\n");
 
     server_fd = create_server_socket(conf.port);
     if (server_fd < 0)
@@ -87,19 +81,8 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&conf.mutex, NULL);
     conf.running = 1;
-    // int err = pthread_create(&tick_thread, NULL, game_tick_thread, &conf);
-    // if (err != 0) {
-    //     printf("Erreur pthread_create: %d\n", err);
-    //     return 84;
-    // }
 
-    printf("Avant accept_clients_loop\n");
     accept_clients_loop(server_fd, &conf);
-    printf("Après accept_clients_loop\n");
-
-    // conf.running = 0;
-    // pthread_join(tick_thread, NULL);
-    // pthread_mutex_destroy(&conf.mutex);
 
     close(server_fd);
     free(conf.team_slots);

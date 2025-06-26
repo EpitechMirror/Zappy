@@ -116,11 +116,10 @@ server_config_t *conf, char *buffer)
         handle_auth(&ctx, buffer);
     } else if (client->state == AUTHENTICATED) {
         if (!client->is_graphic) {
-            // Démarre la game loop si pas encore lancée
             if (!conf->game_started) {
                 conf->game_started = true;
                 pthread_create(&conf->game_thread, NULL, game_tick_thread, conf);
-                printf("[DEBUG] Game loop started.\n");
+                // printf("[DEBUG] Game loop started.\n");
             }
             respond_to_server_fd(fd, conf, buffer, client);
         }

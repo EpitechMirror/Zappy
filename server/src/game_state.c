@@ -23,7 +23,6 @@ void periodic_resource_respawn(server_config_t *conf)
                 int y = rand() % conf->height;
                 int *tile_resources = (int *)&conf->map[y][x];
                 tile_resources[res]++;
-                // Notifie le GUI
                 send_tile_content_to_graphics(conf, x, y);
             }
         }
@@ -44,7 +43,6 @@ void send_tile_content_to_graphics(server_config_t *conf, int x, int y)
 
 void *game_tick_thread(void *arg)
 {
-    printf("coucou game \n");
     server_config_t *conf = (server_config_t *)arg;
     while (conf->running) {
         usleep(1000000 / conf->freq);
