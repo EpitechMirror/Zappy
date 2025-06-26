@@ -5,6 +5,7 @@
 ** handle_client_data
 */
 
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -270,6 +271,112 @@ int find_nb_teams(client_t *client)
     return team_count;
 }
 
+void set_object(client_t *client, server_config_t *conf, char *client_message, int fd)
+{
+    char *resource = client_message + 4;
+    tile_t *tile = &conf->map[client->y][client->x];
+
+    if (strcmp(resource, "linemate") == 0 && client->inventory.linemate > 0) {
+        tile->linemate++; client->inventory.linemate--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "deraumere") == 0 && client->inventory.deraumere > 0) {
+        tile->deraumere++; client->inventory.deraumere--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "sibur") == 0 && client->inventory.sibur > 0) {
+        tile->sibur++; client->inventory.sibur--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "mendiane") == 0 && client->inventory.mendiane > 0) {
+        tile->mendiane++; client->inventory.mendiane--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "phiras") == 0 && client->inventory.phiras > 0) {
+        tile->phiras++; client->inventory.phiras--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "thystame") == 0 && client->inventory.thystame > 0) {
+        tile->thystame++; client->inventory.thystame--; send(fd, "ok\n", 3, 0);
+    } else if (strcmp(resource, "food") == 0 && client->inventory.food > 0) {
+        tile->food++; client->inventory.food--; send(fd, "ok\n", 3, 0);
+    } else {
+        send(fd, "ko\n", 3, 0);
+    }
+    notify_graphics_player_update(client, conf);
+}
+
+// Elevation requirements table (level 1->2, 2->3, etc.)
+static const elevation_req_t elevation_requirements[] = {
+    {1, 1, 0, 0, 0, 0, 0},  // 1->2
+    {2, 1, 1, 1, 0, 0, 0},  // 2->3
+    {2, 2, 0, 1, 0, 2, 0},  // 3->4
+    {4, 1, 1, 2, 0, 1, 0},  // 4->5
+    {4, 1, 2, 1, 3, 0, 0},  // 5->6
+    {6, 1, 2, 3, 0, 1, 0},  // 6->7
+    {6, 2, 2, 2, 2, 2, 1}   // 7->8
+};
+
+int count_players_on_tile(server_config_t *conf, int x, int y, int level)
+{
+    int count = 0;
+    for (client_t *c = conf->clients; c != NULL; c = c->next) {
+        if (c->x == x && c->y == y && c->level == level) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int check_tile_resources(server_config_t *conf, int x, int y, const elevation_req_t *req)
+{
+    tile_t *tile = &conf->map[y][x];
+    
+    return (tile->linemate >= req->linemate &&
+            tile->deraumere >= req->deraumere &&
+            tile->sibur >= req->sibur &&
+            tile->mendiane >= req->mendiane &&
+            tile->phiras >= req->phiras &&
+            tile->thystame >= req->thystame);
+}
+
+void consume_tile_resources(server_config_t *conf, int x, int y, const elevation_req_t *req)
+{
+    tile_t *tile = &conf->map[y][x];
+    
+    tile->linemate -= req->linemate;
+    tile->deraumere -= req->deraumere;
+    tile->sibur -= req->sibur;
+    tile->mendiane -= req->mendiane;
+    tile->phiras -= req->phiras;
+    tile->thystame -= req->thystame;
+}
+
+void elevate_players_on_tile(server_config_t *conf, int x, int y, int level)
+{
+    for (client_t *c = conf->clients; c != NULL; c = c->next) {
+        if (c->x == x && c->y == y && c->level == level) {
+            c->level++;
+            notify_graphics_player_update(c, conf);
+            send(c->fd, "Current level: ", 15, 0);
+            char level_msg[32];
+            snprintf(level_msg, sizeof(level_msg), "%d\n", c->level);
+            send(c->fd, level_msg, strlen(level_msg), 0);
+        }
+    }
+}
+
+void handle_incantation(client_t *client, server_config_t *conf, int fd)
+{
+    if (client->level >= 8) {
+        send(fd, "ko\n", 3, 0);
+        return;
+    }
+    
+    const elevation_req_t *req = &elevation_requirements[client->level - 1];
+    int players_on_tile = count_players_on_tile(conf, client->x, client->y, client->level);
+    if (players_on_tile < req->nb_players) {
+        send(fd, "ko\n", 3, 0);
+        return;
+    }
+    if (!check_tile_resources(conf, client->x, client->y, req)) {
+        send(fd, "ko\n", 3, 0);
+        return;
+    }
+    consume_tile_resources(conf, client->x, client->y, req);
+    elevate_players_on_tile(conf, client->x, client->y, client->level);
+}
+
 int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
 {
     char inventory[256];
@@ -333,6 +440,28 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
         char response[32];
         snprintf(response, sizeof(response), "%d\n", conf->team_count * conf->clients_nb - find_nb_teams(client) + 1);
         send(fd, response, strlen(response), 0);
+        return 0;
+    }
+    if (strncmp(client_message, "Set", 3) == 0) {
+        set_object(client, conf, client_message, fd);
+        return 0;
+    }
+    if (strncmp(client_message, "Eject", 5) == 0) {
+        if (client->next != NULL) {
+            client_t *next_client = client->next;
+            next_client->x = client->x;
+            next_client->y = client->y;
+            next_client->direction = client->direction;
+            notify_graphics_player_update(next_client, conf);
+            send(next_client->fd, "ok\n", 3, 0);
+        } else {
+            send(fd, "ko\n", 3, 0);
+        }
+        send(fd, "ok\n", 3, 0);
+        return 0;
+    }
+    if (strncmp(client_message, "Incantation", 11) == 0) {
+        handle_incantation(client, conf, fd);
         return 0;
     }
     return 0;

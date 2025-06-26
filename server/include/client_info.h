@@ -49,5 +49,15 @@ typedef struct client_s {
     struct client_s *next;
 } client_t;
 
+typedef struct {
+    int nb_players;
+    int linemate;
+    int deraumere;
+    int sibur;
+    int mendiane;
+    int phiras;
+    int thystame;
+} elevation_req_t;
+
 
 #endif /* !CLIENT_INFO_H_ */
