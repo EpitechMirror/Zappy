@@ -101,6 +101,7 @@ void accept_clients_loop(int server_fd, server_config_t *conf)
             break;
         }
         poll_clients(&ctx);
+        execute_pending_commands(conf);
     }
     while (ctx.clients)
         remove_client(&ctx.clients, ctx.clients->fd);

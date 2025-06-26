@@ -54,6 +54,9 @@ void accept_clients_loop(int server_fd, server_config_t *conf);
 void *game_tick_thread(void *arg);
 double get_current_time(void);
 double get_command_delay(const char *cmd, server_config_t *conf);
+void execute_pending_commands(server_config_t *conf);
+void execute_command(client_t *client, server_config_t *conf, const char *cmd);
+egg_t *create_egg_fork(server_config_t *conf, client_t *client);
 
 void handle_graphic_auth(int fd, server_config_t *conf);
 egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y);

@@ -80,7 +80,8 @@ egg_t *create_egg_fork(server_config_t *conf, client_t *client)
         return NULL;
     egg->used = 1; // Mark as used
     add_egg_to_list(conf, egg);
-    send_enw(client->fd, egg, client->fd);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send_enw(conf->graphic_fds[i], egg, client->fd);
     return egg;
 }
 
