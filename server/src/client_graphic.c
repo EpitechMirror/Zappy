@@ -73,6 +73,7 @@ egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y)
 
 egg_t *create_egg_fork(server_config_t *conf, client_t *client)
 {
+    printf("fork to create an egg");
     egg_t *egg = create_egg(conf, client->team_idx, client->x, client->y);
 
     if (!egg)

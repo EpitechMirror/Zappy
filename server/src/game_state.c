@@ -70,17 +70,15 @@ int count_total_resource(server_config_t *conf, int resource_offset)
 
 void update_players_hunger(server_config_t *conf)
 {
-    printf("coucou j'ai faim\n");
     client_t *client = conf->clients;
     while (client) {
         if (!client->is_graphic && client->state == AUTHENTICATED && client->is_alive) {
             client->hunger_tick++;
-            printf("[DEBUG] fd=%d hunger_tick=%d food=%d\n", client->fd, client->hunger_tick, client->inventory.food);
             if (client->hunger_tick >= (126 * 100 / conf->freq)) {
                 client->hunger_tick = 0;
                 if (client->inventory.food > 0) {
                     client->inventory.food--;
-                    printf("[DEBUG] fd=%d food-- => %d\n", client->fd, client->inventory.food);
+                    pin_graphics(client, conf);
                 } else {
                     client->is_alive = false;
                     send(client->fd, "dead\n", 5, 0);
@@ -96,4 +94,3 @@ void update_players_hunger(server_config_t *conf)
         client = client->next;
     }
 }
-
