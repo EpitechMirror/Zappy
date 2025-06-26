@@ -627,21 +627,29 @@ void Renderer::gameLoop(Client &client) {
 
 void Renderer::DrawIncantations() {
     float time = GetTime();
+    const int segments = 16;
+    const float yLevel = 0.15f;
+    const float thickness = 0.07f;
 
     for (const auto& inc : _map.getActiveIncantations()) {
-        float centerX = inc.x * TILE_SIZE + TILE_SIZE / 2.0f;
-        float centerZ = inc.y * TILE_SIZE + TILE_SIZE / 2.0f; // Note: passage en coordonnées 3D (X,Z)
-        float radius = TILE_SIZE / 2.0f + 5.0f * std::sin(time * 3);
-        Color color = PURPLE;
+        float centerX = inc.x * 1.0f + 0.5f;
+        float centerZ = inc.y * 1.0f + 0.5f;
+        float radius = 0.5f + 0.2f * std::sin(time * 3);
+        Color color = GREEN;
 
-        //DrawRing3D(
-        //    (Vector3){ centerX, 0.1f, centerZ }, // Position (Y légèrement élevé)
-        //    radius - 0.5f, // Rayon intérieur
-        //    radius + 0.5f, // Rayon extérieur
-        //    0, 360, // Angles
-        //    16, // Segments
-        //    color
-        //);
+        for (int i = 0; i < segments; i++) {
+            float angle1 = 2 * PI * i / segments;
+            float angle2 = 2 * PI * (i + 1) / segments;
+
+            // Suppression des variables inutilisées `start` et `end`
+            for (float t = -thickness; t <= thickness; t += thickness / 2.0f) {
+                float r1 = radius + t;
+                float r2 = radius + t;
+                Vector3 s = {centerX + r1 * cos(angle1), yLevel, centerZ + r1 * sin(angle1)};
+                Vector3 e = {centerX + r2 * cos(angle2), yLevel, centerZ + r2 * sin(angle2)};
+                DrawLine3D(s, e, color);
+            }
+        }
     }
 }
 
