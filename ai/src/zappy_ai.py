@@ -6,12 +6,12 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Tue Jun 10 12:46:14 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 1:36:54 PM 2025 adrien.marette@epitech.eu
+## Last update Sat Jun 20 9:50:06 AM 2025 adrien.marette@epitech.eu
 ##
 
 import sys
 import argparse
-from ZappyAI import ZappyAI
+from main_ai import ZappyAI
 
 def helper():
     print("🤖 Enhanced Zappy AI with Neural Networks and Learning")
@@ -33,7 +33,7 @@ def helper():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Enhanced Zappy AI Client with Neural Networks")
+    parser = argparse.ArgumentParser(description="Zappy AI Client with Neural Networks")
     parser.add_argument("-p", "--port", type=int, required=True, help="Port number")
     parser.add_argument("-n", "--name", type=str, required=True, help="Team name")
     parser.add_argument("-H", "--hostname", type=str, default="localhost", help="Server hostname")
@@ -45,7 +45,7 @@ def main():
 
     args = parser.parse_args()
 
-    print("🎮 Initializing Enhanced Zappy AI...")
+    print("🎮 Initializing Zappy AI...")
     print(f"🌐 Connecting to {args.hostname}:{args.port}")
     print(f"👥 Team: {args.name}")
     

@@ -15,6 +15,8 @@
 #include <functional>
 #include <sstream>
 #include "../map/Map.hpp"
+#include "../player/Player.hpp"
+#include <iostream>
 
 class ProtocolHandler {
 public:
@@ -42,6 +44,13 @@ private:
     void handlePlv(std::istringstream &iss);
     void handlePin(std::istringstream &iss);
     void handlePdi(std::istringstream &iss);
+    void handlePgt(std::istringstream &iss);
+    void handlePdr(std::istringstream &iss);
+    void handlePfk(std::istringstream &iss);
+
+    void handleSmg(std::istringstream &iss);
+    void handleSuc(std::istringstream &iss);
+    void handleSbp(std::istringstream &iss);
 };
 
 

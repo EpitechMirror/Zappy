@@ -38,6 +38,7 @@ typedef struct server_config_s {
     int *team_slots;
     struct tile_s **map;
     struct client_s *clients;
+    int next_egg_id;
     int graphic_fds[MAX_GRAPHICS];
     int nb_graphics;
 } server_config_t;

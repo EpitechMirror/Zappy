@@ -1,11 +1,11 @@
 ##
-## ai.py for Zappy in /home/adrien/Epitech/B-YEP-410/Zappy/ai/src
+## main_ai.py for Zappy in /home/adrien/Epitech/B-YEP-410/Zappy/ai/src
 ##
 ## Made by adrien.marette@epitech.eu
 ## Login   <adrien.marette@epitech.eu>
 ##
-## Started on  Tue Jun 10 1:22:09 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 1:37:11 PM 2025 adrien.marette@epitech.eu
+## Started on  Wed Jun 25 11:39:38 AM 2025 adrien.marette@epitech.eu
+## Last update Thu Jun 25 11:39:51 AM 2025 adrien.marette@epitech.eu
 ##
 
 import json
@@ -76,15 +76,8 @@ class ZappyAI:
                 raise Exception(f"Expected WELCOME, got: {welcome}")
 
             self.send_message(self.team_name)
-            client_num = self.receive_message()
-            world_dims = self.receive_message()
 
-            self.state.team_slots = int(client_num)
-            dims = world_dims.split()
-            self.state.world_width = int(dims[0])
-            self.state.world_height = int(dims[1])
-
-            print(f"Enhanced AI connected. Team slots: {self.state.team_slots}, World: {self.state.world_width}x{self.state.world_height}")
+            print(f"Enhanced AI connected successfully!")
             return True
         except Exception as e:
             print(f"Connection failed: {e}")
@@ -280,50 +273,60 @@ class ZappyAI:
         if not self.learning_enabled:
             return
         
-        # Add to memory
-        self.memory.add_experience(experience)
-        
-        # Train neural network
-        state = experience.state.reshape(1, -1)
-        target = experience.reward
-        if not experience.done:
-            # Q-learning update
-            next_q_values = self.neural_network.predict(experience.next_state.reshape(1, -1))
-            target += 0.95 * np.max(next_q_values)  # Discount factor = 0.95
-        
-        # Update Q-values
-        current_q_values = self.neural_network.predict(state)
-        current_q_values[0][experience.action] = target
-        
-        # Train the network
-        loss = self.neural_network.train(state, current_q_values)
-        
-        # Update performance metrics
-        self.performance_metrics['total_rewards'] += experience.reward
-        self.reward_history.append(experience.reward)
+        try:
+            # Add to memory
+            self.memory.add_experience(experience)
+            
+            # Train neural network
+            state = experience.state.reshape(1, -1)
+            target = experience.reward
+            if not experience.done:
+                # Q-learning update
+                next_q_values = self.neural_network.predict(experience.next_state.reshape(1, -1))
+                target += 0.95 * np.max(next_q_values)  # Discount factor = 0.95
+            
+            # Update Q-values
+            current_q_values = self.neural_network.predict(state)
+            current_q_values[0][experience.action] = target
+            
+            # Train the network
+            loss = self.neural_network.train(state, current_q_values)
+            
+            # Update performance metrics
+            self.performance_metrics['total_rewards'] += experience.reward
+            self.reward_history.append(experience.reward)
+            
+        except Exception as e:
+            print(f"Learning error: {e}")
     
     def batch_learning(self):
         """Perform batch learning from memory"""
         if len(self.memory.experiences) < 32:
             return
         
-        batch = self.memory.get_batch(32)
-        states = np.array([exp.state for exp in batch])
-        targets = []
-        
-        for exp in batch:
-            target = exp.reward
-            if not exp.done:
-                next_q_values = self.neural_network.predict(exp.next_state.reshape(1, -1))
-                target += 0.95 * np.max(next_q_values)
-            targets.append(target)
-        
-        # Batch training
-        current_q_values = self.neural_network.predict(states)
-        for i, exp in enumerate(batch):
-            current_q_values[i][exp.action] = targets[i]
-        
-        self.neural_network.train(states, current_q_values)
+        try:
+            batch = self.memory.get_batch(32)
+            states = np.array([exp.state for exp in batch])
+            targets = np.zeros((len(batch), len(ActionType)))
+            
+            # Get current Q-values for all states in batch
+            current_q_values = self.neural_network.predict(states)
+            
+            for i, exp in enumerate(batch):
+                target = exp.reward
+                if not exp.done:
+                    next_q_values = self.neural_network.predict(exp.next_state.reshape(1, -1))
+                    target += 0.95 * np.max(next_q_values)
+                
+                # Copy current Q-values and update only the taken action
+                targets[i] = current_q_values[i].copy()
+                targets[i][exp.action] = target
+            
+            # Batch training
+            self.neural_network.train(states, targets)
+            
+        except Exception as e:
+            print(f"Batch learning error: {e}")
     
     def process_response(self, response: str, previous_state: GameState, action: ActionType) -> bool:
         """Process server response and learn"""
@@ -479,9 +482,6 @@ class ZappyAI:
                     position=Position(self.state.position.x, self.state.position.y),
                     direction=self.state.direction,
                     inventory=self.state.inventory.copy(),
-                    world_width=self.state.world_width,
-                    world_height=self.state.world_height,
-                    team_slots=self.state.team_slots,
                     food_units=self.state.food_units,
                     turn_count=self.state.turn_count
                 )

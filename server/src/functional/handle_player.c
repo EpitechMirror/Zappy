@@ -146,7 +146,7 @@ void add_players_to_tile(server_config_t *conf, int x, int y, char *buffer, int 
     buffer[buffer_size - 1] = '\0';
 }
 
-void get_look_coordinates(client_t *client, int distance, int side_offset, int *x, int *y)
+void get_look_coordinates(client_t *client, int distance, int side_offset, int *x, int *y, server_config_t *conf)
 {
     *x = client->x;
     *y = client->y;
@@ -169,6 +169,8 @@ void get_look_coordinates(client_t *client, int distance, int side_offset, int *
             *y -= side_offset;
             break;
     }
+    *x = (*x + conf->width) % conf->width;
+    *y = (*y + conf->height) % conf->height;
 }
 
 void look_around(client_t *client, server_config_t *conf)
@@ -183,7 +185,7 @@ void look_around(client_t *client, server_config_t *conf)
         for (int i = 0; i < tiles_at_distance; i++) {
             int side_offset = start_offset + i;
             int x, y;
-            get_look_coordinates(client, distance, side_offset, &x, &y);
+            get_look_coordinates(client, distance, side_offset, &x, &y, conf);
             get_tile_content_string(conf, x, y, tile_content, sizeof(tile_content));
             add_players_to_tile(conf, x, y, tile_content, sizeof(tile_content), client);
             if (strlen(response) > 1) {
@@ -209,23 +211,76 @@ void move_player(client_t *client, server_config_t *conf, direction_t direction)
         move_functions[direction](client, conf);
 }
 
+int calculate_direction_tile(client_t *sender, client_t *receiver)
+{
+    int dx = sender->x - receiver->x;
+    int dy = sender->y - receiver->y;
+
+    if (dx == 0 && dy == 0)
+        return 0;
+
+    if (dy < 0) {
+        if (dx < 0) return 1; // North-East
+        if (dx == 0) return 2; // North
+        return 3; // North-West
+    } else if (dy == 0) {
+        if (dx < 0) return 8; // East
+        return 4; // West
+    } else {
+        if (dx < 0) return 7; // South-East
+        if (dx == 0) return 6; // South
+        return 5; // South-West
+    }
+}
+
+void notify_graphics_player_update(client_t *player, server_config_t *conf)
+{
+    char msg[128];
+    // ppo
+    snprintf(msg, sizeof(msg), "ppo #%d %d %d %d\n", player->fd, player->x, player->y, player->direction + 1);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
+
+    // plv
+    snprintf(msg, sizeof(msg), "plv #%d %d\n", player->fd, player->level);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
+
+    // pin
+    snprintf(msg, sizeof(msg), "pin #%d %d %d %d %d %d %d %d %d %d\n",
+        player->fd, player->x, player->y,
+        player->inventory.food,
+        player->inventory.linemate,
+        player->inventory.deraumere,
+        player->inventory.sibur,
+        player->inventory.mendiane,
+        player->inventory.phiras,
+        player->inventory.thystame
+    );
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
+}
+
 int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
 {
     char inventory[256];
 
     if (strncmp(client_message, "Forward", 7) == 0) {
-        move_player(client, conf, client->direction);
-        send(fd, "ok\n", 3, 0);
-        return 0;
+    move_player(client, conf, client->direction);
+    send(fd, "ok\n", 3, 0);
+    notify_graphics_player_update(client, conf);
+    return 0;
     }
     if (strncmp(client_message, "Right", 5) == 0) {
         client->direction = (client->direction + 1) % 4;
         send(fd, "ok\n", 3, 0);
+        notify_graphics_player_update(client, conf);
         return 0;
     }
     if (strncmp(client_message, "Left", 4) == 0) {
         client->direction = (client->direction + 3) % 4;
         send(fd, "ok\n", 3, 0);
+        notify_graphics_player_update(client, conf);
         return 0;
     }
     if (strncmp(client_message, "Inventory", 9) == 0) {
@@ -248,6 +303,18 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
     }
     if (strncmp(client_message, "Look", 4) == 0) {
         look_around(client, conf);
+        return 0;
+    }
+    if (strncmp(client_message, "Broadcast", 9) == 0) {
+        for (client_t *c = conf->clients; c != NULL; c = c->next) {
+            if (c->is_alive && c->fd != fd && !c->is_graphic) {
+                char broadcast_msg[512];
+                snprintf(broadcast_msg, sizeof(broadcast_msg), "message %d, %s\n",
+                         calculate_direction_tile(client, c), client_message + 10);
+                send(c->fd, broadcast_msg, strlen(broadcast_msg), 0);
+            }
+        }
+        send(fd, "ok\n", 3, 0);
         return 0;
     }
     return 0;

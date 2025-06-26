@@ -30,35 +30,9 @@ static int find_team_index(server_config_t *conf, const char *team_name)
     return -1;
 }
 
-static void send_auth_success(int fd, server_config_t *conf)
-{
-    char msg[64];
-
-    snprintf(msg, sizeof(msg), "%d\n", conf->clients_nb);
-    send(fd, msg, strlen(msg), 0);
-    snprintf(msg, sizeof(msg), "%d %d\n", conf->width, conf->height);
-    send(fd, msg, strlen(msg), 0);
-}
-
-static int count_team_members(client_t *clients, const char *team_name)
-{
-    int count = 0;
-
-    while (clients) {
-        if (clients->team_name &&
-            strcmp(clients->team_name, team_name) == 0 &&
-            !clients->is_graphic)
-            count++;
-        clients = clients->next;
-    }
-    return count;
-}
-
-
-void send_pnw_to_graphics(client_t *clients, client_t *player, server_config_t *conf)
+void send_pnw_to_graphics(client_t *player, server_config_t *conf)
 {
     char msg[256];
-    client_t *tmp = clients;
 
     snprintf(msg, sizeof(msg), "pnw #%d %d %d %d %d %s\n",
         player->fd, player->x, player->y, player->direction + 1, player->level, player->team_name);
@@ -67,10 +41,9 @@ void send_pnw_to_graphics(client_t *clients, client_t *player, server_config_t *
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
-void send_ebo_to_graphics(client_t *clients, int egg_id, server_config_t *conf)
+void send_ebo_to_graphics(int egg_id, server_config_t *conf)
 {
     char msg[64];
-    client_t *tmp = clients;
 
     snprintf(msg, sizeof(msg), "ebo #%d\n", egg_id);
     for (int i = 0; i < conf->nb_graphics; i++)
@@ -106,11 +79,8 @@ static void handle_player_auth(client_t *client, int fd,
         client->level = 1;
         client->team_name = strdup(team);
 
-        send_pnw_to_graphics(conf->clients, client, conf);
-        send_ebo_to_graphics(conf->clients, egg->id, conf);
-
-        // printf("[DEBUG] Nouveau joueur connecté : fd=%d, team=%s, pos=(%d,%d), orientation=%d, level=%d, egg=%d\n",
-        //     client->fd, client->team_name, client->x, client->y, client->direction, client->level, egg->id);
+        send_pnw_to_graphics(client, conf);
+        send_ebo_to_graphics(egg->id, conf);
     }
 }
 
@@ -121,7 +91,7 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
         ctx->client->is_graphic = true;
         ctx->client->state = AUTHENTICATED;
         ctx->conf->graphic_fds[ctx->conf->nb_graphics++] = ctx->client->fd;
-        handle_graphic_auth(ctx->client, ctx->client->fd, ctx->conf);
+        handle_graphic_auth(ctx->client->fd, ctx->conf);
         return true;
     }
     handle_player_auth(ctx->client, ctx->client->fd, ctx->conf, buffer);
@@ -129,14 +99,17 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
 }
 
 static bool process_client_request(client_t *client, int fd,
-    server_config_t *conf, char *buffer)
+server_config_t *conf, char *buffer)
 {
     auth_context_t ctx = {&conf->clients, client, conf};
-
-    if (client->is_graphic == false)
-        respond_to_server_fd(fd, conf, buffer, client);
-    if (client->state == WAITING_NAME)
+    
+    if (client->state == WAITING_NAME) {
         handle_auth(&ctx, buffer);
+    } else if (client->state == AUTHENTICATED) {
+        if (client->is_graphic == false)
+            respond_to_server_fd(fd, conf, buffer, client);
+    }
+    
     return false;
 }
 

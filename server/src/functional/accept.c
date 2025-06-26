@@ -7,26 +7,6 @@
 
 #include "server.h"
 
-static void add_last_client_fd(struct pollfd *fds, client_t *clients,
-    int *client_count)
-{
-    client_t *last = clients;
-    int i = 0;
-
-    while (last && last->next)
-        last = last->next;
-    if (!last)
-        return;
-    for (i = 0; i < *client_count; i++) {
-        if (fds[i].fd == last->fd)
-            return;
-    }
-    fds[*client_count].fd = last->fd;
-    fds[*client_count].events = POLLIN;
-    fds[*client_count].revents = 0;
-    (*client_count)++;
-    printf("coucou Ajout du fd %d au tableau fds[]\n", last->fd);
-}
 
 static void handle_server_connection(poll_context_t *ctx)
 {

@@ -64,6 +64,7 @@ static int setup_server(int argc, char **argv, server_config_t *conf)
         return 84;
     generate_map_resources(conf);
     conf->clients = calloc(MAX_CLIENTS, sizeof(client_t));
+    conf->next_egg_id = 1;
     if (!conf->clients)
         return 84;
     return 0;

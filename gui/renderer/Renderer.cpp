@@ -8,44 +8,18 @@
 #include "Renderer.hpp"
 
 Renderer::Renderer(int width, int height, const Map &map)
-    : _mainMusic({}), 
+    : 
+      _assets(map.getWidth(), map.getHeight()),
       _screenWidth(width),
       _screenHeight(height),
       _map(map),
       _cameraController(map.getWidth(), map.getHeight()),
-      _floorModel({}),
-      _playerModel({}),
-      _mapInitialized(false)
+      _mapInitialized(false),
+      _disconnectTimer(0.0f)
 {}
 
-void Renderer::loadModels() {
-    float cellSize = 1.0f;
-    float roomWidth = _map.getWidth() * cellSize;
-    float roomDepth = _map.getHeight() * cellSize;
-    float roomHeight = 4.0f;
-    float wallThickness = 0.2f;
-
-    _floorModel = LoadModel("../resources/models/plane.glb");
-    _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
-    _wallLong = LoadModelFromMesh(GenMeshCube(roomWidth + wallThickness, roomHeight, wallThickness));
-    _wallShort = LoadModelFromMesh(GenMeshCube(wallThickness, roomHeight, roomDepth + wallThickness));
-    _toyFont = LoadFont("resources/fonts/Woody.ttf");
-}
-
-void Renderer::unloadModels() {
-    UnloadModel(_floorModel);
-    UnloadModel(_playerModel);
-    UnloadModel(_wallShort);
-    UnloadModel(_wallLong);
-    UnloadFont(_toyFont);
-}
-
-void Renderer::loadShaders() {
-    _shaders.loadPBR();
-}
-
-void Renderer::unloadShaders() {
-    _shaders.unloadAll();
+float Renderer::getDesktopY() {
+    return 0.0f;
 }
 
 void Renderer::drawRoomAndy() {
@@ -55,104 +29,22 @@ void Renderer::drawRoomAndy() {
 
     float roomWidth = width * cellSize;
     float roomDepth = height * cellSize;
-    float roomHeight = 4.0f;
-    float wallThickness = 0.2f;
 
-    // Mur du fond (z = 0)
-    DrawModel(_wallLong, {roomWidth/2, roomHeight/2, -wallThickness/2}, 1.0f, WHITE);
-    // Mur devant (z = roomDepth)
-    DrawModel(_wallLong, {roomWidth/2, roomHeight/2, roomDepth + wallThickness/2}, 1.0f, WHITE);
-    // Mur gauche (x = 0)
-    DrawModel(_wallShort, {-wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
-    // Mur droite (x = roomWidth)
-    DrawModel(_wallShort, {roomWidth + wallThickness/2, roomHeight/2, roomDepth/2}, 1.0f, WHITE);
-}
-
-void Renderer::loadTextures() {
-    //Ici on charge les textures (sol)
-    Texture2D floorAlbedo = LoadTexture("../resources/textures/wood_8.jpg");
-    GenTextureMipmaps(&floorAlbedo);
-    SetTextureFilter(floorAlbedo, TEXTURE_FILTER_ANISOTROPIC_16X);
-    
-    // Et on les associe au modèle concerné (ici le sol)
-    for (int i = 0; i < _floorModel.materialCount; ++i) {
-        _floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
-    }
-    
-    
-    //texture joueur (lampe)
-    Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
-    Texture2D lampNormal = LoadTexture("../resources/models/pixar_lamp/PixarLamp_normal.jpeg");
-    Texture2D lampMRA = LoadTexture("../resources/models/pixar_lamp/PixarLamp_metallicRoughness.jpeg");
-    Texture2D lampEmissive = LoadTexture("../resources/models/pixar_lamp/PixarLamp_emissive.jpeg");
-    
-    //associé au modèle joueur (si on a plusieurs textures on fait une boucle)
-    for (int i = 0; i < _playerModel.materialCount; ++i) {
-        _playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = lampAlbedo;
-        _playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = lampNormal;
-        _playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = lampMRA;
-        _playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = lampEmissive;
-    }
-    
-    
-    Texture2D wallTex = LoadTexture("../resources/room_andy/textures/wallpaper.jpg");
-    _wallLong.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
-    _wallShort.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
-}
-
-void Renderer::loadAudio() {
-    InitAudioDevice();  
-    _mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
-    //_loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
-    _mainMusic.looping = true;
-    //_loadingMusic.looping = true;
-    PlayMusicStream(_mainMusic);
-}
-
-void Renderer::unloadAudio() {
-    StopMusicStream(_mainMusic);
-    UnloadMusicStream(_mainMusic);
-    CloseAudioDevice();
-}
-
-void Renderer::unloadTextures() {
-    // Libère les textures du sol
-    for (int i = 0; i < _floorModel.materialCount; ++i) {
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
-    }
-    // Libère les textures du joueur
-    for (int i = 0; i < _playerModel.materialCount; ++i) {
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
-    }
-
-    for (int i = 0; i < _wallLong.materialCount; ++i) {
-        UnloadTexture(_wallLong.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-    }
-
-    for (int i = 0; i < _wallShort.materialCount; ++i) {
-        UnloadTexture(_wallShort.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-    }
-}
-
-void Renderer::applyShaders() {
-    // Ici on applique les shaders aux modèles
-    Shader& pbr = _shaders.getPBR();
-    for (int i = 0; i < _floorModel.materialCount; ++i)
-    _floorModel.materials[i].shader = pbr;
-    
-    // PLusieurs textures donc on applique les shaders pour chacune d'elles
-    for (int i = 0; i < _playerModel.materialCount; ++i)
-    _playerModel.materials[i].shader = pbr;
+    rlPushMatrix();
+        rlTranslatef(roomWidth/2, 0.0f, roomDepth/2);
+        
+        float scaleX = roomWidth / 0.5f;
+        float scaleZ = roomDepth / 1.0f;
+        float scaleY = 1.0f;
+        
+        rlScalef(scaleX, scaleY, scaleZ);
+        
+        DrawModel(_assets.deskModel, {0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+    rlPopMatrix();
 }
 
 void Renderer::initLights() {
-    Shader& pbr = _shaders.getPBR();
+    Shader& pbr = _assets.shaders.getPBR();
     _lights.clear();
     _lights.push_back(Light(LIGHT_POINT, { -1.0f, 1.0f, -2.0f }, { 0, 0, 0 }, YELLOW, 4.0f, pbr, 0));
     _lights.push_back(Light(LIGHT_POINT, { 2.0f, 1.0f, 1.0f }, { 0, 0, 0 }, GREEN, 3.3f, pbr, 1));
@@ -192,7 +84,7 @@ void Renderer::drawItems() {
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
                     
-                    float posY = 0.2f + (q * 0.01f);
+                    float posY = 0.05f + (q * 0.01f);
                     
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
@@ -222,24 +114,27 @@ Color Renderer::getColorForResource(ResourceType type) {
     }
 }
 
-void Renderer::drawFloor() {
-    float cellSize = 1.0f;
-    int width = _map.getWidth();
-    int height = _map.getHeight();
+// void Renderer::drawFloor() {
+//     float cellSize = 1.0f;
+//     int width = _map.getWidth();
+//     int height = _map.getHeight();
 
-    Shader& pbr = _shaders.getPBR();
-    int tilingLoc = GetShaderLocation(pbr, "tiling");
-    Vector2 tiling = {0.5f, 0.5f};
-    SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+//     // pour placer en fonction du bureau
+//     float deskTopY = getDesktopY();
 
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            Vector3 pos = { x * cellSize + cellSize/2, 0.0f, y * cellSize + cellSize/2 };
-            DrawModel(_floorModel, pos, cellSize, WHITE);
-        }
-    }
-    _mapInitialized = true;
-}
+//     Shader& pbr = _assets.shaders.getPBR();
+//     int tilingLoc = GetShaderLocation(pbr, "tiling");
+//     Vector2 tiling = {0.5f, 0.5f};
+//     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+
+//     for (int x = 0; x < width; ++x) {
+//         for (int y = 0; y < height; ++y) {
+//             Vector3 pos = { x * cellSize + cellSize/2, deskTopY, y * cellSize + cellSize/2 };
+//             DrawModel(_assets.floorModel, pos, cellSize, WHITE);
+//         }
+//     }
+//     _mapInitialized = true;
+// }
 
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
@@ -266,7 +161,7 @@ void Renderer::showLoadingScreen(const std::string &message) {
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
             float spacing = 5.0f;
-            Vector2 logoTextSize = MeasureTextEx(_toyFont, logo, sizeLogo, spacing);
+            Vector2 logoTextSize = MeasureTextEx(_assets.toyFont, logo, sizeLogo, spacing);
             float correction = spacing * 2.0f;
             Vector2 logoPos;
             logoPos.x = (_screenWidth - logoTextSize.x + correction) / 3.4f;
@@ -277,10 +172,10 @@ void Renderer::showLoadingScreen(const std::string &message) {
                 for (int dy = -3; dy <= 3; dy += 3) {
                     if (dx == 0 && dy == 0) continue;
                     Vector2 offsetPos = { logoPos.x + dx, logoPos.y + dy };
-                    DrawTextEx(_toyFont, logo, offsetPos, sizeLogo, spacing, outline);
+                    DrawTextEx(_assets.toyFont, logo, offsetPos, sizeLogo, spacing, outline);
                 }
             }
-            DrawTextEx(_toyFont, logo, logoPos, sizeLogo, spacing, YELLOW);
+            DrawTextEx(_assets.toyFont, logo, logoPos, sizeLogo, spacing, YELLOW);
 
             // === Texte Loading animé ===
             int loadingFontSize = 40;
@@ -323,60 +218,17 @@ void Renderer::showLoadingScreen(const std::string &message) {
     }
 }
 
-void Renderer::gameLoop(Client &client) {
-    if (!_mapInitialized) {
-        showLoadingScreen("Loading...");
-    }
-
-    //on init tout (a mettre dans une fonction init et meme dnas les classes associées)
-    loadModels();
-    loadTextures();
-    loadShaders();
-    applyShaders();
-    loadAudio();
-    initLights();
-
-    while (!WindowShouldClose()) {
-        client.update();
-        
-        _cameraController.update();
-        for (auto& l : _lights)
-            l.updateShader(_shaders.getPBR());
-
-        UpdateMusicStream(_mainMusic);
-
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            handleMouseClick();
-        }
-
-        BeginDrawing();
-            ClearBackground(BLACK);
-
-            BeginMode3D(_cameraController.getCamera());
-                drawFloor();
-                drawRoomAndy();
-                DrawGrid();
-                drawItems();
-                DrawEggs();
-                DrawPlayers();
-            EndMode3D();
-
-            InfoItemsBoard();
-            InfoTeamsBoard();
-            InfoPlayersBoard();
-            InfoBoxBoard();
-        EndDrawing();
-    }
-}
-
 void Renderer::DrawPlayers() {
     const auto& players = _map.getPlayers();
+
     float cellSize = 1.0f;
+
+    float deskTopY = getDesktopY();
 
     for (const Player& p : players) {
         float px = p.getPosition().x * cellSize + cellSize/2;
         float pz = p.getPosition().z * cellSize + cellSize/2;
-        float py = 0.0f;
+        float py = deskTopY;
 
         float yaw = 0;
         switch (p.getOrientation()) {
@@ -408,7 +260,7 @@ void Renderer::DrawPlayers() {
             rlRotatef(yaw,   0.0f, 1.0f, 0.0f);
             rlScalef(scale, scale, scale);
 
-            DrawModel(_playerModel, { 0.0f, 0.0f, 0.0f }, 1.0f, teamColor);
+            DrawModel(_assets.playerModel, { 0.0f, 0.0f, 0.0f }, 1.0f, teamColor);
         rlPopMatrix();
     }
 }
@@ -594,7 +446,8 @@ void Renderer::InfoBoxBoard() {
     int contentLines = 1;
 
     std::vector<std::pair<std::string, Color>> resourceLines;
-
+    std::string clickText = "Click on a box";
+ 
     if (_selectedTile) {
         int tx = static_cast<int>(_selectedTile->x);
         int ty = static_cast<int>(_selectedTile->y);
@@ -644,6 +497,7 @@ void Renderer::InfoBoxBoard() {
         
         contentLines += resourceLines.size();
     } else {
+        maxWidth = std::max(maxWidth, MeasureText(clickText.c_str(), titleSize));
         contentLines++;
     }
 
@@ -653,11 +507,9 @@ void Renderer::InfoBoxBoard() {
     const std::vector<std::string>& teamNames = Player::getTeamNames();
     int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
     
-    // Calculer la position Y de InfoPlayersBoard
     int playersBoxY = 10 + teamsBoxHeight + 10;
     int playersBoxHeight = 0;
     
-    // Calculer la hauteur réelle de InfoPlayersBoard
     if (_selectedPlayerId) {
         const Player* selectedPlayer = nullptr;
         for (const Player& p : _map.getPlayers()) {
@@ -668,7 +520,7 @@ void Renderer::InfoBoxBoard() {
         }
         
         if (selectedPlayer) {
-            int lines = 5; // Level, Team, Position, Orientation, "Inventory:"
+            int lines = 5;
             const int* inventory = selectedPlayer->getInventory();
             if (inventory) {
                 for (int i = 0; i < 7; i++) {
@@ -677,13 +529,12 @@ void Renderer::InfoBoxBoard() {
             }
             playersBoxHeight = (1 + lines) * lineSpacing + 2 * padding;
         } else {
-            playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding; // Titre + "Click on a player"
+            playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding;
         }
     } else {
-        playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding; // Titre + "Click on a player"
+        playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding;
     }
 
-    // Positionner en dessous de InfoPlayersBoard
     int boxX = _screenWidth - boxWidth - 10;
     int boxY = playersBoxY + playersBoxHeight + 10;
 
@@ -702,24 +553,122 @@ void Renderer::InfoBoxBoard() {
             y += lineSpacing;
         }
     } else {
-        DrawText(" ", x, y, titleSize, DARKGRAY);
+        DrawText(clickText.c_str(), x, y, titleSize, DARKGRAY);
     }
 }
 
+void Renderer::gameLoop(Client &client) {
+    _assets.loadFonts();
+    _assets.loadAudio();
+    if (!_mapInitialized) {
+        showLoadingScreen("Loading...");
+    }
+
+    _assets.loadAllResources();
+    _assets.applyShaders();
+    initLights();
+
+    while (!WindowShouldClose()) {
+        bool wasConnected = client.isConnected();
+        client.update();
+        bool isConnected = client.isConnected();
+        
+        if (wasConnected && !isConnected) {
+            notifyServerDisconnect();
+            disconnected = true;
+        }
+
+        if (_disconnectTimer > 0) {
+            _disconnectTimer -= GetFrameTime();
+        }
+
+        _cameraController.update();
+        for (auto& l : _lights)
+            l.updateShader(_assets.shaders.getPBR());
+
+        UpdateMusicStream(_assets.mainMusic);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            handleMouseClick();
+        }
+
+        BeginDrawing();
+            ClearBackground(BLACK);
+
+            BeginMode3D(_cameraController.getCamera());
+               // drawFloor();
+                drawRoomAndy();
+                DrawGrid();
+                drawItems();
+                DrawEggs();
+                DrawPlayers();
+                DrawSelectionMarkers();
+            EndMode3D();
+
+            InfoItemsBoard();
+            InfoTeamsBoard();
+            InfoPlayersBoard();
+            InfoBoxBoard();
+            
+            if (_disconnectTimer > 0) {
+                handleServerDisconnect();
+            }
+        EndDrawing();
+    }
+}
+
+void Renderer::handleServerDisconnect() {
+    static float slideOffset = 0.0f;
+    float targetOffset = (_disconnectTimer > 0) ? 0.0f : 50.0f;
+    slideOffset = Lerp(slideOffset, targetOffset, 0.2f);
+
+    const char* text = "Server disconnected";
+    const float width = MeasureText(text, 20) + 40;
+    const float height = 30.0f;
+    const float posX = (_screenWidth - width) / 2.0f;
+    const float posY = _screenHeight - height - slideOffset;
+
+    DrawRectangleRounded(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10,
+        Fade(MAROON, 0.7f)
+    );
+
+    DrawRectangleRoundedLines(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10, RED);
+
+    DrawText(
+        text,
+        static_cast<int>(posX + (width - MeasureText(text, 20)) / 2),
+        static_cast<int>(posY + 5),
+        20,
+        WHITE
+    );
+}
+
+void Renderer::notifyServerDisconnect() {
+    _disconnectTimer = 5.0f;
+}
+
 void Renderer::DrawGrid() {
+    float cellSize = 1.0f;
     int width = _map.getWidth();
     int height = _map.getHeight();
-    float cellSize = 1.0f;
+
+    float yPos = 0.01f;
 
     for (int x = 0; x <= width; x++) {
-        Vector3 start = { x * cellSize, 0.0f, 0.0f };
-        Vector3 end = { x * cellSize, 0.0f, height * cellSize };
+        Vector3 start = { x * cellSize, yPos, 0.0f };
+        Vector3 end = { x * cellSize, yPos, height * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 
     for (int z = 0; z <= height; z++) {
-        Vector3 start = { 0.0f, 0.0f, z * cellSize };
-        Vector3 end = { width * cellSize, 0.0f, z * cellSize };
+        Vector3 start = { 0.0f, yPos, z * cellSize };
+        Vector3 end = { width * cellSize, yPos, z * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 }
@@ -729,21 +678,49 @@ void Renderer::renderWindow(Client &client) {
     InitWindow(_screenWidth, _screenHeight, "WOODY GUI");
     SetTargetFPS(60);
 
-    gameLoop(client);
+    try {
+        gameLoop(client);
+    } catch (...) {
+        // Handle any exceptions that may occur during the game loop
+        TraceLog(LOG_ERROR, "An error occurred during the game loop.");
+    }
 
-    unloadTextures();
-    unloadModels();
-    unloadShaders();
-    unloadAudio();
-
+    _assets.unloadAllResources();
+    
     CloseWindow();
     client.disconnect();
 }
 
 void Renderer::handleMouseClick() {
     Ray ray = GetMouseRay(GetMousePosition(), _cameraController.getCamera());
-    _selectedTile.reset();
-    _selectedPlayerId.reset();
+
+    // Player
+    for (const Player& p : _map.getPlayers()) {
+        float cellSize = 1.0f;
+        
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        
+        float width = 0.4f;
+        float height = 1.0f;
+        float depth = 0.4f;
+        
+        BoundingBox playerBox = {
+            {
+                px - width/2,0.0f, pz - depth/2},
+            {
+                px + width/2,
+                height,
+                pz + depth/2
+            }
+        };
+        
+        RayCollision collision = GetRayCollisionBox(ray, playerBox);
+        if (collision.hit) {
+            _selectedPlayerId = p.getId();
+            return;
+        }
+    }
 
     // Box
     Vector3 hit;
@@ -755,48 +732,41 @@ void Renderer::handleMouseClick() {
             return;
         }
     }
+}
 
-    // Player
-    for (const Player& p : _map.getPlayers()) {
-        float cellSize = 1.0f;
-        Vector3 playerPos = {
-            p.getPosition().x * cellSize + cellSize/2,
-            0.0f,
-            p.getPosition().z * cellSize + cellSize/2
-        };
-        
-        // Calculer la taille de la bounding box en fonction du niveau
-        float playerScale = 0.5f;
-        switch (p.getLevel()) {
-            case 1: playerScale = 1.5f; break;
-            case 2: playerScale = 1.8f; break;
-            case 3: playerScale = 2.1f; break;
-            case 4: playerScale = 2.4f; break;
-            case 5: playerScale = 2.7f; break;
-            case 6: playerScale = 3.0f; break;
-            case 7: playerScale = 3.3f; break;
-            case 8: playerScale = 3.6f; break;
-        }
-        
-        // Créer une bounding box adaptée à la lampe Pixar
-        BoundingBox playerBox = {
-            { // Min corner
-                playerPos.x - 0.4f * playerScale,
-                playerPos.y,
-                playerPos.z - 0.4f * playerScale
-            },
-            { // Max corner
-                playerPos.x + 0.4f * playerScale,
-                playerPos.y + 2.0f * playerScale, // Hauteur de la lampe
-                playerPos.z + 0.4f * playerScale
+void Renderer::DrawSelectionMarkers() {
+    if (_selectedPlayerId) {
+        const Player* p = nullptr;
+        for (const Player& player : _map.getPlayers()) {
+            if (player.getId() == *_selectedPlayerId) {
+                p = &player;
+                break;
             }
-        };
-        
-        RayCollision collision = GetRayCollisionBox(ray, playerBox);
-        if (collision.hit) {
-            _selectedPlayerId = p.getId();
-            return;
         }
+        if (p) {
+            float cellSize = 1.0f;
+            float px = p->getPosition().x * cellSize + cellSize/2;
+            float pz = p->getPosition().z * cellSize + cellSize/2;
+            
+            float width = 0.4f;
+            float height = 1.0f;
+            float depth = 0.4f;
+            
+            BoundingBox playerBox = {
+                { px - width/2, 0.0f, pz - depth/2 },
+                { px + width/2, height, pz + depth/2 }
+            };
+            
+            DrawBoundingBox(playerBox, Fade(GREEN, 0.3f));
+        }
+    }
+    
+    if (_selectedTile) {
+        float tx = _selectedTile->x;
+        float tz = _selectedTile->y;
+        Vector3 center = { tx + 0.5f, 0.1f, tz + 0.5f };
+        
+        DrawCubeWires(center, 1.0f, 0.1f, 1.0f, Fade(RED, 0.5f));
     }
 }
 
@@ -807,3 +777,6 @@ bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
     outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     return true;
 }
+
+bool Renderer::firstCall = true;
+bool Renderer::disconnected = false;

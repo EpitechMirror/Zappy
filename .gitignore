@@ -27,6 +27,8 @@
 *.a
 *.la
 *.lo
+*.json
+*.pkl
 
 # Shared objects (inc. Windows DLLs)
 *.dll
