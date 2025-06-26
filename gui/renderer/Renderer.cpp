@@ -6,6 +6,7 @@
 */
 
 #include "Renderer.hpp"
+constexpr float TILE_SIZE = 64.0f;
 
 Renderer::Renderer(int width, int height, const Map &map)
     : 
@@ -608,6 +609,7 @@ void Renderer::gameLoop(Client &client) {
                 drawItems();
                 DrawEggs();
                 DrawPlayers();
+                DrawIncantations();
                 DrawSelectionMarkers();
             EndMode3D();
 
@@ -620,6 +622,26 @@ void Renderer::gameLoop(Client &client) {
                 handleServerDisconnect();
             }
         EndDrawing();
+    }
+}
+
+void Renderer::DrawIncantations() {
+    float time = GetTime();
+
+    for (const auto& inc : _map.getActiveIncantations()) {
+        float centerX = inc.x * TILE_SIZE + TILE_SIZE / 2.0f;
+        float centerZ = inc.y * TILE_SIZE + TILE_SIZE / 2.0f; // Note: passage en coordonnées 3D (X,Z)
+        float radius = TILE_SIZE / 2.0f + 5.0f * std::sin(time * 3);
+        Color color = PURPLE;
+
+        //DrawRing3D(
+        //    (Vector3){ centerX, 0.1f, centerZ }, // Position (Y légèrement élevé)
+        //    radius - 0.5f, // Rayon intérieur
+        //    radius + 0.5f, // Rayon extérieur
+        //    0, 360, // Angles
+        //    16, // Segments
+        //    color
+        //);
     }
 }
 

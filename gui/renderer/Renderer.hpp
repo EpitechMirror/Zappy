@@ -76,6 +76,7 @@ class Renderer
         static bool disconnected;
         float _disconnectTimer;
         void notifyServerDisconnect();
+        void DrawIncantations();
         void DrawSelectionMarkers();
 };
 #endif
