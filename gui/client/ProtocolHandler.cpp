@@ -31,6 +31,8 @@ void ProtocolHandler::registerHandlers() {
     _handlers["sbp"] = [this](std::istringstream &iss) { handleSbp(iss); };
     _handlers["pic"] = [this](std::istringstream &iss) { handlePic(iss); };
     _handlers["pie"] = [this](std::istringstream &iss) { handlePie(iss); };
+    _handlers["pbc"] = [this](std::istringstream &iss) { handlePbc(iss); };
+    _handlers["seg"] = [this](std::istringstream &iss) { handleSeg(iss); };
 }
 
 void ProtocolHandler::handleLine(const std::string &line) {
@@ -329,14 +331,41 @@ void ProtocolHandler::handlePie(std::istringstream &iss) {
         return;
     }
 
-    if (result == "ko") {
+    if (result == "0") {
         _map.clearIncantationAt(x, y);
         std::cout << "Incantation at (" << x << ", " << y << ") failed\n";
-    } else if (result == "ok") {
+    } else if (result == "1") {
+        _map.clearIncantationAt(x, y);
         std::cout << "Incantation at (" << x << ", " << y << ") succeeded\n";
     } else {
         std::cerr << "Unknown result in pie: " << result << "\n";
     }
+}
+
+//--- Player broadcast
+void ProtocolHandler::handlePbc(std::istringstream &iss) {
+    std::string idStr, message;
+    if (!(iss >> idStr)) {
+        std::cerr << "Invalid pbc format\n";
+        return;
+    }
+
+    int playerId = std::stoi(idStr.substr(1));
+    if (!std::getline(iss, message)) {
+        std::cerr << "No message provided in pbc\n";
+        return;
+    }
+
+    if (message.empty() || message[0] == ' ')
+        message.erase(0, 1);
+
+    Player* player = _map.getPlayerById(playerId);
+    if (!player) {
+        std::cerr << "Unknown player in pbc: #" << playerId << "\n";
+        return;
+    }
+
+    std::cout << "[Broadcast from #" << playerId << "] " << message << "\n";
 }
 
 //--- Server message
@@ -360,4 +389,17 @@ void ProtocolHandler::handleSuc(std::istringstream &) {
 void ProtocolHandler::handleSbp(std::istringstream &) {
     std::cerr << "Error: Invalid parameters in command (sbp)\n";
     // Optionnel : Afficher dans l’interface ?
+}
+
+//---Team winner
+void ProtocolHandler::handleSeg(std::istringstream &iss) {
+    std::string teamName;
+    if (!(iss >> teamName)) {
+        std::cerr << "Invalid seg format\n";
+        return;
+    }
+
+    _map.setGameOver(true, teamName);
+
+    std::cout << "Game Over! Team " << teamName << " wins!\n";
 }

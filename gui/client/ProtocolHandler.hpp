@@ -49,10 +49,13 @@ private:
     void handlePfk(std::istringstream &iss);
     void handlePic(std::istringstream &iss);
     void handlePie(std::istringstream &iss);
+    void handlePbc(std::istringstream &iss);
 
     void handleSmg(std::istringstream &iss);
     void handleSuc(std::istringstream &iss);
     void handleSbp(std::istringstream &iss);
+
+    void handleSeg(std::istringstream &iss);
 };
 
 
