@@ -44,7 +44,7 @@ typedef struct client_s {
     int level;
     tilecp_t inventory;
     direction_t direction;
-
+    int hunger_tick;
     client_state_t state;
     struct client_s *next;
 } client_t;

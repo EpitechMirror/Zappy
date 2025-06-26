@@ -8,6 +8,9 @@
 #ifndef FLAG_H_
     #define FLAG_H_
     #include "ressources.h"
+    #include <pthread.h>
+    #include <unistd.h>
+    #include <stdbool.h>
 
 #ifndef MAX_GRAPHICS
 #define MAX_GRAPHICS 16
@@ -41,6 +44,8 @@ typedef struct server_config_s {
     int next_egg_id;
     int graphic_fds[MAX_GRAPHICS];
     int nb_graphics;
+    bool running;
+    pthread_mutex_t mutex;
 } server_config_t;
 
 typedef struct {
@@ -52,6 +57,7 @@ typedef struct {
 int parse(int argc, char **argv, server_config_t *conf);
 int handle_int(int *field, int *i, char **argv);
 int handle_teams(server_config_t *conf, int *i, char **argv);
+void *game_tick_thread(void *arg);
 
 
 #endif /* !FLAG_H_ */
