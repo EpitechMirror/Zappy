@@ -40,7 +40,7 @@ class Renderer
         void DrawEggs();
         void DrawPlayers();
         void initLights();
-        // void drawFloor();
+        void drawFloor();
         void drawRoomAndy();        
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);

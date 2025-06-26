@@ -114,27 +114,33 @@ Color Renderer::getColorForResource(ResourceType type) {
     }
 }
 
-// void Renderer::drawFloor() {
-//     float cellSize = 1.0f;
-//     int width = _map.getWidth();
-//     int height = _map.getHeight();
+void Renderer::drawFloor() {
+    float cellSize = 1.0f;
+    int width = _map.getWidth();
+    int height = _map.getHeight();
 
-//     // pour placer en fonction du bureau
-//     float deskTopY = getDesktopY();
+    float floorWidth = width * cellSize;
+    float floorDepth = height * cellSize;
 
-//     Shader& pbr = _assets.shaders.getPBR();
-//     int tilingLoc = GetShaderLocation(pbr, "tiling");
-//     Vector2 tiling = {0.5f, 0.5f};
-//     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+    // Facteur pour agrandir le modele de sol
+    float scaleFactor = 10.0f;
 
-//     for (int x = 0; x < width; ++x) {
-//         for (int y = 0; y < height; ++y) {
-//             Vector3 pos = { x * cellSize + cellSize/2, deskTopY, y * cellSize + cellSize/2 };
-//             DrawModel(_assets.floorModel, pos, cellSize, WHITE);
-//         }
-//     }
-//     _mapInitialized = true;
-// }
+    float floorY = 0.0f;
+
+    Vector3 pos = { floorWidth / 2.0f, floorY, floorDepth / 2.0f };
+
+    float scaleX = floorWidth * scaleFactor;
+    float scaleZ = floorDepth * scaleFactor;
+    float scaleY = 1.0f;
+
+    rlPushMatrix();
+        rlTranslatef(pos.x, pos.y, pos.z);
+        rlScalef(scaleX, scaleY, scaleZ);
+        DrawModel(_assets.floorModel, {0, -13.0, 0}, 1.0f, WHITE);
+    rlPopMatrix();
+
+    _mapInitialized = true;
+}
 
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
@@ -596,7 +602,7 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-               // drawFloor();
+               drawFloor();
                 drawRoomAndy();
                 DrawGrid();
                 drawItems();
