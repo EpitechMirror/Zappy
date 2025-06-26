@@ -261,6 +261,15 @@ void notify_graphics_player_update(client_t *player, server_config_t *conf)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
+int find_nb_teams(client_t *client)
+{
+    int team_count = 0;
+    for (client_t *c = client; c != NULL; c = c->next) {
+        team_count++;
+    }
+    return team_count;
+}
+
 int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, client_t *client)
 {
     char inventory[256];
@@ -318,6 +327,12 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
             }
         }
         send(fd, "ok\n", 3, 0);
+        return 0;
+    }
+    if (strncmp(client_message, "Connect_nbr", 11) == 0) {
+        char response[32];
+        snprintf(response, sizeof(response), "%d\n", conf->team_count * conf->clients_nb - find_nb_teams(client) + 1);
+        send(fd, response, strlen(response), 0);
         return 0;
     }
     return 0;
