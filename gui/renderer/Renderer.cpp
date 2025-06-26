@@ -23,6 +23,42 @@ float Renderer::getDesktopY() {
     return 0.0f;
 }
 
+void Renderer::drawWalls() {
+    float cellSize = 1.0f;
+    // Dimensions des murs
+    int width = 450;
+    int height = 450;
+
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
+    float wallThickness = 0.2f;
+    float roomHeight = 4.0f;
+
+    // 1er mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, -wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -100.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 2eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, roomDepth + wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -315.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 3eme mur
+    rlPushMatrix();
+        rlTranslatef(-wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-100.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 4eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth + wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-315.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
+}
+
 void Renderer::drawRoomAndy() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -603,8 +639,9 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-               drawFloor();
+                drawFloor();
                 drawRoomAndy();
+                drawWalls();
                 DrawGrid();
                 drawItems();
                 DrawEggs();

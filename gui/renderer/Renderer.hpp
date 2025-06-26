@@ -41,6 +41,7 @@ class Renderer
         void DrawPlayers();
         void initLights();
         void drawFloor();
+        void drawWalls();
         void drawRoomAndy();        
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
