@@ -35,11 +35,11 @@ void Renderer::drawRoomAndy() {
         
         float scaleX = roomWidth / 0.5f;
         float scaleZ = roomDepth / 1.0f;
-        float scaleY = 1.0f;
+        float scaleY = (scaleX + scaleZ) / 2.0f;
         
         rlScalef(scaleX, scaleY, scaleZ);
         
-        DrawModel(_assets.deskModel, {0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+        DrawModel(_assets.deskModel, {-0.5f, -0.780f, 1.3f}, 1.0f, WHITE);
     rlPopMatrix();
 }
 
