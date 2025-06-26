@@ -200,7 +200,7 @@ void Renderer::showLoadingScreen(const std::string &message) {
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // === Titre principal : WOODY GUI ===
+            // === Titre principal : Y GUI ===
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
             float spacing = 5.0f;

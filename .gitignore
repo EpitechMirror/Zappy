@@ -375,6 +375,10 @@ Cargo.lock
 .history
 .ionide
 
+zappy_ref-v3.0.1/
+gui/unit_tests
+
+
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,c,c++,cmake,python,ruby,rust
 
