@@ -398,9 +398,9 @@ void Renderer::InfoPlayersBoard() {
     
     if (selectedPlayer) {
         title = "Player #" + std::to_string(selectedPlayer->getId());
-        
+
         lines.push_back("Level: " + std::to_string(selectedPlayer->getLevel()));
-        lines.push_back("Team: " + selectedPlayer->getTeam());
+        lines.push_back(selectedPlayer->getTeam());
         lines.push_back("Position: " + 
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().x)) + "," +
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().z)));
@@ -414,17 +414,17 @@ void Renderer::InfoPlayersBoard() {
             default: orientation = "Unknown";
         }
         lines.push_back("Orientation: " + orientation);
-        
+
         lines.push_back("Inventory:");
         const int* inventory = selectedPlayer->getInventory();
         if (inventory) {
-            if (inventory[0] > 0) lines.push_back("  Food: " + std::to_string(inventory[0]));
-            if (inventory[1] > 0) lines.push_back("  Linemate: " + std::to_string(inventory[1]));
-            if (inventory[2] > 0) lines.push_back("  Deraumere: " + std::to_string(inventory[2]));
-            if (inventory[3] > 0) lines.push_back("  Sibur: " + std::to_string(inventory[3]));
-            if (inventory[4] > 0) lines.push_back("  Mendiane: " + std::to_string(inventory[4]));
-            if (inventory[5] > 0) lines.push_back("  Phiras: " + std::to_string(inventory[5]));
-            if (inventory[6] > 0) lines.push_back("  Thystame: " + std::to_string(inventory[6]));
+            lines.push_back("  Food: " + std::to_string(inventory[FOOD]));
+            lines.push_back("  Linemate: " + std::to_string(inventory[LINEMATE]));
+            lines.push_back("  Deraumere: " + std::to_string(inventory[DERAUMERE]));
+            lines.push_back("  Sibur: " + std::to_string(inventory[SIBUR]));
+            lines.push_back("  Mendiane: " + std::to_string(inventory[MENDIANE]));
+            lines.push_back("  Phiras: " + std::to_string(inventory[PHIRAS]));
+            lines.push_back("  Thystame: " + std::to_string(inventory[THYSTAME]));
         }
     } else {
         lines.push_back("Click on a player");
@@ -563,7 +563,7 @@ void Renderer::InfoBoxBoard() {
         }
         
         if (selectedPlayer) {
-            int lines = 5;
+            int lines = 11;
             const int* inventory = selectedPlayer->getInventory();
             if (inventory) {
                 for (int i = 0; i < 7; i++) {
@@ -648,6 +648,7 @@ void Renderer::gameLoop(Client &client) {
                 DrawPlayers();
                 DrawIncantations();
                 DrawSelectionMarkers();
+                DrawGameOver();
             EndMode3D();
 
             InfoItemsBoard();
@@ -849,6 +850,42 @@ bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
     if (t < 0) return false;
     outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     return true;
+}
+
+void Renderer::DrawGameOver() {
+    if (!_map._gameOver) return;
+    const std::string winText = _map._winningTeam + " wins!";
+    const int winFontSize = 80;
+    const float spacing = 3.0f;
+
+    Vector2 winTextSize = MeasureTextEx(_assets.toyFont, winText.c_str(), winFontSize, spacing);
+    Vector2 winPos = {
+        (_screenWidth - winTextSize.x) / 2.0f,
+        (_screenHeight - winTextSize.y) / 2.0f
+    };
+    
+    // Overlay semi-transparent
+    DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.5f));
+    
+    // Message de victoire
+    Color outline = BLUE;
+    for (int dx = -3; dx <= 3; dx += 3) {
+        for (int dy = -3; dy <= 3; dy += 3) {
+            if (dx == 0 && dy == 0) continue;
+            Vector2 offsetPos = { winPos.x + dx, winPos.y + dy };
+            DrawTextEx(_assets.toyFont, winText.c_str(), offsetPos, winFontSize, spacing, outline);
+        }
+    }
+    DrawTextEx(_assets.toyFont, winText.c_str(), winPos, winFontSize, spacing, YELLOW);
+
+    // Instruction pour quitter
+    const char* instruction = "Press any key to exit";
+    int instFontSize = 30;
+    Vector2 instPos = {
+        (_screenWidth - MeasureText(instruction, instFontSize)) / 2.0f,
+        winPos.y + winTextSize.y + 50
+    };
+    DrawText(instruction, instPos.x, instPos.y, instFontSize, WHITE);
 }
 
 bool Renderer::firstCall = true;

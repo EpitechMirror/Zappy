@@ -24,8 +24,7 @@
 #include <ctime>
 #include <cstring>
 
-class Renderer
-{
+class Renderer {
     public:
         Renderer(int width, int height, const Map & map);
 
@@ -53,6 +52,7 @@ class Renderer
         const std::vector<Player>& getPlayers() const { return _players; }
 
         void handleServerDisconnect();
+        void DrawGameOver();
 
     private:
         AssetsManager _assets;
@@ -80,4 +80,5 @@ class Renderer
         void DrawIncantations();
         void DrawSelectionMarkers();
 };
+
 #endif

@@ -54,6 +54,8 @@ private:
     void handleSmg(std::istringstream &iss);
     void handleSuc(std::istringstream &iss);
     void handleSbp(std::istringstream &iss);
+
+    void handleSeg(std::istringstream &iss);
 };
 
 

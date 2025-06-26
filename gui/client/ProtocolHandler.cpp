@@ -32,6 +32,7 @@ void ProtocolHandler::registerHandlers() {
     _handlers["pic"] = [this](std::istringstream &iss) { handlePic(iss); };
     _handlers["pie"] = [this](std::istringstream &iss) { handlePie(iss); };
     _handlers["pbc"] = [this](std::istringstream &iss) { handlePbc(iss); };
+    _handlers["seg"] = [this](std::istringstream &iss) { handleSeg(iss); };
 }
 
 void ProtocolHandler::handleLine(const std::string &line) {
@@ -388,4 +389,17 @@ void ProtocolHandler::handleSuc(std::istringstream &) {
 void ProtocolHandler::handleSbp(std::istringstream &) {
     std::cerr << "Error: Invalid parameters in command (sbp)\n";
     // Optionnel : Afficher dans l’interface ?
+}
+
+//---Team winner
+void ProtocolHandler::handleSeg(std::istringstream &iss) {
+    std::string teamName;
+    if (!(iss >> teamName)) {
+        std::cerr << "Invalid seg format\n";
+        return;
+    }
+
+    _map.setGameOver(true, teamName);
+
+    std::cout << "Game Over! Team " << teamName << " wins!\n";
 }
