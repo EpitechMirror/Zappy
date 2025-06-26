@@ -40,7 +40,7 @@ class Renderer
         void DrawEggs();
         void DrawPlayers();
         void initLights();
-        // void drawFloor();
+        void drawFloor();
         void drawRoomAndy();        
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
@@ -76,6 +76,7 @@ class Renderer
         static bool disconnected;
         float _disconnectTimer;
         void notifyServerDisconnect();
+        void DrawIncantations();
         void DrawSelectionMarkers();
 };
 #endif

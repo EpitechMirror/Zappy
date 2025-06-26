@@ -51,6 +51,7 @@ int add_client_fd(struct pollfd *fds, int client_fd, int count);
 bool handle_client_data(client_t **clients, int fd, server_config_t *conf);
 void poll_clients(poll_context_t *ctx);
 void accept_clients_loop(int server_fd, server_config_t *conf);
+void *game_tick_thread(void *arg);
 
 void handle_graphic_auth(int fd, server_config_t *conf);
 egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y);

@@ -7,8 +7,20 @@
 
 #ifndef RESSOURCES_H_
     #define RESSOURCES_H_
+    #define RESOURCE_TYPES 7
 
     #include "flag.h"
+
+
+static const float resource_min_ratio[RESOURCE_TYPES] = {
+    0.3, // food
+    0.2, // linemate
+    0.15, // deraumere
+    0.1, // sibur
+    0.08, // mendiane
+    0.08, // phiras
+    0.05  // thystame
+};
 
 typedef struct tile_s {
     int food;

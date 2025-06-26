@@ -7,7 +7,6 @@
 
 #include "server.h"
 
-
 static void handle_server_connection(poll_context_t *ctx)
 {
     handle_new_connection(ctx);

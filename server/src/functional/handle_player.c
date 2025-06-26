@@ -16,26 +16,22 @@
 
 static void move_north(client_t *client, server_config_t *conf)
 {
-    if (client->y > 0)
-        client->y -= 1;
+    client->y = (client->y + conf->height - 1) % conf->height;
 }
 
 static void move_east(client_t *client, server_config_t *conf)
 {
-    if (client->x < conf->width - 1)
-        client->x += 1;
+    client->x = (client->x + 1) % conf->width;
 }
 
 static void move_south(client_t *client, server_config_t *conf)
 {
-    if (client->y < conf->height - 1)
-        client->y += 1;
+    client->y = (client->y + 1) % conf->height;
 }
 
 static void move_west(client_t *client, server_config_t *conf)
 {
-    if (client->x > 0)
-        client->x -= 1;
+    client->x = (client->x + conf->width - 1) % conf->width;
 }
 
 void get_tile_contents(int x, int y, client_t *client, char *inventory)

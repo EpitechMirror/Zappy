@@ -29,6 +29,8 @@ void ProtocolHandler::registerHandlers() {
     _handlers["smg"] = [this](std::istringstream &iss) { handleSmg(iss); };
     _handlers["suc"] = [this](std::istringstream &iss) { handleSuc(iss); };
     _handlers["sbp"] = [this](std::istringstream &iss) { handleSbp(iss); };
+    _handlers["pic"] = [this](std::istringstream &iss) { handlePic(iss); };
+    _handlers["pie"] = [this](std::istringstream &iss) { handlePie(iss); };
 }
 
 void ProtocolHandler::handleLine(const std::string &line) {
@@ -278,6 +280,63 @@ void ProtocolHandler::handlePfk(std::istringstream &iss) {
     //_map.addEgg(-1, x, y);
 //
     //std::cout << "Player #" << playerId << " laid an egg at (" << x << ", " << y << ")\n";
+}
+
+//----Player begin incantation
+void ProtocolHandler::handlePic(std::istringstream &iss) {
+    int x, y, level;
+    if (!(iss >> x >> y >> level)) {
+        std::cerr << "Invalid pic format\n";
+        return;
+    }
+
+    std::vector<int> playerIds;
+    std::string token;
+    while (iss >> token) {
+        if (token[0] == '#') {
+            try {
+                int id = std::stoi(token.substr(1));
+                playerIds.push_back(id);
+            } catch (...) {
+                std::cerr << "Invalid player ID in pic: " << token << "\n";
+            }
+        } else {
+            std::cerr << "Unexpected token in pic: " << token << "\n";
+        }
+    }
+
+    if (playerIds.empty()) {
+        std::cerr << "pic with no players\n";
+        return;
+    }
+
+    _map.startIncantation(x, y, level, playerIds);
+
+    std::cout << "Incantation started at (" << x << ", " << y << ") level " << level
+              << " with players: ";
+    for (int id : playerIds)
+        std::cout << "#" << id << " ";
+    std::cout << "\n";
+}
+
+//--- Player end incantation
+void ProtocolHandler::handlePie(std::istringstream &iss) {
+    int x, y;
+    std::string result;
+
+    if (!(iss >> x >> y >> result)) {
+        std::cerr << "Invalid pie format\n";
+        return;
+    }
+
+    if (result == "ko") {
+        _map.clearIncantationAt(x, y);
+        std::cout << "Incantation at (" << x << ", " << y << ") failed\n";
+    } else if (result == "ok") {
+        std::cout << "Incantation at (" << x << ", " << y << ") succeeded\n";
+    } else {
+        std::cerr << "Unknown result in pie: " << result << "\n";
+    }
 }
 
 //--- Server message
