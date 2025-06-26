@@ -26,8 +26,8 @@ void AssetsManager::unloadAllResources()
     //NE PAS LIBÉRER LES TEXTURES, SINON ÇA CRASH VA SAVOIR PQ
     UnloadModel(floorModel);
     UnloadModel(playerModel);
-    UnloadModel(wallLong);
-    UnloadModel(wallShort);
+    // UnloadModel(wallLong);
+    // UnloadModel(wallShort);
     UnloadModel(deskModel);
     
     shaders.unloadAll();
@@ -54,7 +54,7 @@ void AssetsManager::loadModels()
     float roomHeight = 4.0f;
     float wallThickness = 0.2f;
 
-    //floorModel = LoadModel("../resources/models/plane.glb");
+    floorModel = LoadModel("../resources/models/plane.glb");
     playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
     deskModel = LoadModel("../resources/models/wooden_desk.glb");
     wallLong = LoadModelFromMesh(GenMeshCube(roomWidth + wallThickness, roomHeight, wallThickness));
@@ -63,14 +63,14 @@ void AssetsManager::loadModels()
 
 void AssetsManager::loadTextures()
 {
-    // Texture2D floorAlbedo = LoadTexture("../resources/textures/wood_8.jpg");
-    // if (floorAlbedo.id > 0) {
-    //     GenTextureMipmaps(&floorAlbedo);
-    //     SetTextureFilter(floorAlbedo, TEXTURE_FILTER_ANISOTROPIC_16X);
-    //     for (int i = 0; i < floorModel.materialCount; ++i) {
-    //         floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
-    //     }
-    // }
+    Texture2D floorAlbedo = LoadTexture("../resources/textures/wood_8.jpg");
+    if (floorAlbedo.id > 0) {
+        GenTextureMipmaps(&floorAlbedo);
+        SetTextureFilter(floorAlbedo, TEXTURE_FILTER_ANISOTROPIC_16X);
+        for (int i = 0; i < floorModel.materialCount; ++i) {
+            floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
+        }
+    }
 
     Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
     Texture2D lampNormal = LoadTexture("../resources/models/pixar_lamp/PixarLamp_normal.jpeg");

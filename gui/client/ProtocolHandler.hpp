@@ -47,6 +47,8 @@ private:
     void handlePgt(std::istringstream &iss);
     void handlePdr(std::istringstream &iss);
     void handlePfk(std::istringstream &iss);
+    void handlePic(std::istringstream &iss);
+    void handlePie(std::istringstream &iss);
 
     void handleSmg(std::istringstream &iss);
     void handleSuc(std::istringstream &iss);

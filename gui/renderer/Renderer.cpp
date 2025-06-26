@@ -6,6 +6,7 @@
 */
 
 #include "Renderer.hpp"
+constexpr float TILE_SIZE = 64.0f;
 
 Renderer::Renderer(int width, int height, const Map &map)
     : 
@@ -35,11 +36,11 @@ void Renderer::drawRoomAndy() {
         
         float scaleX = roomWidth / 0.5f;
         float scaleZ = roomDepth / 1.0f;
-        float scaleY = 1.0f;
+        float scaleY = (scaleX + scaleZ) / 2.0f;
         
         rlScalef(scaleX, scaleY, scaleZ);
         
-        DrawModel(_assets.deskModel, {0.0f, 0.0f, 0.0f}, 1.0f, WHITE);
+        DrawModel(_assets.deskModel, {-0.5f, -0.780f, 1.3f}, 1.0f, WHITE);
     rlPopMatrix();
 }
 
@@ -114,27 +115,33 @@ Color Renderer::getColorForResource(ResourceType type) {
     }
 }
 
-// void Renderer::drawFloor() {
-//     float cellSize = 1.0f;
-//     int width = _map.getWidth();
-//     int height = _map.getHeight();
+void Renderer::drawFloor() {
+    float cellSize = 1.0f;
+    int width = _map.getWidth();
+    int height = _map.getHeight();
 
-//     // pour placer en fonction du bureau
-//     float deskTopY = getDesktopY();
+    float floorWidth = width * cellSize;
+    float floorDepth = height * cellSize;
 
-//     Shader& pbr = _assets.shaders.getPBR();
-//     int tilingLoc = GetShaderLocation(pbr, "tiling");
-//     Vector2 tiling = {0.5f, 0.5f};
-//     SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+    // Facteur pour agrandir le modele de sol
+    float scaleFactor = 10.0f;
 
-//     for (int x = 0; x < width; ++x) {
-//         for (int y = 0; y < height; ++y) {
-//             Vector3 pos = { x * cellSize + cellSize/2, deskTopY, y * cellSize + cellSize/2 };
-//             DrawModel(_assets.floorModel, pos, cellSize, WHITE);
-//         }
-//     }
-//     _mapInitialized = true;
-// }
+    float floorY = 0.0f;
+
+    Vector3 pos = { floorWidth / 2.0f, floorY, floorDepth / 2.0f };
+
+    float scaleX = floorWidth * scaleFactor;
+    float scaleZ = floorDepth * scaleFactor;
+    float scaleY = 1.0f;
+
+    rlPushMatrix();
+        rlTranslatef(pos.x, pos.y, pos.z);
+        rlScalef(scaleX, scaleY, scaleZ);
+        DrawModel(_assets.floorModel, {0, -13.0, 0}, 1.0f, WHITE);
+    rlPopMatrix();
+
+    _mapInitialized = true;
+}
 
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
@@ -596,12 +603,13 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-               // drawFloor();
+               drawFloor();
                 drawRoomAndy();
                 DrawGrid();
                 drawItems();
                 DrawEggs();
                 DrawPlayers();
+                DrawIncantations();
                 DrawSelectionMarkers();
             EndMode3D();
 
@@ -614,6 +622,26 @@ void Renderer::gameLoop(Client &client) {
                 handleServerDisconnect();
             }
         EndDrawing();
+    }
+}
+
+void Renderer::DrawIncantations() {
+    float time = GetTime();
+
+    for (const auto& inc : _map.getActiveIncantations()) {
+        float centerX = inc.x * TILE_SIZE + TILE_SIZE / 2.0f;
+        float centerZ = inc.y * TILE_SIZE + TILE_SIZE / 2.0f; // Note: passage en coordonnées 3D (X,Z)
+        float radius = TILE_SIZE / 2.0f + 5.0f * std::sin(time * 3);
+        Color color = PURPLE;
+
+        //DrawRing3D(
+        //    (Vector3){ centerX, 0.1f, centerZ }, // Position (Y légèrement élevé)
+        //    radius - 0.5f, // Rayon intérieur
+        //    radius + 0.5f, // Rayon extérieur
+        //    0, 360, // Angles
+        //    16, // Segments
+        //    color
+        //);
     }
 }
 
