@@ -26,8 +26,8 @@ void AssetsManager::unloadAllResources()
     //NE PAS LIBÉRER LES TEXTURES, SINON ÇA CRASH VA SAVOIR PQ
     UnloadModel(floorModel);
     UnloadModel(playerModel);
-    // UnloadModel(wallLong);
-    // UnloadModel(wallShort);
+    UnloadModel(wallLong);
+    UnloadModel(wallShort);
     UnloadModel(deskModel);
     
     shaders.unloadAll();
