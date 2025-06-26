@@ -274,7 +274,8 @@ int find_nb_teams(client_t *client)
 
 void notify_graphics_player_update(client_t *client, server_config_t *conf)
 {
-    ppo_graphics(client,plv_graphics(client, conf);
+    ppo_graphics(client, conf);
+    plv_graphics(client, conf);
     pin_graphics(client, conf);
 }
 
