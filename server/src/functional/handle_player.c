@@ -447,15 +447,12 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
         return 0;
     }
     if (strncmp(client_message, "Eject", 5) == 0) {
-        if (client->next != NULL) {
-            client_t *next_client = client->next;
-            next_client->x = client->x;
-            next_client->y = client->y;
-            next_client->direction = client->direction;
-            notify_graphics_player_update(next_client, conf);
-            send(next_client->fd, "ok\n", 3, 0);
-        } else {
-            send(fd, "ko\n", 3, 0);
+        for (client_t *c = client; c != NULL; c = c->next) {
+            if (c != client && c->x == client->x && c->y == client->y) {
+                int eject_direction = (client->direction + 2) % 4;
+                move_player(c, conf, eject_direction);
+                notify_graphics_player_update(c, conf);
+            }
         }
         send(fd, "ok\n", 3, 0);
         return 0;
