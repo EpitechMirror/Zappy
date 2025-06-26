@@ -69,6 +69,14 @@ class Map {
         void clearIncantationAt(int x, int y);
         const std::vector<Incantation>& getActiveIncantations() const;
 
+        void setGameOver(bool gameOver, std::string teamName) {
+            _gameOver = gameOver;
+            _winningTeam = teamName;
+        }
+
+        bool _gameOver = false;
+        std::string _winningTeam;
+
     private:
         int _width;
         int _height;

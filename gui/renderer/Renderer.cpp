@@ -23,6 +23,42 @@ float Renderer::getDesktopY() {
     return 0.0f;
 }
 
+void Renderer::drawWalls() {
+    float cellSize = 1.0f;
+    // Dimensions des murs
+    int width = 450;
+    int height = 450;
+
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
+    float wallThickness = 0.2f;
+    float roomHeight = 4.0f;
+
+    // 1er mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, -wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -100.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 2eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, roomDepth + wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -315.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 3eme mur
+    rlPushMatrix();
+        rlTranslatef(-wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-100.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 4eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth + wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-315.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
+}
+
 void Renderer::drawRoomAndy() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -164,7 +200,7 @@ void Renderer::showLoadingScreen(const std::string &message) {
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // === Titre principal : WOODY GUI ===
+            // === Titre principal : Y GUI ===
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
             float spacing = 5.0f;
@@ -362,9 +398,9 @@ void Renderer::InfoPlayersBoard() {
     
     if (selectedPlayer) {
         title = "Player #" + std::to_string(selectedPlayer->getId());
-        
+
         lines.push_back("Level: " + std::to_string(selectedPlayer->getLevel()));
-        lines.push_back("Team: " + selectedPlayer->getTeam());
+        lines.push_back(selectedPlayer->getTeam());
         lines.push_back("Position: " + 
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().x)) + "," +
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().z)));
@@ -378,17 +414,17 @@ void Renderer::InfoPlayersBoard() {
             default: orientation = "Unknown";
         }
         lines.push_back("Orientation: " + orientation);
-        
+
         lines.push_back("Inventory:");
         const int* inventory = selectedPlayer->getInventory();
         if (inventory) {
-            if (inventory[0] > 0) lines.push_back("  Food: " + std::to_string(inventory[0]));
-            if (inventory[1] > 0) lines.push_back("  Linemate: " + std::to_string(inventory[1]));
-            if (inventory[2] > 0) lines.push_back("  Deraumere: " + std::to_string(inventory[2]));
-            if (inventory[3] > 0) lines.push_back("  Sibur: " + std::to_string(inventory[3]));
-            if (inventory[4] > 0) lines.push_back("  Mendiane: " + std::to_string(inventory[4]));
-            if (inventory[5] > 0) lines.push_back("  Phiras: " + std::to_string(inventory[5]));
-            if (inventory[6] > 0) lines.push_back("  Thystame: " + std::to_string(inventory[6]));
+            lines.push_back("  Food: " + std::to_string(inventory[FOOD]));
+            lines.push_back("  Linemate: " + std::to_string(inventory[LINEMATE]));
+            lines.push_back("  Deraumere: " + std::to_string(inventory[DERAUMERE]));
+            lines.push_back("  Sibur: " + std::to_string(inventory[SIBUR]));
+            lines.push_back("  Mendiane: " + std::to_string(inventory[MENDIANE]));
+            lines.push_back("  Phiras: " + std::to_string(inventory[PHIRAS]));
+            lines.push_back("  Thystame: " + std::to_string(inventory[THYSTAME]));
         }
     } else {
         lines.push_back("Click on a player");
@@ -527,7 +563,7 @@ void Renderer::InfoBoxBoard() {
         }
         
         if (selectedPlayer) {
-            int lines = 5;
+            int lines = 11;
             const int* inventory = selectedPlayer->getInventory();
             if (inventory) {
                 for (int i = 0; i < 7; i++) {
@@ -603,14 +639,16 @@ void Renderer::gameLoop(Client &client) {
             ClearBackground(BLACK);
 
             BeginMode3D(_cameraController.getCamera());
-               drawFloor();
+                drawFloor();
                 drawRoomAndy();
+                drawWalls();
                 DrawGrid();
                 drawItems();
                 DrawEggs();
                 DrawPlayers();
                 DrawIncantations();
                 DrawSelectionMarkers();
+                DrawGameOver();
             EndMode3D();
 
             InfoItemsBoard();
@@ -627,21 +665,29 @@ void Renderer::gameLoop(Client &client) {
 
 void Renderer::DrawIncantations() {
     float time = GetTime();
+    const int segments = 16;
+    const float yLevel = 0.15f;
+    const float thickness = 0.07f;
 
     for (const auto& inc : _map.getActiveIncantations()) {
-        float centerX = inc.x * TILE_SIZE + TILE_SIZE / 2.0f;
-        float centerZ = inc.y * TILE_SIZE + TILE_SIZE / 2.0f; // Note: passage en coordonnées 3D (X,Z)
-        float radius = TILE_SIZE / 2.0f + 5.0f * std::sin(time * 3);
-        Color color = PURPLE;
+        float centerX = inc.x * 1.0f + 0.5f;
+        float centerZ = inc.y * 1.0f + 0.5f;
+        float radius = 0.5f + 0.2f * std::sin(time * 3);
+        Color color = GREEN;
 
-        //DrawRing3D(
-        //    (Vector3){ centerX, 0.1f, centerZ }, // Position (Y légèrement élevé)
-        //    radius - 0.5f, // Rayon intérieur
-        //    radius + 0.5f, // Rayon extérieur
-        //    0, 360, // Angles
-        //    16, // Segments
-        //    color
-        //);
+        for (int i = 0; i < segments; i++) {
+            float angle1 = 2 * PI * i / segments;
+            float angle2 = 2 * PI * (i + 1) / segments;
+
+            // Suppression des variables inutilisées `start` et `end`
+            for (float t = -thickness; t <= thickness; t += thickness / 2.0f) {
+                float r1 = radius + t;
+                float r2 = radius + t;
+                Vector3 s = {centerX + r1 * cos(angle1), yLevel, centerZ + r1 * sin(angle1)};
+                Vector3 e = {centerX + r2 * cos(angle2), yLevel, centerZ + r2 * sin(angle2)};
+                DrawLine3D(s, e, color);
+            }
+        }
     }
 }
 
@@ -804,6 +850,42 @@ bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
     if (t < 0) return false;
     outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
     return true;
+}
+
+void Renderer::DrawGameOver() {
+    if (!_map._gameOver) return;
+    const std::string winText = _map._winningTeam + " wins!";
+    const int winFontSize = 80;
+    const float spacing = 3.0f;
+
+    Vector2 winTextSize = MeasureTextEx(_assets.toyFont, winText.c_str(), winFontSize, spacing);
+    Vector2 winPos = {
+        (_screenWidth - winTextSize.x) / 2.0f,
+        (_screenHeight - winTextSize.y) / 2.0f
+    };
+    
+    // Overlay semi-transparent
+    DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.5f));
+    
+    // Message de victoire
+    Color outline = BLUE;
+    for (int dx = -3; dx <= 3; dx += 3) {
+        for (int dy = -3; dy <= 3; dy += 3) {
+            if (dx == 0 && dy == 0) continue;
+            Vector2 offsetPos = { winPos.x + dx, winPos.y + dy };
+            DrawTextEx(_assets.toyFont, winText.c_str(), offsetPos, winFontSize, spacing, outline);
+        }
+    }
+    DrawTextEx(_assets.toyFont, winText.c_str(), winPos, winFontSize, spacing, YELLOW);
+
+    // Instruction pour quitter
+    const char* instruction = "Press any key to exit";
+    int instFontSize = 30;
+    Vector2 instPos = {
+        (_screenWidth - MeasureText(instruction, instFontSize)) / 2.0f,
+        winPos.y + winTextSize.y + 50
+    };
+    DrawText(instruction, instPos.x, instPos.y, instFontSize, WHITE);
 }
 
 bool Renderer::firstCall = true;

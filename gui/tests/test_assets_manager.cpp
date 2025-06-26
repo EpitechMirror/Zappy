@@ -16,7 +16,7 @@ Test(AssetsManager, resource_files_exist) {
     cr_assert(file_exists("../resources/models/plane.glb"));
     cr_assert(file_exists("../resources/models/pixar_lamp/scene.gltf"));
     cr_assert(file_exists("../resources/textures/wood_8.jpg"));
-    cr_assert(file_exists("../resources/room_andy/textures/wallpaper.jpg"));
+    cr_assert(file_exists("../resources/textures/wallpaper.jpg"));
     cr_assert(file_exists("../resources/fonts/Woody.ttf"));
     cr_assert(file_exists("../resources/music/main_music.ogg"));
 }
