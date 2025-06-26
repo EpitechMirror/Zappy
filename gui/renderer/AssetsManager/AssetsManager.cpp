@@ -86,7 +86,7 @@ void AssetsManager::loadTextures()
         }
     }
 
-    Texture2D wallTex = LoadTexture("../resources/room_andy/textures/wallpaper.jpg");
+    Texture2D wallTex = LoadTexture("../resources/textures/wallpaper.jpg");
     if (wallTex.id > 0) {
         wallLong.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
         wallShort.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
