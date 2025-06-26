@@ -33,9 +33,17 @@ typedef struct tilecp_s {
     int food;
 } tilecp_t;
 
+typedef struct command_s {
+    char *cmd;
+    double execute_at;
+    struct command_s *next;
+} command_t;
+
+
 typedef struct client_s {
     int fd;
     bool connected;
+    int team_idx;
     bool is_ready;
     bool is_alive;
     int x, y, id;
@@ -47,6 +55,8 @@ typedef struct client_s {
     int hunger_tick;
     client_state_t state;
     struct client_s *next;
+    command_t *command_queue;
+    double last_command_end;
 } client_t;
 
 typedef struct {

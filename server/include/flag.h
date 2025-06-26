@@ -46,6 +46,8 @@ typedef struct server_config_s {
     int nb_graphics;
     bool running;
     pthread_mutex_t mutex;
+    bool game_started;
+    pthread_t game_thread;
 } server_config_t;
 
 typedef struct {
@@ -57,7 +59,5 @@ typedef struct {
 int parse(int argc, char **argv, server_config_t *conf);
 int handle_int(int *field, int *i, char **argv);
 int handle_teams(server_config_t *conf, int *i, char **argv);
-void *game_tick_thread(void *arg);
-
 
 #endif /* !FLAG_H_ */

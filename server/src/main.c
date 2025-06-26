@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 {
     server_config_t conf = {0};
     int server_fd;
-    pthread_t tick_thread;
+    // pthread_t tick_thread;
 
     if (setup_server(argc, argv, &conf) == 84)
         return 84;
@@ -83,15 +83,19 @@ int main(int argc, char **argv)
     if (server_fd < 0)
         return 84;
 
-    pthread_mutex_init(&conf.mutex, NULL);
-    conf.running = 1;
-    pthread_create(&tick_thread, NULL, game_tick_thread, &conf);
+    // pthread_mutex_init(&conf.mutex, NULL);
+    // conf.running = 1;
+    // int err = pthread_create(&tick_thread, NULL, game_tick_thread, &conf);
+    // if (err != 0) {
+    //     printf("Erreur pthread_create: %d\n", err);
+    //     return 84;
+    // }
 
     accept_clients_loop(server_fd, &conf);
 
-    conf.running = 0;
-    pthread_join(tick_thread, NULL);
-    pthread_mutex_destroy(&conf.mutex);
+    // conf.running = 0;
+    // pthread_join(tick_thread, NULL);
+    // pthread_mutex_destroy(&conf.mutex);
 
     close(server_fd);
     free(conf.team_slots);

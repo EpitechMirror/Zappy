@@ -230,29 +230,34 @@ int calculate_direction_tile(client_t *sender, client_t *receiver)
     }
 }
 
-void notify_graphics_player_update(client_t *player, server_config_t *conf)
+void ppo_graphics(client_t *client, server_config_t *conf)
 {
     char msg[128];
-    // ppo
-    snprintf(msg, sizeof(msg), "ppo #%d %d %d %d\n", player->fd, player->x, player->y, player->direction + 1);
+    snprintf(msg, sizeof(msg), "ppo #%d %d %d %d\n", client->fd, client->x, client->y, client->direction + 1);
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
+}
 
-    // plv
-    snprintf(msg, sizeof(msg), "plv #%d %d\n", player->fd, player->level);
+void plv_graphics(client_t *client, server_config_t *conf)
+{
+    char msg[64];
+    snprintf(msg, sizeof(msg), "plv #%d %d\n", client->fd, client->level);
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
+}
 
-    // pin
+void pin_graphics(client_t *client, server_config_t *conf)
+{
+    char msg[256];
     snprintf(msg, sizeof(msg), "pin #%d %d %d %d %d %d %d %d %d %d\n",
-        player->fd, player->x, player->y,
-        player->inventory.food,
-        player->inventory.linemate,
-        player->inventory.deraumere,
-        player->inventory.sibur,
-        player->inventory.mendiane,
-        player->inventory.phiras,
-        player->inventory.thystame
+        client->fd, client->x, client->y,
+        client->inventory.food,
+        client->inventory.linemate,
+        client->inventory.deraumere,
+        client->inventory.sibur,
+        client->inventory.mendiane,
+        client->inventory.phiras,
+        client->inventory.thystame
     );
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
@@ -265,6 +270,13 @@ int find_nb_teams(client_t *client)
         team_count++;
     }
     return team_count;
+}
+
+void notify_graphics_player_update(client_t *client, server_config_t *conf)
+{
+    ppo_graphics(client, conf);
+    plv_graphics(client, conf);
+    pin_graphics(client, conf);
 }
 
 void set_object(client_t *client, server_config_t *conf, char *client_message, int fd)
@@ -380,19 +392,22 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
     if (strncmp(client_message, "Forward", 7) == 0) {
     move_player(client, conf, client->direction);
     send(fd, "ok\n", 3, 0);
-    notify_graphics_player_update(client, conf);
+    ppo_graphics(client, conf);
+    pin_graphics(client, conf);
     return 0;
     }
     if (strncmp(client_message, "Right", 5) == 0) {
         client->direction = (client->direction + 1) % 4;
         send(fd, "ok\n", 3, 0);
-        notify_graphics_player_update(client, conf);
+        ppo_graphics(client, conf);
+        pin_graphics(client, conf);
         return 0;
     }
     if (strncmp(client_message, "Left", 4) == 0) {
         client->direction = (client->direction + 3) % 4;
         send(fd, "ok\n", 3, 0);
-        notify_graphics_player_update(client, conf);
+        ppo_graphics(client, conf);
+        pin_graphics(client, conf);
         return 0;
     }
     if (strncmp(client_message, "Inventory", 9) == 0) {
@@ -411,10 +426,16 @@ int respond_to_server_fd(int fd, server_config_t *conf, char *client_message, cl
     }
     if (strncmp(client_message, "Take", 4) == 0) {
         take_object(client, conf, client_message);
+        pin_graphics(client, conf);
         return 0;
     }
     if (strncmp(client_message, "Look", 4) == 0) {
         look_around(client, conf);
+        return 0;
+    }
+    if (strncmp(client_message, "Fork", 4) == 0) {
+        create_egg_fork(client, conf);
+        send(fd, "ok\n", 3, 0);
         return 0;
     }
     if (strncmp(client_message, "Broadcast", 9) == 0) {

@@ -44,6 +44,7 @@ void send_tile_content_to_graphics(server_config_t *conf, int x, int y)
 
 void *game_tick_thread(void *arg)
 {
+    printf("coucou game \n");
     server_config_t *conf = (server_config_t *)arg;
     while (conf->running) {
         usleep(1000000 / conf->freq);
@@ -69,23 +70,26 @@ int count_total_resource(server_config_t *conf, int resource_offset)
 
 void update_players_hunger(server_config_t *conf)
 {
+    printf("coucou j'ai faim\n");
     client_t *client = conf->clients;
     while (client) {
         if (!client->is_graphic && client->state == AUTHENTICATED && client->is_alive) {
             client->hunger_tick++;
-            // 126 ticks = 1 food unit consommé (pour f=126)
+            printf("[DEBUG] fd=%d hunger_tick=%d food=%d\n", client->fd, client->hunger_tick, client->inventory.food);
             if (client->hunger_tick >= (126 * 100 / conf->freq)) {
                 client->hunger_tick = 0;
                 if (client->inventory.food > 0) {
                     client->inventory.food--;
+                    printf("[DEBUG] fd=%d food-- => %d\n", client->fd, client->inventory.food);
                 } else {
                     client->is_alive = false;
                     send(client->fd, "dead\n", 5, 0);
-                    // Notifie le GUI
                     char msg[64];
                     snprintf(msg, sizeof(msg), "pdi #%d\n", client->fd);
                     for (int i = 0; i < conf->nb_graphics; i++)
                         send(conf->graphic_fds[i], msg, strlen(msg), 0);
+                    close(client->fd);
+                    remove_client(&conf->clients, client->fd);
                 }
             }
         }

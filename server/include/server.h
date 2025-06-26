@@ -52,6 +52,8 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf);
 void poll_clients(poll_context_t *ctx);
 void accept_clients_loop(int server_fd, server_config_t *conf);
 void *game_tick_thread(void *arg);
+double get_current_time(void);
+double get_command_delay(const char *cmd, server_config_t *conf);
 
 void handle_graphic_auth(int fd, server_config_t *conf);
 egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y);

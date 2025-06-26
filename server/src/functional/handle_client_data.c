@@ -78,6 +78,7 @@ static void handle_player_auth(client_t *client, int fd,
         client->direction = NORTH;
         client->level = 1;
         client->team_name = strdup(team);
+        client->inventory.food = 10;
 
         send_pnw_to_graphics(client, conf);
         send_ebo_to_graphics(egg->id, conf);
@@ -106,8 +107,15 @@ server_config_t *conf, char *buffer)
     if (client->state == WAITING_NAME) {
         handle_auth(&ctx, buffer);
     } else if (client->state == AUTHENTICATED) {
-        if (client->is_graphic == false)
+        if (!client->is_graphic) {
+            // Démarre la game loop si pas encore lancée
+            if (!conf->game_started) {
+                conf->game_started = true;
+                pthread_create(&conf->game_thread, NULL, game_tick_thread, conf);
+                printf("[DEBUG] Game loop started.\n");
+            }
             respond_to_server_fd(fd, conf, buffer, client);
+        }
     }
     
     return false;

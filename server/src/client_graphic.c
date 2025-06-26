@@ -71,6 +71,17 @@ egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y)
     return egg;
 }
 
+egg_t *create_egg_fork(server_config_t *conf, client_t *client)
+{
+    egg_t *egg = create_egg(conf, client->team_idx, client->x, client->y);
+
+    if (!egg)
+        return NULL;
+    egg->used = 1; // Mark as used
+    add_egg_to_list(conf, egg);
+    send_enw(client->fd, egg, client->fd);
+    return egg;
+}
 
 void handle_graphic_auth(int fd, server_config_t *conf)
 {
