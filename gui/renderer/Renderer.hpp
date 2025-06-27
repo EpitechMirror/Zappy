@@ -21,9 +21,10 @@
 #include "../renderer/Light/Light.hpp"
 #include <cmath>
 #include "AssetsManager/AssetsManager.hpp"
+#include <ctime>
+#include <cstring>
 
-class Renderer
-{
+class Renderer {
     public:
         Renderer(int width, int height, const Map & map);
 
@@ -39,15 +40,19 @@ class Renderer
         void DrawPlayers();
         void initLights();
         void drawFloor();
-        void drawRoomAndy();
+        void drawWalls();
+        void drawRoomAndy();        
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
 
+        float getDesktopY();
+
         const std::vector<Player>& getPlayers() const { return _players; }
 
         void handleServerDisconnect();
+        void DrawGameOver();
 
     private:
         AssetsManager _assets;
@@ -72,5 +77,8 @@ class Renderer
         static bool disconnected;
         float _disconnectTimer;
         void notifyServerDisconnect();
+        void DrawIncantations();
+        void DrawSelectionMarkers();
 };
+
 #endif
