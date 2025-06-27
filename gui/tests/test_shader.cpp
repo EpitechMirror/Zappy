@@ -19,7 +19,7 @@ Test(ShadersManager, load_and_unload_pbr) {
 
     try {
         WindowRAII window(800, 600, "Shader Test");
-        
+
         ShadersManager manager;
         manager.loadPBR();
 

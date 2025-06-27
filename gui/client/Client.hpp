@@ -51,7 +51,7 @@ class Client {
         bool readLine(std::string &line);
         void parseData();
         void receiveData();
-        
+
         bool isConnected() const {
             return _socket != -1;
         }

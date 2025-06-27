@@ -41,7 +41,7 @@ class Renderer {
         void initLights();
         void drawFloor();
         void drawWalls();
-        void drawRoomAndy();        
+        void drawRoomAndy();
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
@@ -71,7 +71,7 @@ class Renderer {
             "Did you know? Eggs hatch into players ! ",
             "Legend says no one ever reached level 8... Yet. "
         };
-        std::optional<Vector2> _selectedTile;    
+        std::optional<Vector2> _selectedTile;
         std::optional<int>_selectedPlayerId;
         static bool firstCall;
         static bool disconnected;

@@ -9,7 +9,7 @@
 constexpr float TILE_SIZE = 64.0f;
 
 Renderer::Renderer(int width, int height, const Map &map)
-    : 
+    :
       _assets(map.getWidth(), map.getHeight()),
       _screenWidth(width),
       _screenHeight(height),
@@ -69,13 +69,13 @@ void Renderer::drawRoomAndy() {
 
     rlPushMatrix();
         rlTranslatef(roomWidth/2, 0.0f, roomDepth/2);
-        
+
         float scaleX = roomWidth / 0.5f;
         float scaleZ = roomDepth / 1.0f;
         float scaleY = (scaleX + scaleZ) / 2.0f;
-        
+
         rlScalef(scaleX, scaleY, scaleZ);
-        
+
         DrawModel(_assets.deskModel, {-0.5f, -0.780f, 1.3f}, 1.0f, WHITE);
     rlPopMatrix();
 }
@@ -106,23 +106,23 @@ void Renderer::drawItems() {
     for (int x = 0; x < width; ++x) {
         for (int y = 0; y < height; ++y) {
             const Resources& res = _map.getTileResources(x, y);
-            
+
             for (int i = 0; i < RESOURCE_COUNT; ++i) {
                 int quantity = res.quantities[i];
                 if (quantity <= 0) continue;
 
                 int baseHash = resourceHash(x, y, i);
-                
+
                 for (int q = 0; q < quantity; ++q) {
                     int slot = (baseHash + q) % (gridSize * gridSize);
                     int gridX = slot % gridSize;
                     int gridZ = slot / gridSize;
-                    
+
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
-                    
+
                     float posY = 0.05f + (q * 0.01f);
-                    
+
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
                 }
@@ -182,8 +182,8 @@ void Renderer::drawFloor() {
 void Renderer::showLoadingScreen(const std::string &message) {
     float duration = 11.0f;
     float startTime = GetTime();
-    float nextTipTime = 3.0f; 
-    
+    float nextTipTime = 3.0f;
+
     int tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
     std::string tip = _loadingTips[tipIndex];
 
@@ -248,7 +248,7 @@ void Renderer::showLoadingScreen(const std::string &message) {
 
             DrawRectangle(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, Fade(SKYBLUE, 0.25f));
             DrawRectangleLines(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, BLUE);
-            
+
             float tipAlpha = 1.0f;
             if (nextTipTime - elapsed < 0.5f) {
                 tipAlpha = (nextTipTime - elapsed) * 2.0f;
@@ -395,16 +395,16 @@ void Renderer::InfoPlayersBoard() {
 
     std::vector<std::string> lines;
     std::string title = "Player Info";
-    
+
     if (selectedPlayer) {
         title = "Player #" + std::to_string(selectedPlayer->getId());
 
         lines.push_back("Level: " + std::to_string(selectedPlayer->getLevel()));
         lines.push_back(selectedPlayer->getTeam());
-        lines.push_back("Position: " + 
+        lines.push_back("Position: " +
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().x)) + "," +
                         std::to_string(static_cast<int>(selectedPlayer->getPosition().z)));
-        
+
         std::string orientation;
         switch (selectedPlayer->getOrientation()) {
             case 1: orientation = "North"; break;
@@ -435,7 +435,7 @@ void Renderer::InfoPlayersBoard() {
         int w = MeasureText(line.c_str(), titleSize);
         if (w > maxWidth) maxWidth = w;
     }
-    
+
     int boxWidth = maxWidth + 2 * padding;
     int boxHeight = (1 + lines.size()) * lineSpacing + 2 * padding;
 
@@ -455,7 +455,7 @@ void Renderer::InfoPlayersBoard() {
 
     for (const auto& line : lines) {
         Color color = WHITE;
-        
+
         if (line == "Click on a player") {
             color = DARKGRAY;
         }
@@ -467,7 +467,7 @@ void Renderer::InfoPlayersBoard() {
         else if (line.find("Mendiane:") != std::string::npos) color = RED;
         else if (line.find("Phiras:") != std::string::npos) color = GREEN;
         else if (line.find("Thystame:") != std::string::npos) color = PINK;
-        
+
         DrawText(line.c_str(), x, y, titleSize, color);
         y += lineSpacing;
     }
@@ -490,12 +490,12 @@ void Renderer::InfoBoxBoard() {
 
     std::vector<std::pair<std::string, Color>> resourceLines;
     std::string clickText = "Click on a box";
- 
+
     if (_selectedTile) {
         int tx = static_cast<int>(_selectedTile->x);
         int ty = static_cast<int>(_selectedTile->y);
         const auto& res = _map.getTileResources(tx, ty);
-        
+
         if (res.quantities[FOOD] > 0) {
             std::string txt = TextFormat("Food: %d", res.quantities[FOOD]);
             resourceLines.push_back({txt, ORANGE});
@@ -531,13 +531,13 @@ void Renderer::InfoBoxBoard() {
             resourceLines.push_back({txt, PINK});
             maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
         }
-        
+
         if (resourceLines.empty()) {
             std::string emptyTxt = "Empty tile";
             resourceLines.push_back({emptyTxt, DARKGRAY});
             maxWidth = std::max(maxWidth, MeasureText(emptyTxt.c_str(), titleSize));
         }
-        
+
         contentLines += resourceLines.size();
     } else {
         maxWidth = std::max(maxWidth, MeasureText(clickText.c_str(), titleSize));
@@ -549,10 +549,10 @@ void Renderer::InfoBoxBoard() {
 
     const std::vector<std::string>& teamNames = Player::getTeamNames();
     int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
-    
+
     int playersBoxY = 10 + teamsBoxHeight + 10;
     int playersBoxHeight = 0;
-    
+
     if (_selectedPlayerId) {
         const Player* selectedPlayer = nullptr;
         for (const Player& p : _map.getPlayers()) {
@@ -561,7 +561,7 @@ void Renderer::InfoBoxBoard() {
                 break;
             }
         }
-        
+
         if (selectedPlayer) {
             int lines = 11;
             const int* inventory = selectedPlayer->getInventory();
@@ -589,7 +589,7 @@ void Renderer::InfoBoxBoard() {
 
     DrawText(title.c_str(), x, y, titleSize, BLACK);
     y += lineSpacing;
-    
+
     if (_selectedTile) {
         for (const auto& [text, color] : resourceLines) {
             DrawText(text.c_str(), x, y, titleSize, color);
@@ -615,7 +615,7 @@ void Renderer::gameLoop(Client &client) {
         bool wasConnected = client.isConnected();
         client.update();
         bool isConnected = client.isConnected();
-        
+
         if (wasConnected && !isConnected) {
             notifyServerDisconnect();
             disconnected = true;
@@ -655,7 +655,7 @@ void Renderer::gameLoop(Client &client) {
             InfoTeamsBoard();
             InfoPlayersBoard();
             InfoBoxBoard();
-            
+
             if (_disconnectTimer > 0) {
                 handleServerDisconnect();
             }
@@ -760,7 +760,7 @@ void Renderer::renderWindow(Client &client) {
     }
 
     _assets.unloadAllResources();
-    
+
     CloseWindow();
     client.disconnect();
 }
@@ -771,14 +771,14 @@ void Renderer::handleMouseClick() {
     // Player
     for (const Player& p : _map.getPlayers()) {
         float cellSize = 1.0f;
-        
+
         float px = p.getPosition().x * cellSize + cellSize/2;
         float pz = p.getPosition().z * cellSize + cellSize/2;
-        
+
         float width = 0.4f;
         float height = 1.0f;
         float depth = 0.4f;
-        
+
         BoundingBox playerBox = {
             {
                 px - width/2,0.0f, pz - depth/2},
@@ -788,7 +788,7 @@ void Renderer::handleMouseClick() {
                 pz + depth/2
             }
         };
-        
+
         RayCollision collision = GetRayCollisionBox(ray, playerBox);
         if (collision.hit) {
             _selectedPlayerId = p.getId();
@@ -821,25 +821,25 @@ void Renderer::DrawSelectionMarkers() {
             float cellSize = 1.0f;
             float px = p->getPosition().x * cellSize + cellSize/2;
             float pz = p->getPosition().z * cellSize + cellSize/2;
-            
+
             float width = 0.4f;
             float height = 1.0f;
             float depth = 0.4f;
-            
+
             BoundingBox playerBox = {
                 { px - width/2, 0.0f, pz - depth/2 },
                 { px + width/2, height, pz + depth/2 }
             };
-            
+
             DrawBoundingBox(playerBox, Fade(GREEN, 0.3f));
         }
     }
-    
+
     if (_selectedTile) {
         float tx = _selectedTile->x;
         float tz = _selectedTile->y;
         Vector3 center = { tx + 0.5f, 0.1f, tz + 0.5f };
-        
+
         DrawCubeWires(center, 1.0f, 0.1f, 1.0f, Fade(RED, 0.5f));
     }
 }
@@ -863,10 +863,10 @@ void Renderer::DrawGameOver() {
         (_screenWidth - winTextSize.x) / 2.0f,
         (_screenHeight - winTextSize.y) / 2.0f
     };
-    
+
     // Overlay semi-transparent
     DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.5f));
-    
+
     // Message de victoire
     Color outline = BLUE;
     for (int dx = -3; dx <= 3; dx += 3) {

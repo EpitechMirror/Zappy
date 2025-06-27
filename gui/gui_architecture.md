@@ -1,37 +1,37 @@
 # Zappy GUI Client
 
-A realtime 3D visualization client for the Zappy multiplayer game server.  
+A realtime 3D visualization client for the Zappy multiplayer game server.
 Written in modern C++17 and powered by [raylib](https://www.raylib.com/) for cross-platform graphics, this client renders the map, players, resources, and game events in an interactive GUI.
 
 ---
 
 ## Table of Contents
 
-1. [Features](#features)  
+1. [Features](#features)
 2. [Architecture](#architecture)
-3. [Usage](#usage)  
-4. [Protocol & Communication](#protocol--communication) 
+3. [Usage](#usage)
+4. [Protocol & Communication](#protocol--communication)
 
 ---
 
 ## Features
 
-- **Map Rendering**  
-  • Dynamic 2D/3D grid visualization of the game world  
-  • Textured tiles showing resource counts  
+- **Map Rendering**
+  • Dynamic 2D/3D grid visualization of the game world
+  • Textured tiles showing resource counts
 
-- **Player & Resource Visualization**  
-  • Colored 3D models for each player, oriented by direction  
+- **Player & Resource Visualization**
+  • Colored 3D models for each player, oriented by direction
   • Icons/meshes for resources (food, linemate, deraumere, sibur, mendiane, phiras, thystame)
 
-- **Real-time Animations & Events**  
-  • Smooth movement and orientation updates  
-  • Incantation effects, broadcasts, egg laying, deaths  
+- **Real-time Animations & Events**
+  • Smooth movement and orientation updates
+  • Incantation effects, broadcasts, egg laying, deaths
 
-- **Interactive UI**  
-  • Camera controls 
-  • Overlay panels for player inventory, team scores, time unit  
-  • Debug console for raw protocol logs  
+- **Interactive UI**
+  • Camera controls
+  • Overlay panels for player inventory, team scores, time unit
+  • Debug console for raw protocol logs
 
 ---
 
@@ -87,20 +87,20 @@ Written in modern C++17 and powered by [raylib](https://www.raylib.com/) for cro
 +-----------------------+
 ```
 
-- **Network Module**  
-  - Non-blocking TCP socket implementation  
-  - Protocol-compliant message parsing and dispatch  
-  - Thread-safe message queue  
+- **Network Module**
+  - Non-blocking TCP socket implementation
+  - Protocol-compliant message parsing and dispatch
+  - Thread-safe message queue
 
-- **Rendering Engine**  
-  - Loads textures, models, and shaders on startup  
-  - Scene graph management for tiles, players, eggs  
-  - Frame-based update system  
+- **Rendering Engine**
+  - Loads textures, models, and shaders on startup
+  - Scene graph management for tiles, players, eggs
+  - Frame-based update system
 
-- **User Interface**  
-  - Dear ImGui overlay for debugging and controls  
-  - Camera controller (keyboard + mouse)  
-  - Context-sensitive information panels  
+- **User Interface**
+  - Dear ImGui overlay for debugging and controls
+  - Camera controller (keyboard + mouse)
+  - Context-sensitive information panels
 
 ---
 
@@ -117,7 +117,7 @@ After connecting to server:
    - `enw`, `ebo`, `edi` (egg events)
    - `sgt`, `seg` (game state)
 
-**Controls**:  
+**Controls**:
 - ZQSD: Camera movement
 - Left click: Select objects
 - F1: Toggle debug console

@@ -22,10 +22,10 @@ int main(int argc, char** argv) {
 
     while ((opt = getopt(argc, argv, "p:h:")) != -1) {
         switch (opt) {
-            case 'p': 
-                port = std::stoi(optarg); 
+            case 'p':
+                port = std::stoi(optarg);
                 break;
-            case 'h': 
+            case 'h':
                 if (strcasecmp(optarg, "localhost") == 0) {
                     host = "127.0.0.1";
                 } else {

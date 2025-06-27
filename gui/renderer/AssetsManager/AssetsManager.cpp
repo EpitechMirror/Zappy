@@ -7,7 +7,7 @@
 
 #include "AssetsManager.hpp"
 
-AssetsManager::AssetsManager(int width, int height) 
+AssetsManager::AssetsManager(int width, int height)
     : mapWidth(width), mapHeight(height) {}
 
 AssetsManager::~AssetsManager()
@@ -29,9 +29,9 @@ void AssetsManager::unloadAllResources()
     UnloadModel(wallLong);
     UnloadModel(wallShort);
     UnloadModel(deskModel);
-    
+
     shaders.unloadAll();
-    
+
     if (IsAudioDeviceReady()) {
         UnloadMusicStream(mainMusic);
         CloseAudioDevice();

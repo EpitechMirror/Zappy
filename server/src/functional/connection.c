@@ -39,7 +39,7 @@ void handle_new_connection(int server_fd, struct pollfd *fds, int *client_count,
             fds[*client_count].events = POLLIN;
         (*client_count)++;
         printf("Ajout du fd %d au tableau fds[]\n", new_fd);
-        } 
+        }
         //else {
         //     printf("Max clients atteints, fermeture fd %d\n", new_fd);
         //     close(new_fd);
