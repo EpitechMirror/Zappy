@@ -67,6 +67,17 @@ egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx);
 void send_ebo(int fd, int egg_id);
 int respond_to_server_fd(int fd, server_config_t *conf,
     char *client_message, client_t *client);
-
-
+void send_tile_update_to_gui(server_config_t *conf, int x, int y);
+void elevate_players_on_tile(server_config_t *conf, int x, int y, int level);
+void handle_incantation(client_t *client, server_config_t *conf, int fd);
+void get_tile_content_string(server_config_t *conf, int x, int y, char *buffer, int buffer_size);
+void add_players_to_tile(server_config_t *conf, int x, int y, char *buffer, int buffer_size, client_t *current_client);
+int count_players_on_tile(server_config_t *conf, int x, int y, int level);
+int check_tile_resources(server_config_t *conf, int x, int y, const elevation_req_t *req);
+void consume_tile_resources(server_config_t *conf, int x, int y, const elevation_req_t *req);
+void ppo_graphics(client_t *client, server_config_t *conf);
+void plv_graphics(client_t *client, server_config_t *conf);
+void pin_graphics(client_t *client, server_config_t *conf);
+void notify_graphics_player_update(client_t *client, server_config_t *conf);
+void send_tile_update_to_gui(server_config_t *conf, int x, int y);
 #endif /* !SERVER_H_ */
