@@ -5,11 +5,11 @@
 ** main
 */
 
-#include "flag.h"
-#include "server.h"
+#include "../include/flag.h"
+#include "../include/server.h"
 #include <pthread.h>
 
-void print_help(void)
+static void print_help(void)
 {
     printf("USAGE: ./zappy_server -p port -x width -y height");
     printf(" -n name1 name2 ... -c clientsNb -f freq\n");
@@ -57,11 +57,9 @@ static int setup_server(int argc, char **argv, server_config_t *conf)
         print_help();
         return 84;
     }
-    if (parse(argc, argv, conf) == 84)
-        return 84;
-    if (alloc_team_slots(conf) == 84)
-        return 84;
-    if (alloc_map(conf) == 84)
+    if (parse(argc, argv, conf) == 84
+        || alloc_team_slots(conf) == 84
+        || alloc_map(conf) == 84)
         return 84;
     generate_map_resources(conf);
     conf->next_egg_id = 1;
@@ -72,18 +70,15 @@ int main(int argc, char **argv)
 {
     server_config_t conf = {0};
     int server_fd;
+
     if (setup_server(argc, argv, &conf) == 84)
         return 84;
-
     server_fd = create_server_socket(conf.port);
     if (server_fd < 0)
         return 84;
-
     pthread_mutex_init(&conf.mutex, NULL);
     conf.running = 1;
-
     accept_clients_loop(server_fd, &conf);
-
     close(server_fd);
     free(conf.team_slots);
     return 0;
