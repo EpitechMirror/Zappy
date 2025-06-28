@@ -13,10 +13,11 @@
 void strip_newline(char *str)
 {
     size_t len = strlen(str);
-    if (len > 0 && (str[len-1] == '\n' || str[len-1] == '\r'))
-        str[len-1] = '\0';
-    if (len > 1 && str[len-2] == '\r')
-        str[len-2] = '\0';
+
+    if (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
+        str[len - 1] = '\0';
+    if (len > 1 && str[len - 2] == '\r')
+        str[len - 2] = '\0';
 }
 
 static int find_team_index(server_config_t *conf, const char *team_name)
@@ -35,9 +36,9 @@ void send_pnw_to_graphics(client_t *player, server_config_t *conf)
 {
     char msg[256];
 
-    snprintf(msg, sizeof(msg), "pnw #%d %d %d %d %d %s\n",
-        player->fd, player->x, player->y, player->direction + 1, player->level, player->team_name);
-
+    snprintf(msg, sizeof(msg), "pnw #%d %d %d %d %d %s\n", player->fd,
+        player->x, player->y, player->direction + 1, player->level,
+        player->team_name);
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
@@ -70,7 +71,6 @@ static void handle_player_auth(client_t *client, int fd,
         team, conf->clients_nb, conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
     client->state = AUTHENTICATED;
-
     egg = get_unused_egg_for_team(conf, team_idx);
     if (egg) {
         egg->used = 1;
@@ -87,7 +87,6 @@ static void handle_player_auth(client_t *client, int fd,
         client->inventory.food = 10;
         client->next = conf->clients;
         conf->clients = client;
-
         send_pnw_to_graphics(client, conf);
         send_ebo_to_graphics(egg->id, conf);
     }
@@ -99,7 +98,8 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
     if (strcmp(buffer, "GRAPHIC") == 0) {
         ctx->client->is_graphic = true;
         ctx->client->state = AUTHENTICATED;
-        ctx->conf->graphic_fds[ctx->conf->nb_graphics++] = ctx->client->fd;
+        ctx->conf->graphic_fds[ctx->conf->nb_graphics] = ctx->client->fd;
+        ctx->conf->nb_graphics++;
         handle_graphic_auth(ctx->client->fd, ctx->conf);
         return true;
     }
@@ -108,24 +108,24 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
 }
 
 static bool process_client_request(client_t *client, int fd,
-server_config_t *conf, char *buffer)
+    server_config_t *conf, char *buffer)
 {
     auth_context_t ctx = {&conf->clients, client, conf};
     //printf("[DEBUG] fd=%d is_graphic=%d state=%d is_alive=%d\n", client->fd, client->is_graphic, client->state, client->is_alive);
-    
+
     if (client->state == WAITING_NAME) {
         handle_auth(&ctx, buffer);
-    } else if (client->state == AUTHENTICATED) {
+    }
+    if (client->state == AUTHENTICATED) {
+        if (!client->is_graphic && !conf->game_started) {
+            conf->game_started = true;
+            pthread_create(&conf->game_thread, NULL, game_tick_thread, conf);
+            // printf("[DEBUG] Game loop started.\n");
+        }
         if (!client->is_graphic) {
-            if (!conf->game_started) {
-                conf->game_started = true;
-                pthread_create(&conf->game_thread, NULL, game_tick_thread, conf);
-                // printf("[DEBUG] Game loop started.\n");
-            }
             respond_to_server_fd(fd, conf, buffer, client);
         }
     }
-    
     return false;
 }
 

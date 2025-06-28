@@ -13,7 +13,7 @@
     #include <stdbool.h>
 
 #ifndef MAX_GRAPHICS
-#define MAX_GRAPHICS 16
+    #define MAX_GRAPHICS 16
 #endif
 
 typedef struct egg_s {

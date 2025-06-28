@@ -8,7 +8,7 @@
 #include "../include/server.h"
 #include "../include/ressources.h"
 
-void add_egg_to_list(server_config_t *conf, egg_t *egg)
+static void add_egg_to_list(server_config_t *conf, egg_t *egg)
 {
     if (!egg || !conf)
         return;
@@ -16,7 +16,7 @@ void add_egg_to_list(server_config_t *conf, egg_t *egg)
     conf->eggs = egg;
 }
 
-void send_team_names(int fd, server_config_t *conf)
+static void send_team_names(int fd, server_config_t *conf)
 {
     char msg[128];
     int i = 0;
@@ -27,7 +27,7 @@ void send_team_names(int fd, server_config_t *conf)
     }
 }
 
-void send_enw(int fd, egg_t *egg, int player_id)
+static void send_enw(int fd, egg_t *egg, int player_id)
 {
     char msg[128];
 
@@ -62,7 +62,8 @@ egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y)
 
     if (!egg)
         return NULL;
-    egg->id = conf->next_egg_id++;
+    egg->id = conf->next_egg_id;
+    conf->next_egg_id++;
     egg->x = x;
     egg->y = y;
     egg->team_idx = team_idx;
@@ -73,9 +74,9 @@ egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y)
 
 egg_t *create_egg_fork(server_config_t *conf, client_t *client)
 {
-    printf("fork to create an egg");
     egg_t *egg = create_egg(conf, client->team_idx, client->x, client->y);
 
+    printf("fork to create an egg");
     if (!egg)
         return NULL;
     egg->used = 1;
@@ -100,7 +101,8 @@ void handle_graphic_auth(int fd, server_config_t *conf)
     send_team_names(fd, conf);
     for (t = 0; t < conf->team_count; t++) {
         for (s = 0; s < conf->clients_nb; s++) {
-            egg = create_egg(conf, t, rand() % conf->width, rand() % conf->height);
+            egg = create_egg(conf, t, rand() % conf->width,
+            rand() % conf->height);
             add_egg_to_list(conf, egg);
             send_enw(fd, egg, -1);
         }
