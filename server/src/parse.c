@@ -9,7 +9,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "flag.h"
+
+#include "../include/flag.h"
 
 static int is_number(const char *str)
 {

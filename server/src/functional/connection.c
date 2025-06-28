@@ -5,7 +5,7 @@
 ** connection
 */
 
-#include "server.h"
+#include "../../include/server.h"
 
 client_t *create_new_client(int fd)
 {

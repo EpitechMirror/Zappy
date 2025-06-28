@@ -8,10 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include "client_info.h"
-#include "flag.h"
-#include "ressources.h"
-#include "server.h"
+#include "../../include/client_info.h"
+#include "../../include/flag.h"
+#include "../../include/ressources.h"
 
 static int calculate_direction_tile(client_t *sender, client_t *receiver)
 {

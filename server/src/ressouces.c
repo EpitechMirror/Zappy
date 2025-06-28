@@ -10,8 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "ressources.h"
-#include "server.h"
+
+#include "../include/ressources.h"
+#include "../include/server.h"
 
 static void clear_map_resources(server_config_t *conf)
 {

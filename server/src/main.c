@@ -5,9 +5,10 @@
 ** main
 */
 
+#include <pthread.h>
+
 #include "../include/flag.h"
 #include "../include/server.h"
-#include <pthread.h>
 
 static void print_help(void)
 {

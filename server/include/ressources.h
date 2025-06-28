@@ -9,7 +9,7 @@
     #define RESSOURCES_H_
     #define RESOURCE_TYPES 7
 
-    #include "flag.h"
+    // #include "flag.h"
 
 
 static const float resource_min_ratio[RESOURCE_TYPES] = {

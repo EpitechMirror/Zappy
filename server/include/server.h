@@ -67,6 +67,7 @@ egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx);
 void send_ebo(int fd, int egg_id);
 int respond_to_server_fd(int fd, server_config_t *conf,
     char *client_message, client_t *client);
+void pin_graphics(client_t *client, server_config_t *conf);
 
 
 #endif /* !SERVER_H_ */

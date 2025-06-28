@@ -5,7 +5,7 @@
 ** accept
 */
 
-#include "server.h"
+#include "../../include/server.h"
 
 static void handle_server_connection(poll_context_t *ctx)
 {

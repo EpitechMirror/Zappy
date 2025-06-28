@@ -6,8 +6,9 @@
 */
 
 #include <stdbool.h>
-#include "server.h"
-#include "flag.h"
+
+#include "../../include/server.h"
+#include "../../include/flag.h"
 
 void strip_newline(char *str)
 {

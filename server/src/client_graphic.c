@@ -5,8 +5,8 @@
 ** client_graphic
 */
 
-#include "server.h"
-#include "ressources.h"
+#include "../include/server.h"
+#include "../include/ressources.h"
 
 void add_egg_to_list(server_config_t *conf, egg_t *egg)
 {
