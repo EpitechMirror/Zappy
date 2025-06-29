@@ -10,7 +10,7 @@
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
-static int handle_resource(client_t *client, const char *resource,
+static int handle_resource(const char *resource,
     const resource_mapping_t *mapping, int fd)
 {
     if (strcmp(resource, mapping->name) == 0 && *mapping->inventory_ptr > 0) {
@@ -38,7 +38,7 @@ void set_object(client_t *client, server_config_t *conf, char *client_message,
     };
 
     for (int i = 0; i < 7; i++)
-        if (handle_resource(client, resourc, &mappings[i], fd)) {
+        if (handle_resource(resourc, &mappings[i], fd)) {
             notify_graphics_player_update(client, conf);
             return;
         }
