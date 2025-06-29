@@ -17,7 +17,9 @@ Renderer::Renderer(int width, int height, const Map &map)
       _cameraController(map.getWidth(), map.getHeight()),
       _mapInitialized(false),
       _disconnectTimer(0.0f)
-{}
+{
+    _menuButton = {20, static_cast<float>(height - 60), 100, 40};
+}
 
 float Renderer::getDesktopY() {
     return 0.0f;
@@ -606,6 +608,9 @@ void Renderer::gameLoop(Client &client) {
     if (!_mapInitialized) {
         showLoadingScreen("Loading...");
     }
+    if (_musicEnabled) {
+        PlayMusicStream(_assets.mainMusic);
+    }
 
     _assets.loadAllResources();
     _assets.applyShaders();
@@ -635,6 +640,17 @@ void Renderer::gameLoop(Client &client) {
             handleMouseClick();
         }
 
+        Vector2 mousePos = GetMousePosition();
+        _menuButtonHovered = CheckCollisionPointRec(mousePos, _menuButton);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && _menuButtonHovered) {
+            _menuOpen = true;
+        }
+
+        if (_musicEnabled) {
+            UpdateMusicStream(_assets.mainMusic);
+        }
+
         BeginDrawing();
             ClearBackground(BLACK);
 
@@ -655,11 +671,171 @@ void Renderer::gameLoop(Client &client) {
             InfoTeamsBoard();
             InfoPlayersBoard();
             InfoBoxBoard();
+            DrawButton();
             
             if (_disconnectTimer > 0) {
                 handleServerDisconnect();
             }
+            if (_menuOpen) {
+                DrawMenu();
+            }
         EndDrawing();
+    }
+}
+
+void Renderer::DrawButton() {
+    Color btnColor = _menuButtonHovered ? BLUE : SKYBLUE;
+    DrawRectangleRounded(_menuButton, 0.4f, 8, btnColor);
+    DrawRectangleRoundedLines(_menuButton, 0.4f, 8, DARKBLUE);
+
+    const char* text = "Menu";
+    int textWidth = MeasureText(text, 20);
+    int textX = _menuButton.x + (_menuButton.width - textWidth) / 2;
+    int textY = _menuButton.y + (_menuButton.height - 20) / 2;
+    DrawText(text, textX, textY, 20, WHITE);
+}
+
+void Renderer::DrawMenu() {
+    DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.7f));
+    
+    const float menuWidth = 600;
+    const float menuHeight = 500;
+    const float menuX = (_screenWidth - menuWidth) / 2;
+    const float menuY = (_screenHeight - menuHeight) / 2;
+    
+    DrawRectangleRounded(
+        Rectangle{menuX, menuY, menuWidth, menuHeight}, 
+        0.05f, 
+        10, 
+        Fade(RAYWHITE, 0.95f)
+    );
+    DrawRectangleRoundedLines(
+        Rectangle{menuX, menuY, menuWidth, menuHeight}, 
+        0.05f, 
+        10, 
+        BLUE);
+    
+    const char* title = "WOODY GUI - MENU";
+    int titleSize = 40;
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, menuX + (menuWidth - titleWidth)/2, menuY + 20, titleSize, DARKBLUE);
+    
+    DrawLine(
+        menuX + 20, 
+        menuY + 70, 
+        menuX + menuWidth - 20, 
+        menuY + 70, 
+        BLUE
+    );
+    
+    int optionSize = 30;
+    int optionY = menuY + 100;
+    int optionSpacing = 50;
+    
+    DrawText("RESUME GAME", menuX + 50, optionY, optionSize, DARKGRAY);
+    
+    const char* musicStatus = _musicEnabled ? "ON" : "OFF";
+    Color musicColor = _musicEnabled ? GREEN : RED;
+    DrawText("MUSIC: ", menuX + 50, optionY + optionSpacing, optionSize, DARKGRAY);
+    DrawText(musicStatus, menuX + 50 + MeasureText("MUSIC: ", optionSize), 
+             optionY + optionSpacing, optionSize, musicColor);
+    
+    const char* controlsTitle = "CAMERA CONTROLS";
+    DrawText(controlsTitle, menuX + 50, optionY + 3*optionSpacing, optionSize, DARKBLUE);
+    
+    int controlSize = 25;
+    int controlY = optionY + 3*optionSpacing + 40;
+    
+    // Z (haut)
+    DrawCircle(menuX + 80, controlY, 25, Fade(BLUE, 0.2f));
+    DrawText("Z", menuX + 80 - MeasureText("Z", controlSize)/2, 
+             controlY - controlSize/2, controlSize, DARKBLUE);
+    
+    // Q (gauche)
+    DrawCircle(menuX + 40, controlY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("Q", menuX + 40 - MeasureText("Q", controlSize)/2, 
+             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
+    
+    // S (bas)
+    DrawCircle(menuX + 80, controlY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("S", menuX + 80 - MeasureText("S", controlSize)/2, 
+             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
+    
+    // D (droite)
+    DrawCircle(menuX + 120, controlY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("D", menuX + 120 - MeasureText("D", controlSize)/2, 
+             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
+    
+    DrawText("MOUSE", menuX + 200, controlY, controlSize, DARKGRAY);
+    DrawText("- Rotate view", menuX + 200, controlY + 30, controlSize, DARKGRAY);
+    DrawText("- Zoom", menuX + 200, controlY + 60, controlSize, DARKGRAY);
+    
+    Rectangle quitButton = {
+        menuX + menuWidth - 210,
+        menuY + menuHeight - 70,
+        200,
+        50
+    };
+    
+    bool quitHovered = CheckCollisionPointRec(GetMousePosition(), quitButton);
+    Color quitColor = quitHovered ? Fade(RED, 0.8f) : Fade(RED, 0.6f);
+    
+    DrawRectangleRounded(quitButton, 0.3f, 10, quitColor);
+    DrawRectangleRoundedLines(quitButton, 0.3f, 10, MAROON);
+    
+    const char* quitText = "QUIT GAME";
+    DrawText(quitText, 
+             quitButton.x + (quitButton.width - MeasureText(quitText, optionSize))/2,
+             quitButton.y + (quitButton.height - optionSize)/2,
+             optionSize, WHITE);
+    
+    Vector2 mousePos = GetMousePosition();
+    
+    Rectangle musicRect = {
+        menuX + 50,
+        static_cast<float>(optionY + optionSpacing),
+        static_cast<float>(MeasureText("MUSIC: OFF", optionSize)),
+        static_cast<float>(optionSize)
+    };
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        // Musique
+        if (CheckCollisionPointRec(mousePos, musicRect)) {
+            _musicEnabled = !_musicEnabled;
+            if (_musicEnabled) {
+                PlayMusicStream(_assets.mainMusic);
+            } else {
+                StopMusicStream(_assets.mainMusic);
+            }
+        }
+        // Quitter
+        else if (CheckCollisionPointRec(mousePos, quitButton)) {
+            _menuOpen = false;
+            _disconnectTimer = 0;
+            CloseWindow();
+            return;
+        }
+        else if (CheckCollisionPointRec(mousePos, 
+                Rectangle{menuX, menuY, menuWidth, menuHeight})) {
+            _menuOpen = false;
+        }
+    }
+    
+    // Bouton fermeture en haut à droite
+    Rectangle closeButton = {menuX + menuWidth - 40, menuY + 10, 30, 30};
+    bool closeHovered = CheckCollisionPointRec(mousePos, closeButton);
+    
+    DrawCircle(closeButton.x + closeButton.width/2, 
+               closeButton.y + closeButton.height/2, 
+               15, 
+               closeHovered ? Fade(RED, 0.7f) : Fade(GRAY, 0.5f));
+    DrawText("X", 
+             closeButton.x + (closeButton.width - MeasureText("X", 20))/2,
+             closeButton.y + (closeButton.height - 20)/2,
+             20, WHITE);
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && closeHovered) {
+        _menuOpen = false;
     }
 }
 

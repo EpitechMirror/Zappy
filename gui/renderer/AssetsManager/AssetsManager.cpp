@@ -121,7 +121,7 @@ void AssetsManager::loadAudio()
         mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
         if (mainMusic.stream.buffer != nullptr) {
             mainMusic.looping = true;
-            PlayMusicStream(mainMusic);
+            //PlayMusicStream(mainMusic);
         }
     }
 }
