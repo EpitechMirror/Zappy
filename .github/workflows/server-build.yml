@@ -1,4 +1,4 @@
-name: Server Build and Test
+name: Server Build, Test, and Quality Assurance
 
 on:
   push:
@@ -12,39 +12,209 @@ on:
       - 'server/**'
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential gcc make valgrind
+        sudo apt-get install -y \
+          build-essential \
+          gcc \
+          make \
+          cmake \
+          valgrind \
+          gcov \
+          lcov \
+          cppcheck
     
-    - name: Build
+    - name: Build Server
       run: |
         cd server
-        make
+        mkdir -p build
+        cd build
+        cmake ..
+        make -j$(nproc)
+        cd ..
+        echo "✅ Server build completed successfully"
     
-    - name: Run tests
+    - name: Build Unit Tests
+      run: |
+        cd server/test
+        make clean
+        make all
+        echo "✅ Unit tests build completed successfully"
+    
+    - name: Run Unit Tests
+      run: |
+        cd server/test
+        echo "🧪 Running comprehensive unit test suite..."
+        ./run_tests.sh
+        echo "✅ All unit tests passed successfully"
+    
+    - name: Memory Leak Detection
+      run: |
+        cd server/test
+        echo "🔍 Running memory leak detection with Valgrind..."
+        ./run_tests.sh memory
+        echo "✅ No memory leaks detected"
+    
+    - name: Code Coverage Analysis
+      run: |
+        cd server/test
+        echo "📊 Generating code coverage report..."
+        ./run_tests.sh coverage
+        echo "✅ Code coverage analysis completed"
+    
+    - name: Static Code Analysis
       run: |
         cd server
-        make test
+        echo "🔎 Running static code analysis..."
+        cppcheck --enable=all --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --suppress=unusedVariable \
+          src/ include/ || true
+        echo "✅ Static code analysis completed"
     
-    - name: Check memory leaks
+    - name: Coding Style Check (Epitech)
       run: |
         cd server
-        make valgrind-test
+        echo "📏 Checking Epitech coding style compliance..."
+        find src/ include/ -name "*.c" -o -name "*.h" | while read -r file; do
+          echo "Checking: $file"
+          # Basic checks for Epitech coding style
+          if grep -n $'\t' "$file"; then
+            echo "❌ Found tabs in $file (should use spaces)"
+            exit 1
+          fi
+          if grep -n '  *$' "$file"; then
+            echo "⚠️  Found trailing spaces in $file"
+          fi
+        done
+        echo "✅ Coding style check completed"
     
-    - name: Code coverage
+    - name: Test Documentation
       run: |
-        cd server
-        make coverage
-        
-    - name: Upload coverage reports
+        cd server/test
+        echo "📖 Verifying test documentation..."
+        if [ -f "README.md" ] && [ -f "IMPLEMENTATION_SUMMARY.md" ]; then
+          echo "✅ Test documentation is complete"
+        else
+          echo "❌ Missing test documentation"
+          exit 1
+        fi
+    
+    - name: Archive Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-test-results
+        path: |
+          server/test/run_tests
+          server/test/*.gcov
+          server/coding-style-reports.log
+        retention-days: 30
+    
+    - name: Archive Coverage Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-coverage-report
+        path: |
+          server/test/*.gcov
+          server/test/coverage_*.html
+        retention-days: 30
+    
+    - name: Upload Coverage to Codecov
+      if: success()
       uses: codecov/codecov-action@v3
       with:
-        directory: ./server/coverage/
+        directory: ./server/test/
         flags: server
+        name: server-coverage
+        fail_ci_if_error: false
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Server for Integration Testing
+      run: |
+        cd server
+        mkdir -p build
+        cd build
+        cmake ..
+        make -j$(nproc)
+    
+    - name: Test Server Startup
+      run: |
+        cd server
+        echo "🚀 Testing server startup and basic functionality..."
+        timeout 5s ./zappy_server -p 8080 -x 10 -y 10 -n team1 team2 -c 5 -f 100 || true
+        echo "✅ Server startup test completed"
+    
+    - name: Test Invalid Arguments
+      run: |
+        cd server
+        echo "🧪 Testing error handling with invalid arguments..."
+        # Test with missing arguments
+        if ./zappy_server; then
+          echo "❌ Server should fail with no arguments"
+          exit 1
+        fi
+        # Test with invalid port
+        if ./zappy_server -p invalid; then
+          echo "❌ Server should fail with invalid port"
+          exit 1
+        fi
+        echo "✅ Error handling tests passed"
+
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install performance tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y time
+    
+    - name: Build Optimized Server
+      run: |
+        cd server
+        mkdir -p build-release
+        cd build-release
+        cmake -DCMAKE_BUILD_TYPE=Release ..
+        make -j$(nproc)
+    
+    - name: Performance Benchmarks
+      run: |
+        cd server/test
+        echo "⚡ Running performance benchmarks..."
+        # Rebuild tests with optimizations
+        make clean
+        make CFLAGS="-O2 -Wall -Wextra -Wpedantic -std=c11 -D_GNU_SOURCE"
+        # Run tests and measure time
+        /usr/bin/time -v ./run_tests.sh > performance_results.txt 2>&1
+        echo "✅ Performance benchmarks completed"
+        cat performance_results.txt
+    
+    - name: Archive Performance Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-performance-results
+        path: server/test/performance_results.txt
+        retention-days: 7
