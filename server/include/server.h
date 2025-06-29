@@ -65,6 +65,24 @@ void send_ebo(int fd, int egg_id);
 int respond_to_server_fd(server_config_t *conf,
     char *client_message, client_t *client);
 void pin_graphics(client_t *client, server_config_t *conf);
-
+void add_resource_to_buffer(char *buffer, char *name, int count, int *first);
+void ppo_graphics(client_t *client, server_config_t *conf);
+void get_tile_contents(client_t *client, char *inventory);
+void take_object(client_t *client, server_config_t *conf,
+    char *client_message);
+int calculate_direction_tile(client_t *sender, client_t *receiver);
+int find_nb_teams(client_t *client);
+void set_object(client_t *client, server_config_t *conf, char *client_message,
+    int fd);
+void notify_graphics_player_update(client_t *client, server_config_t *conf);
+void handle_incantation(client_t *client, server_config_t *conf, int fd);
+int count_players_on_tile(server_config_t *conf, int x, int y, int level);
+int check_tile_resources(server_config_t *conf, int x, int y,
+    const elevation_req_t *req);
+void consume_tile_resources(server_config_t *conf, int x, int y,
+    const elevation_req_t *req);
+void elevate_players_on_tile(server_config_t *conf, int x, int y, int level);
+void get_look_coordinates(client_t *client, int dist_and_sideoff[2],
+    int **coords, server_config_t *conf);
 
 #endif /* !SERVER_H_ */
