@@ -35,7 +35,7 @@ static void move_west(client_t *client, server_config_t *conf)
     client->x = (client->x + conf->width - 1) % conf->width;
 }
 
-void get_tile_contents(int x, int y, client_t *client, char *inventory)
+void get_tile_contents(client_t *client, char *inventory)
 {
     snprintf(inventory, 256,
         "linemate %d, deraumere %d, sibur %d, mendiane %d,"
@@ -156,7 +156,7 @@ void get_tile_content_string(server_config_t *conf, int x, int y, char *buffer,
     buffer[buffer_size - 1] = '\0';
 }
 
-void add_players_to_tile(server_config_t *conf, int x, int y, char *buffer,
+void add_players_to_tile(int x, int y, char *buffer,
     int buffer_size, client_t *current_client)
 {
     char temp[512];
@@ -217,7 +217,7 @@ void look_around(client_t *client, server_config_t *conf)
             get_look_coordinates(client, distance, side_offset, &x, &y, conf);
             get_tile_content_string(conf, x, y, tile_content,
                 sizeof(tile_content));
-            add_players_to_tile(conf, x, y, tile_content, sizeof(tile_content),
+            add_players_to_tile(x, y, tile_content, sizeof(tile_content),
                 client);
             if (strlen(response) > 1)
                 strcat(response, ",");
@@ -447,7 +447,7 @@ void handle_incantation(client_t *client, server_config_t *conf, int fd)
     elevate_players_on_tile(conf, client->x, client->y, client->level);
 }
 
-int respond_to_server_fd(int fd, server_config_t *conf, char *client_message,
+int respond_to_server_fd(server_config_t *conf, char *client_message,
     client_t *client)
 {
     double now = get_current_time();
@@ -522,7 +522,7 @@ void execute_command(client_t *client, server_config_t *conf, const char *cmd)
         return;
     }
     if (strncmp(cmd, "Inventory", 9) == 0) {
-        get_tile_contents(client->x, client->y, client, inventory);
+        get_tile_contents(client, inventory);
         snprintf(inventory, sizeof(inventory), "[linemate %d, deraumere %d, "
         "sibur %d, mendiane %d, phiras %d, thystame %d, food %d]\n",
             client->inventory.linemate,

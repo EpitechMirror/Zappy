@@ -62,7 +62,7 @@ void handle_graphic_auth(int fd, server_config_t *conf);
 egg_t *create_egg(server_config_t *conf, int team_idx, int x, int y);
 egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx);
 void send_ebo(int fd, int egg_id);
-int respond_to_server_fd(int fd, server_config_t *conf,
+int respond_to_server_fd(server_config_t *conf,
     char *client_message, client_t *client);
 void pin_graphics(client_t *client, server_config_t *conf);
 

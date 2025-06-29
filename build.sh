@@ -5,7 +5,7 @@ set -e
 # Paths
 SERVER_DIR="server"
 GUI_DIR="gui"
-AI_SCRIPT="ai/src/ai.py"
+AI_SCRIPT="ai/src/zappy_ai.py"
 
 # Parse arguments
 BUILD_SERVER=false

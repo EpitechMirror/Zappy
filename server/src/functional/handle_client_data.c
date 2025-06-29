@@ -107,8 +107,8 @@ bool handle_auth(auth_context_t *ctx, char *buffer)
     return true;
 }
 
-static bool process_client_request(client_t *client, int fd,
-    server_config_t *conf, char *buffer)
+static bool process_client_request(client_t *client, server_config_t *conf,
+    char *buffer)
 {
     auth_context_t ctx = {&conf->clients, client, conf};
     //printf("[DEBUG] fd=%d is_graphic=%d state=%d is_alive=%d\n", client->fd, client->is_graphic, client->state, client->is_alive);
@@ -123,7 +123,7 @@ static bool process_client_request(client_t *client, int fd,
             // printf("[DEBUG] Game loop started.\n");
         }
         if (!client->is_graphic) {
-            respond_to_server_fd(fd, conf, buffer, client);
+            respond_to_server_fd(conf, buffer, client);
         }
     }
     return false;
@@ -147,5 +147,5 @@ bool handle_client_data(client_t **clients, int fd,
     }
     buffer[r] = '\0';
     printf("[DEBUG] Data from fd %d: %s\n", fd, buffer);
-    return process_client_request(client, fd, conf, buffer);
+    return process_client_request(client, conf, buffer);
 }
