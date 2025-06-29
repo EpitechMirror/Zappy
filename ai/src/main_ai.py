@@ -5,10 +5,11 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Wed Jun 25 11:39:38 AM 2025 adrien.marette@epitech.eu
-## Last update Mon Jun 29 2:49:47 PM 2025 adrien.marette@epitech.eu
+## Last update Mon Jun 29 4:49:04 PM 2025 adrien.marette@epitech.eu
 ##
 
 import json
+import sys
 import time
 import socket
 import random
@@ -31,6 +32,14 @@ class ZappyAI:
         self.state = GameState()
         self.command_queue = []
         self.last_look_result = []
+        
+        # Fork and team management
+        self.available_slots = None
+        self.world_width = None
+        self.world_height = None
+        self.last_fork_attempt = 0
+        self.fork_cooldown = 60.0  # Wait 60 seconds between fork attempts
+        self.should_fork_early = True  # Fork aggressively at the beginning
         
         # AI Components
         self.neural_network = NeuralNetwork(
@@ -58,12 +67,22 @@ class ZappyAI:
             'successful_actions': 0,
             'failed_actions': 0,
             'elevations_completed': 0,
-            'resources_collected': 0
+            'resources_collected': 0,
+            'forks_attempted': 0,
+            'forks_successful': 0
         }
         
         # Action history for pattern recognition
         self.action_history = deque(maxlen=1000)
         self.reward_history = deque(maxlen=1000)
+        
+        # Fork-related attributes
+        self.available_slots = None
+        self.world_width = None
+        self.world_height = None
+        self.fork_cooldown = 60.0  # 60 seconds between fork attempts
+        self.last_fork_attempt = 0
+        self.should_fork_early = True  # Aggressive early game forking
         
     def connect(self):
         """Connect to the Zappy server"""
@@ -76,6 +95,43 @@ class ZappyAI:
                 raise Exception(f"Expected WELCOME, got: {welcome}")
 
             self.send_message(self.team_name)
+            
+            # Get server info for fork planning
+            server_response = self.receive_message()
+            try:
+                # Server sends welcome message, slots and dimensions in response
+                lines = server_response.split('\n')
+                
+                # Find slots (first numeric line)
+                slots_found = False
+                dims_line_idx = -1
+                for i, line in enumerate(lines):
+                    try:
+                        self.available_slots = int(line.strip())
+                        print(f"Team slots available: {self.available_slots}")
+                        slots_found = True
+                        dims_line_idx = i + 1
+                        break
+                    except ValueError:
+                        continue  # Skip non-numeric lines
+                
+                # Find dimensions (next line after slots)
+                if slots_found and dims_line_idx < len(lines):
+                    parts = lines[dims_line_idx].split()
+                    self.world_width = int(parts[0])
+                    self.world_height = int(parts[1])
+                    print(f"World size: {self.world_width}x{self.world_height}")
+                elif slots_found:
+                    # Dimensions might be in a separate message
+                    dims_response = self.receive_message()
+                    parts = dims_response.split()
+                    self.world_width = int(parts[0])
+                    self.world_height = int(parts[1])
+                    print(f"World size: {self.world_width}x{self.world_height}")
+                    
+            except (ValueError, IndexError) as e:
+                print(f"Warning: Could not parse server response: {server_response}")
+                # Continue anyway, these are just for optimization
 
             print(f"Enhanced AI connected successfully!")
             return True
@@ -181,6 +237,8 @@ class ZappyAI:
         elif action == ActionType.TAKE_RESOURCE and result == "ok":
             reward += 5.0
             self.performance_metrics['resources_collected'] += 1
+        elif action == ActionType.FORK and result == "ok":
+            reward += 20.0  # Good reward for successful fork
         elif result == "ko":
             reward -= 2.0  # Penalty for failed actions
             self.performance_metrics['failed_actions'] += 1
@@ -208,6 +266,10 @@ class ZappyAI:
     
     def think_and_decide(self) -> ActionType:
         """Advanced thinking and decision making"""
+        # Check if we should fork first (high priority)
+        if self.attempt_fork():
+            return ActionType.FORK
+        
         # Get current state representation
         state_vector = self.create_state_vector()
         
@@ -359,6 +421,13 @@ class ZappyAI:
         """Process server response and learn"""
         response = response.strip()
         
+        # Handle fork success
+        if action == ActionType.FORK and response == "ok":
+            self.performance_metrics['forks_successful'] += 1
+            print("🎉 Fork successful! New egg created.")
+            # Reduce fork urgency after successful fork
+            self.should_fork_early = False
+        
         # Calculate reward
         reward = self.calculate_reward(action, response, previous_state)
         
@@ -389,6 +458,8 @@ class ZappyAI:
             new_level = int(level_str)
             if new_level > self.state.level:
                 print(f"🎉 LEVELED UP! New level: {new_level}")
+                # Reset fork urgency on level up
+                self.should_fork_early = True
             self.state.level = new_level
         
         # Update thinking module
@@ -479,6 +550,57 @@ class ZappyAI:
             elif avg_reward > 10:  # Very good performance
                 self.neural_network.learning_rate = max(0.0001, self.neural_network.learning_rate * 0.95)
     
+    def should_fork(self) -> bool:
+        """Determine if the AI should attempt to fork"""
+        current_time = time.time()
+        
+        # Check cooldown
+        if current_time - self.last_fork_attempt < self.fork_cooldown:
+            return False
+        
+        # Early game: fork aggressively if we have good food
+        if self.should_fork_early and self.state.turn_count < 500:
+            if self.state.inventory.get('food', 0) > 50:
+                return True
+        
+        # Mid/late game: fork when we have excess resources
+        if self.state.inventory.get('food', 0) > 100:
+            # Check if we have excess stones for our current level
+            required_stones = self.get_required_stones_for_level(self.state.level + 1)
+            current_stones = sum(self.state.inventory.get(stone, 0) for stone in required_stones.keys())
+            
+            if current_stones > sum(required_stones.values()) * 2:  # Have 2x what we need
+                return True
+        
+        # Fork if we're high level and stable
+        if self.state.level >= 3 and self.state.inventory.get('food', 0) > 80:
+            return True
+        
+        return False
+    
+    def get_required_stones_for_level(self, level: int) -> dict:
+        """Get required stones for elevation to a specific level"""
+        requirements = {
+            2: {"linemate": 1},
+            3: {"linemate": 1, "deraumere": 1, "sibur": 1},
+            4: {"linemate": 2, "sibur": 1, "phiras": 2},
+            5: {"linemate": 1, "deraumere": 1, "sibur": 2, "mendiane": 3},
+            6: {"linemate": 1, "deraumere": 2, "sibur": 1, "mendiane": 1, "phiras": 2},
+            7: {"linemate": 1, "deraumere": 2, "sibur": 3, "mendiane": 1, "phiras": 1, "thystame": 1},
+            8: {"linemate": 2, "deraumere": 2, "sibur": 2, "mendiane": 2, "phiras": 2, "thystame": 1}
+        }
+        return requirements.get(level, {})
+    
+    def attempt_fork(self):
+        """Attempt to fork if conditions are right"""
+        if self.should_fork():
+            self.last_fork_attempt = time.time()
+            self.performance_metrics['forks_attempted'] += 1
+            print(f"🍴 Attempting to fork! (Food: {self.state.inventory.get('food', 0)}, Level: {self.state.level})")
+            self.send_command("Fork")
+            return True
+        return False
+    
     def run(self):
         """Enhanced main game loop with learning and thinking"""
         if not self.connect():
@@ -559,6 +681,9 @@ class ZappyAI:
                     print(f"   Success Rate: {self.performance_metrics['successful_actions'] / max(1, self.performance_metrics['successful_actions'] + self.performance_metrics['failed_actions']) * 100:.1f}%")
                     print(f"   Resources Collected: {self.performance_metrics['resources_collected']}")
                     print(f"   Elevations: {self.performance_metrics['elevations_completed']}")
+                    print(f"   Forks: {self.performance_metrics['forks_successful']}/{self.performance_metrics['forks_attempted']}")
+                    print(f"   Food: {self.state.inventory.get('food', 0)}")
+                    print(f"   Available Slots: {self.available_slots}")
                 
                 # Short sleep to prevent overwhelming the server
                 time.sleep(0.05)
@@ -578,3 +703,27 @@ class ZappyAI:
             
             if self.socket:
                 self.socket.close()
+
+
+def main():
+    """Main function for running AI from command line"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Zappy AI Client")
+    parser.add_argument("-p", "--port", type=int, required=True, help="Server port number")
+    parser.add_argument("-n", "--name", type=str, required=True, help="Team name")
+    parser.add_argument("-H", "--hostname", type=str, default="localhost", help="Server hostname")
+    
+    args = parser.parse_args()
+    
+    # Create and run AI
+    ai = ZappyAI(args.port, args.name, args.hostname)
+    if ai.connect():
+        ai.run()
+    else:
+        print(f"❌ Failed to connect to server {args.hostname}:{args.port}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

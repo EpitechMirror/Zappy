@@ -5,7 +5,7 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Sat Jun 29 2025
-## Last update Mon Jun 29 2:49:25 PM 2025 adrien.marette@epitech.eu
+## Last update Mon Jun 29 3:46:51 PM 2025 adrien.marette@epitech.eu
 ##
 
 import unittest
@@ -15,6 +15,7 @@ import json
 from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
+import time
 
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
@@ -63,7 +64,9 @@ class TestZappyAI(unittest.TestCase):
             'successful_actions': 0,
             'failed_actions': 0,
             'elevations_completed': 0,
-            'resources_collected': 0
+            'resources_collected': 0,
+            'forks_attempted': 0,
+            'forks_successful': 0
         }
         self.assertEqual(self.ai.performance_metrics, expected_metrics)
 
@@ -382,6 +385,127 @@ class TestZappyAI(unittest.TestCase):
         self.assertIsInstance(self.ai.action_history, type(self.ai.action_history))
         self.assertIsInstance(self.ai.reward_history, type(self.ai.reward_history))
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_fork_conditions(self):
+        """Test fork decision conditions"""
+        # Test early game forking with good food
+        self.ai.state.turn_count = 100
+        self.ai.state.inventory['food'] = 60
+        self.ai.should_fork_early = True
+        
+        self.assertTrue(self.ai.should_fork())
+        
+        # Test insufficient food
+        self.ai.state.inventory['food'] = 30
+        self.assertFalse(self.ai.should_fork())
+        
+        # Test late game with excess resources
+        self.ai.state.turn_count = 1000
+        self.ai.state.inventory['food'] = 120
+        self.ai.state.inventory['linemate'] = 10
+        self.ai.state.level = 2
+        
+        self.assertTrue(self.ai.should_fork())
+        
+        # Test high level stable
+        self.ai.state.level = 4
+        self.ai.state.inventory['food'] = 90
+        
+        self.assertTrue(self.ai.should_fork())
+    
+    def test_fork_cooldown(self):
+        """Test fork cooldown mechanism"""
+        # Set recent fork attempt
+        self.ai.last_fork_attempt = time.time()
+        self.ai.state.inventory['food'] = 100
+        
+        # Should not fork due to cooldown
+        self.assertFalse(self.ai.should_fork())
+        
+        # Set old fork attempt
+        self.ai.last_fork_attempt = time.time() - 70
+        
+        # Should fork now
+        self.assertTrue(self.ai.should_fork())
+    
+    def test_fork_attempt(self):
+        """Test fork attempt execution"""
+        # Mock send_command
+        self.ai.send_command = Mock()
+        
+        # Set conditions for forking
+        self.ai.state.inventory['food'] = 100
+        self.ai.state.level = 3
+        
+        result = self.ai.attempt_fork()
+        
+        self.assertTrue(result)
+        self.ai.send_command.assert_called_with("Fork")
+        self.assertEqual(self.ai.performance_metrics['forks_attempted'], 1)
+    
+    def test_fork_response_handling(self):
+        """Test fork response processing"""
+        previous_state = GameState()
+        previous_state.level = 2
+        previous_state.inventory = {'food': 50}
+        
+        # Test successful fork
+        result = self.ai.process_response("ok", previous_state, ActionType.FORK)
+        
+        self.assertTrue(result)
+        self.assertEqual(self.ai.performance_metrics['forks_successful'], 1)
+        self.assertFalse(self.ai.should_fork_early)
+    
+    def test_get_required_stones_for_level(self):
+        """Test stone requirements for different levels"""
+        # Test level 2 requirements
+        req = self.ai.get_required_stones_for_level(2)
+        self.assertEqual(req, {"linemate": 1})
+        
+        # Test level 3 requirements
+        req = self.ai.get_required_stones_for_level(3)
+        self.assertEqual(req, {"linemate": 1, "deraumere": 1, "sibur": 1})
+        
+        # Test invalid level
+        req = self.ai.get_required_stones_for_level(10)
+        self.assertEqual(req, {})
+    
+    def test_enhanced_think_and_decide_with_fork(self):
+        """Test thinking process with fork consideration"""
+        # Mock methods
+        self.ai.attempt_fork = Mock(return_value=True)
+        
+        action = self.ai.think_and_decide()
+        
+        self.assertEqual(action, ActionType.FORK)
+        self.ai.attempt_fork.assert_called_once()
+    
+    def test_fork_reward_calculation(self):
+        """Test reward calculation for fork actions"""
+        previous_state = GameState()
+        previous_state.inventory = {'food': 50}
+        
+        # Test successful fork reward
+        reward = self.ai.calculate_reward(ActionType.FORK, "ok", previous_state)
+        
+        # Should get base reward + fork success reward
+        self.assertGreater(reward, 20.0)  # Fork gives +20 reward
+    
+    def test_performance_metrics_update(self):
+        """Test that fork metrics are properly tracked"""
+        initial_forks = self.ai.performance_metrics['forks_attempted']
+        initial_success = self.ai.performance_metrics['forks_successful']
+        
+        # Mock successful fork
+        self.ai.send_command = Mock()
+        self.ai.state.inventory['food'] = 100
+        self.ai.attempt_fork()
+        
+        self.assertEqual(self.ai.performance_metrics['forks_attempted'], 
+                        initial_forks + 1)
+        
+        # Process successful response
+        previous_state = GameState()
+        self.ai.process_response("ok", previous_state, ActionType.FORK)
+        
+        self.assertEqual(self.ai.performance_metrics['forks_successful'], 
+                        initial_success + 1)
