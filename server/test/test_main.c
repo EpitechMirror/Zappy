@@ -5,6 +5,10 @@
 ** Unit tests for main.c
 */
 
+#define _GNU_SOURCE
+#include "test_framework.h"
+#include "../include/server.h"
+
 #include "test_framework.h"
 #include "../include/flag.h"
 #include "../include/server.h"

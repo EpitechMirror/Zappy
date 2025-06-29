@@ -5,6 +5,7 @@
 ** Unit tests for accept.c
 */
 
+#define _GNU_SOURCE
 #include "test_framework.h"
 #include "../include/server.h"
 #include "../include/Client_Info.h"
