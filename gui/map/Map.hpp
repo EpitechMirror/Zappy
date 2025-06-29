@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 #include "../ressources/Ressources.hpp"
-#include "../renderer/Player/Player.hpp"
+#include "../player/Player.hpp"
 #include "raylib.h"
 #include <algorithm>
 
@@ -20,6 +20,13 @@ struct Egg {
     int id;
     int x;
     int y;
+};
+
+struct Incantation {
+    int x;
+    int y;
+    int level;
+    std::vector<int> playerIds;
 };
 
 class Map {
@@ -56,6 +63,19 @@ class Map {
         void updatePlayerPosition(int id, Vector3 pos, int orientation);
         void updatePlayerLevel(int id, int level);
         void updatePlayerInventory(int id, const int inventory[RESOURCE_COUNT]);
+
+        std::vector<Incantation> _activeIncantations;
+        void startIncantation(int x, int y, int level, const std::vector<int> &players);
+        void clearIncantationAt(int x, int y);
+        const std::vector<Incantation>& getActiveIncantations() const;
+
+        void setGameOver(bool gameOver, std::string teamName) {
+            _gameOver = gameOver;
+            _winningTeam = teamName;
+        }
+
+        bool _gameOver = false;
+        std::string _winningTeam;
 
     private:
         int _width;

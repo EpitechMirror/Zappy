@@ -1,5 +1,5 @@
 #include <criterion/criterion.h>
-#include "../renderer/Player/Player.hpp"
+#include "../player/Player.hpp"
 
 Test(Player, constructor_and_getters) {
     Vector3 pos = {1.0f, 2.0f, 3.0f};

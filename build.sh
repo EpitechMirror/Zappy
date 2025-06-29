@@ -5,7 +5,7 @@ set -e
 # Paths
 SERVER_DIR="server"
 GUI_DIR="gui"
-AI_SCRIPT="ai/src/ai.py"
+AI_SCRIPT="ai/src/simple_ai_manager.py"
 
 # Parse arguments
 BUILD_SERVER=false

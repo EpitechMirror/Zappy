@@ -150,10 +150,10 @@ Refer to [`docs/PROTOCOL.md`](docs/PROTOCOL.md) for full command definitions and
 
 ## 👩‍💻 Authors
 
-* **Anaïs Parenti** — [GitHub](https://github.com/ananasparenti)
 * **Adrien Marette** — [GitHub](https://github.com/Adrien-Marette)
-* **Ridjan Xhika** — [GitHub](https://github.com/ridjan-xhika)
+* **Anaïs Parenti** — [GitHub](https://github.com/ananasparenti)
 * **Gabriel Mchiri** — [GitHub](https://github.com/Gabrie15066)
+* **Ridjan Xhika** — [GitHub](https://github.com/ridjan-xhika)
 * **Sara Himmich** — [GitHub](https://github.com/Sara28himmich)
-
+* **Pierre-Louis Vie** - [GitHub] (https://github.com/plv92)
 ---

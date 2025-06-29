@@ -164,3 +164,20 @@ void Map::updatePlayerInventory(int id, const int inventory[RESOURCE_COUNT]) {
 const std::vector<Player>& Map::getPlayers() const {
     return _players;
 }
+
+void Map::startIncantation(int x, int y, int level, const std::vector<int> &players) {
+    _activeIncantations.push_back({x, y, level, players});
+}
+
+void Map::clearIncantationAt(int x, int y) {
+    _activeIncantations.erase(
+        std::remove_if(_activeIncantations.begin(), _activeIncantations.end(),
+            [x, y](const Incantation &i) {
+                return i.x == x && i.y == y;
+            }),
+        _activeIncantations.end());
+}
+
+const std::vector<Incantation>& Map::getActiveIncantations() const {
+    return _activeIncantations;
+}

@@ -28,7 +28,8 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Camera/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Light/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Shaders/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Player/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/renderer/AssetsManager/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/player/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
@@ -59,11 +60,13 @@ add_executable(unit_tests
     tests/test_shader.cpp
     tests/test_camera.cpp
     tests/test_light.cpp
+    tests/test_assets_manager.cpp
     tests/test_renderer.cpp
     client/Client.cpp
     map/Map.cpp
-    renderer/Player/Player.cpp
+    player/Player.cpp
     renderer/Camera/Camera.cpp
+    renderer/AssetsManager/AssetsManager.cpp
     renderer/Light/Light.cpp
     renderer/Renderer.cpp
     renderer/Shaders/ShadersManager.cpp

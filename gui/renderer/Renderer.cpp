@@ -6,89 +6,82 @@
 */
 
 #include "Renderer.hpp"
+constexpr float TILE_SIZE = 64.0f;
 
-Renderer::Renderer(int width, int height, const Map &map) : _screenWidth(width), _screenHeight(height), _map(map) {
+Renderer::Renderer(int width, int height, const Map &map)
+    : 
+      _assets(map.getWidth(), map.getHeight()),
+      _screenWidth(width),
+      _screenHeight(height),
+      _map(map),
+      _cameraController(map.getWidth(), map.getHeight()),
+      _mapInitialized(false),
+      _disconnectTimer(0.0f)
+{}
+
+float Renderer::getDesktopY() {
+    return 0.0f;
 }
 
-void Renderer::loadModels() {
-    _floorModel = LoadModel("../resources/models/plane.glb");
-    _playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
+void Renderer::drawWalls() {
+    float cellSize = 1.0f;
+    // Dimensions des murs
+    int width = 450;
+    int height = 450;
+
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
+    float wallThickness = 0.2f;
+    float roomHeight = 4.0f;
+
+    // 1er mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, -wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -100.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 2eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth / 2.0f, roomHeight / 2.0f, roomDepth + wallThickness / 2.0f);
+        DrawModel(_assets.wallLong, {-230.0, 0, -315.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 3eme mur
+    rlPushMatrix();
+        rlTranslatef(-wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-100.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
+
+    // 4eme mur
+    rlPushMatrix();
+        rlTranslatef(roomWidth + wallThickness / 2.0f, roomHeight / 2.0f, roomDepth / 2.0f);
+        DrawModel(_assets.wallShort, {-315.0, 0, -230.0}, 25.0f, WHITE);
+    rlPopMatrix();
 }
 
-void Renderer::unloadModels() {
-    UnloadModel(_floorModel);
-    UnloadModel(_playerModel);
-}
+void Renderer::drawRoomAndy() {
+    int width = _map.getWidth();
+    int height = _map.getHeight();
+    float cellSize = 1.0f;
 
-void Renderer::loadShaders() {
-    _shaders.loadPBR();
-}
+    float roomWidth = width * cellSize;
+    float roomDepth = height * cellSize;
 
-void Renderer::unloadShaders() {
-    _shaders.unloadAll();
-}
-
-void Renderer::loadTextures() {
-    //Ici on charge les textures
-    Texture2D floorAlbedo = LoadTexture("../resources/textures/bitume/bitume_diff.jpg");
-    Texture2D floorNormal = LoadTexture("../resources/textures/bitume/bitume_disp.png");
-    Texture2D floorMRA = LoadTexture("../resources/textures/bitume/bitume_nor.exr");
-    Texture2D floorEmissive = LoadTexture("../resources/textures/bitume/bitume_rough.exr");
-
-    // Et on les associe au modèle concerné (ici le sol)
-    for (int i = 0; i < _floorModel.materialCount; ++i) {
-        _floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = floorAlbedo;
-        _floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = floorNormal;
-        _floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = floorMRA;
-        _floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = floorEmissive;
-    }
-
-
-    //texture joueur (lampe)
-    Texture2D lampAlbedo = LoadTexture("../resources/models/pixar_lamp/PixarLamp_baseColor.jpeg");
-    Texture2D lampNormal = LoadTexture("../resources/models/pixar_lamp/PixarLamp_normal.jpeg");
-    Texture2D lampMRA = LoadTexture("../resources/models/pixar_lamp/PixarLamp_metallicRoughness.jpeg");
-    Texture2D lampEmissive = LoadTexture("../resources/models/pixar_lamp/PixarLamp_emissive.jpeg");
-
-    //associé au modèle joueur (si on a plusieurs textures on fait une boucle)
-    for (int i = 0; i < _playerModel.materialCount; ++i) {
-        _playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = lampAlbedo;
-        _playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture = lampNormal;
-        _playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture = lampMRA;
-        _playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture = lampEmissive;
-    }
-}
-
-void Renderer::unloadTextures() {
-    // Libère les textures du sol
-    for (int i = 0; i < _floorModel.materialCount; ++i) {
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
-        UnloadTexture(_floorModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
-    }
-    // Libère les textures du joueur
-    for (int i = 0; i < _playerModel.materialCount; ++i) {
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_NORMAL].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_METALNESS].texture);
-        UnloadTexture(_playerModel.materials[i].maps[MATERIAL_MAP_EMISSION].texture);
-    }
-}
-
-void Renderer::applyShaders() {
-    // Ici on applique les shaders aux modèles
-    Shader& pbr = _shaders.getPBR();
-    for (int i = 0; i < _floorModel.materialCount; ++i)
-        _floorModel.materials[i].shader = pbr;
-
-    // PLusieurs textures donc on applique les shaders pour chacune d'elles
-    for (int i = 0; i < _playerModel.materialCount; ++i)
-        _playerModel.materials[i].shader = pbr;
+    rlPushMatrix();
+        rlTranslatef(roomWidth/2, 0.0f, roomDepth/2);
+        
+        float scaleX = roomWidth / 0.5f;
+        float scaleZ = roomDepth / 1.0f;
+        float scaleY = (scaleX + scaleZ) / 2.0f;
+        
+        rlScalef(scaleX, scaleY, scaleZ);
+        
+        DrawModel(_assets.deskModel, {-0.5f, -0.780f, 1.3f}, 1.0f, WHITE);
+    rlPopMatrix();
 }
 
 void Renderer::initLights() {
-    Shader& pbr = _shaders.getPBR();
+    Shader& pbr = _assets.shaders.getPBR();
     _lights.clear();
     _lights.push_back(Light(LIGHT_POINT, { -1.0f, 1.0f, -2.0f }, { 0, 0, 0 }, YELLOW, 4.0f, pbr, 0));
     _lights.push_back(Light(LIGHT_POINT, { 2.0f, 1.0f, 1.0f }, { 0, 0, 0 }, GREEN, 3.3f, pbr, 1));
@@ -96,7 +89,6 @@ void Renderer::initLights() {
     _lights.push_back(Light(LIGHT_POINT, { 1.0f, 1.0f, -2.0f }, { 0, 0, 0 }, BLUE, 2.0f, pbr, 3));
 }
 
-//DOIT dessiner nos différentes pierres
 void Renderer::drawItems() {
     int width = _map.getWidth();
     int height = _map.getHeight();
@@ -129,7 +121,7 @@ void Renderer::drawItems() {
                     float posX = x * cellSize + gridX * gridStep + offset;
                     float posZ = y * cellSize + gridZ * gridStep + offset;
                     
-                    float posY = 0.2f + (q * 0.01f);
+                    float posY = 0.05f + (q * 0.01f);
                     
                     Vector3 pos = {posX, posY, posZ};
                     DrawSphere(pos, 0.08f, getColorForResource(static_cast<ResourceType>(i)));
@@ -164,121 +156,155 @@ void Renderer::drawFloor() {
     int width = _map.getWidth();
     int height = _map.getHeight();
 
-    Shader& pbr = _shaders.getPBR();
-    int tilingLoc = GetShaderLocation(pbr, "tiling");
-    Vector2 tiling = {1.0f, 1.0f}; // 1 répétition par case
-    SetShaderValue(pbr, tilingLoc, &tiling, SHADER_UNIFORM_VEC2);
+    float floorWidth = width * cellSize;
+    float floorDepth = height * cellSize;
 
-    for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
-            Vector3 pos = { x * cellSize + cellSize/2, 0.0f, y * cellSize + cellSize/2 };
-            DrawModel(_floorModel, pos, cellSize, WHITE);
-        }
-    }
+    // Facteur pour agrandir le modele de sol
+    float scaleFactor = 10.0f;
+
+    float floorY = 0.0f;
+
+    Vector3 pos = { floorWidth / 2.0f, floorY, floorDepth / 2.0f };
+
+    float scaleX = floorWidth * scaleFactor;
+    float scaleZ = floorDepth * scaleFactor;
+    float scaleY = 1.0f;
+
+    rlPushMatrix();
+        rlTranslatef(pos.x, pos.y, pos.z);
+        rlScalef(scaleX, scaleY, scaleZ);
+        DrawModel(_assets.floorModel, {0, -13.0, 0}, 1.0f, WHITE);
+    rlPopMatrix();
+
     _mapInitialized = true;
 }
 
 void Renderer::showLoadingScreen(const std::string &message) {
-    BeginDrawing();
-        ClearBackground(BLACK);
-        int textSize = 40;
-        int textWidth = MeasureText(message.c_str(), textSize);
-        int posX = (_screenWidth - textWidth) / 2;
-        int posY = _screenHeight / 2;
-        DrawText(message.c_str(), posX, posY, textSize, WHITE);
-    EndDrawing();
-}
+    float duration = 11.0f;
+    float startTime = GetTime();
+    float nextTipTime = 3.0f; 
+    
+    int tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+    std::string tip = _loadingTips[tipIndex];
 
-void Renderer::gameLoop(Client &client) {
-    if (!_mapInitialized) {
-        showLoadingScreen("Loading...");
-    }
+    while ((GetTime() - startTime) < duration && !WindowShouldClose()) {
+        float elapsed = GetTime() - startTime;
+        float progress = elapsed / duration;
 
-    //on init tout (a mettre dans une fonction init et meme dnas les classes associées)
-    loadModels();
-    loadTextures();
-    loadShaders();
-    applyShaders();
-    initLights();
-
-    while (!WindowShouldClose()) {
-        client.update();
-        float wheel = GetMouseWheelMove();
-
-        if (wheel != 0.0f)
-            _cameraController.zoom(-wheel);
-        
-        _cameraController.update();
-        for (auto& l : _lights)
-            l.updateShader(_shaders.getPBR());
+        if (elapsed >= nextTipTime) {
+            tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+            tip = _loadingTips[tipIndex];
+            nextTipTime += 3.0f;
+        }
 
         BeginDrawing();
             ClearBackground(BLACK);
 
-            BeginMode3D(_cameraController.getCamera());
-            // Charge les modèles
-            // Dessine le sol (a voir plus tard pour adapter le dessin du sol a la bonne position)
-            drawFloor();
-            DrawGrid();
+            // === Titre principal : Y GUI ===
+            const char* logo = "WOODY GUI";
+            int sizeLogo = 100;
+            float spacing = 5.0f;
+            Vector2 logoTextSize = MeasureTextEx(_assets.toyFont, logo, sizeLogo, spacing);
+            float correction = spacing * 2.0f;
+            Vector2 logoPos;
+            logoPos.x = (_screenWidth - logoTextSize.x + correction) / 3.4f;
+            logoPos.y = (_screenHeight / 2) - 200;
 
-            drawItems();
-            DrawEggs();
+            Color outline = BLUE;
+            for (int dx = -3; dx <= 3; dx += 3) {
+                for (int dy = -3; dy <= 3; dy += 3) {
+                    if (dx == 0 && dy == 0) continue;
+                    Vector2 offsetPos = { logoPos.x + dx, logoPos.y + dy };
+                    DrawTextEx(_assets.toyFont, logo, offsetPos, sizeLogo, spacing, outline);
+                }
+            }
+            DrawTextEx(_assets.toyFont, logo, logoPos, sizeLogo, spacing, YELLOW);
 
-            // Dessine les joueurs (besoin d'enregistrer le nombre de joueurs)
-            // Exemple de joueur sous forme de lampe, essayer de faire en sorte qu'en fonction de la team on change les couleurs
-            //faire une boucle pour chaque joueur
+            // === Texte Loading animé ===
+            int loadingFontSize = 40;
+            int charsToShow = std::min((int)(elapsed * 10), (int)message.size());
+            std::string animatedText = message.substr(0, charsToShow);
+            int textWidth = MeasureText(animatedText.c_str(), loadingFontSize);
+            int posX = (_screenWidth - textWidth) / 2;
+            int posY = _screenHeight / 2 - 80;
+            DrawText(animatedText.c_str(), posX, posY, loadingFontSize, WHITE);
 
-            //Ici on dessine le jouer avec une rotation a l'aide de drawModelEx
-            Vector3 lampPos = {0, 0, 0};
-            Vector3 lampAxis = {1, 0, 0};
-            float lampAngle = -180.0f;
+            // === Barre de chargement ===
+            int barWidth = 300;
+            int barHeight = 20;
+            int barX = (_screenWidth - barWidth) / 2;
+            int barY = posY + 60;
 
-            //DrawModelEx(_playerModel, lampPos, lampAxis, lampAngle, {1.0f, 1.0f, 1.0f}, RED);
+            DrawRectangle(barX, barY, barWidth, barHeight, GRAY);
+            DrawRectangle(barX, barY, progress * barWidth, barHeight, GREEN);
+            DrawRectangleLines(barX, barY, barWidth, barHeight, DARKGRAY);
 
-            // Dessine les lights (optionnel : sphères pour debug)
-             for (const Light& l : _lights)
-                 DrawSphere(l.getPosition(), 0.2f, YELLOW);
-            EndMode3D();
-            DrawPlayers();
-            InfoItemsBoard();
-            InfoTeamsBoard();
-            InfoPlayersBoard();
+            // === Boîte TIPS ===
+            int tipFontSize = 20;
+            int tipBoxWidth = MeasureText(tip.c_str(), tipFontSize) + 40;
+            int tipBoxHeight = 80;
+            int tipBoxX = (_screenWidth - tipBoxWidth) / 2;
+            int tipBoxY = barY + 60;
+
+            DrawRectangle(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, Fade(SKYBLUE, 0.25f));
+            DrawRectangleLines(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, BLUE);
+            
+            float tipAlpha = 1.0f;
+            if (nextTipTime - elapsed < 0.5f) {
+                tipAlpha = (nextTipTime - elapsed) * 2.0f;
+            }
+
+            DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, ColorAlpha(DARKBLUE, tipAlpha));
+            DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
+
         EndDrawing();
     }
 }
 
 void Renderer::DrawPlayers() {
-    // Récupère la liste
     const auto& players = _map.getPlayers();
+
     float cellSize = 1.0f;
 
-    for (const Player& p : players) {
-        // Position au centre de la case
-        Vector3 pos = {
-            p.getPosition().x * cellSize + cellSize/2,
-            0.0f,  // au sol
-            p.getPosition().z * cellSize + cellSize/2
-        };
+    float deskTopY = getDesktopY();
 
-        // Orientation : on convertit ton int (1=N,2=E,3=S,4=O) en angle Z
-        float angleY = 0;
+    for (const Player& p : players) {
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        float py = deskTopY;
+
+        float yaw = 0;
         switch (p.getOrientation()) {
-            case 1: angleY = 0;   break; // Nord
-            case 2: angleY = 90;  break; // Est
-            case 3: angleY = 180; break; // Sud
-            case 4: angleY = 270; break; // Ouest
+            case 1: yaw =   0; break; // Nord
+            case 2: yaw =  90; break; // Est
+            case 3: yaw = 180; break; // Sud
+            case 4: yaw = 270; break; // Ouest
         }
 
-        // Couleur selon l’équipe (hash simple)
+        float scale = 0.5f;
+        switch (p.getLevel()) {
+            case 1: scale = 1.5f; break; // Niveau 1
+            case 2: scale = 1.8f; break; // Niveau 2
+            case 3: scale = 2.1f; break; // Niveau 3
+            case 4: scale = 2.4f; break; // Niveau 4
+            case 5: scale = 2.7f; break; // Niveau 5
+            case 6: scale = 3.0f; break; // Niveau 6
+            case 7: scale = 3.3f; break; // Niveau 7
+            case 8: scale = 3.6f; break; // Niveau 8
+            default: scale = 1.0f; break;
+        }
+
         size_t h = std::hash<std::string>{}(p.getTeam());
         Color teamColor = ColorFromHSV((h % 360), 0.6f, 0.9f);
 
-        // Échelle du modèle (1 case = taille 1)
-        Vector3 scale = { 1.0f, 1.0f, 1.0f };
-        // Axe de rotation Y (vertical)
-        Vector3 axis = { 0, 1, 0 };
+        rlPushMatrix();
+            rlTranslatef(px, py, pz);
+            rlRotatef(180.0f, 1.0f, 0.0f, 0.0f);
+            rlRotatef(yaw,   0.0f, 1.0f, 0.0f);
+            rlScalef(scale, scale, scale);
 
-        DrawModelEx(_playerModel, pos, axis, angleY, scale, teamColor);
+            DrawModel(_assets.playerModel, { 0.0f, 0.0f, 0.0f }, 1.0f, teamColor);
+        rlPopMatrix();
     }
 }
 
@@ -315,11 +341,6 @@ void Renderer::InfoItemsBoard() {
     int timeTextWidth = MeasureText(timeStr.c_str(), 20);
     int timeCenterX = (_screenWidth - timeTextWidth) / 2;
     DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
-
-    int textWidth = MeasureText("Use ZQSD to move the camera", 20);
-    int centerX = (_screenWidth - textWidth) / 2;
-    int bottomY = _screenHeight - 30;
-    DrawText("Use ZQSD to move the camera", centerX, bottomY, 20, RED);
 }
 
 void Renderer::InfoTeamsBoard() {
@@ -362,11 +383,63 @@ void Renderer::InfoPlayersBoard() {
     int lineSpacing = 20;
     int padding = 10;
 
-    int boxWidth = 150;
-    int boxHeight = lineSpacing + 2 * padding;
+    const Player* selectedPlayer = nullptr;
+    if (_selectedPlayerId) {
+        for (const Player& p : _map.getPlayers()) {
+            if (p.getId() == *_selectedPlayerId) {
+                selectedPlayer = &p;
+                break;
+            }
+        }
+    }
+
+    std::vector<std::string> lines;
+    std::string title = "Player Info";
+    
+    if (selectedPlayer) {
+        title = "Player #" + std::to_string(selectedPlayer->getId());
+
+        lines.push_back("Level: " + std::to_string(selectedPlayer->getLevel()));
+        lines.push_back(selectedPlayer->getTeam());
+        lines.push_back("Position: " + 
+                        std::to_string(static_cast<int>(selectedPlayer->getPosition().x)) + "," +
+                        std::to_string(static_cast<int>(selectedPlayer->getPosition().z)));
+        
+        std::string orientation;
+        switch (selectedPlayer->getOrientation()) {
+            case 1: orientation = "North"; break;
+            case 2: orientation = "East"; break;
+            case 3: orientation = "South"; break;
+            case 4: orientation = "West"; break;
+            default: orientation = "Unknown";
+        }
+        lines.push_back("Orientation: " + orientation);
+
+        lines.push_back("Inventory:");
+        const int* inventory = selectedPlayer->getInventory();
+        if (inventory) {
+            lines.push_back("  Food: " + std::to_string(inventory[FOOD]));
+            lines.push_back("  Linemate: " + std::to_string(inventory[LINEMATE]));
+            lines.push_back("  Deraumere: " + std::to_string(inventory[DERAUMERE]));
+            lines.push_back("  Sibur: " + std::to_string(inventory[SIBUR]));
+            lines.push_back("  Mendiane: " + std::to_string(inventory[MENDIANE]));
+            lines.push_back("  Phiras: " + std::to_string(inventory[PHIRAS]));
+            lines.push_back("  Thystame: " + std::to_string(inventory[THYSTAME]));
+        }
+    } else {
+        lines.push_back("Click on a player");
+    }
+
+    int maxWidth = MeasureText(title.c_str(), titleSize);
+    for (const auto& line : lines) {
+        int w = MeasureText(line.c_str(), titleSize);
+        if (w > maxWidth) maxWidth = w;
+    }
+    
+    int boxWidth = maxWidth + 2 * padding;
+    int boxHeight = (1 + lines.size()) * lineSpacing + 2 * padding;
 
     int boxX = _screenWidth - boxWidth - 10;
-    // Place it just below the teams board
     const std::vector<std::string>& teamNames = Player::getTeamNames();
     int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
     int boxY = 10 + teamsBoxHeight + 10;
@@ -377,38 +450,443 @@ void Renderer::InfoPlayersBoard() {
     int x = boxX + padding;
     int y = boxY + padding;
 
-    DrawText("Player : ", x, y, titleSize, BLACK);
+    DrawText(title.c_str(), x, y, titleSize, BLACK);
+    y += lineSpacing;
+
+    for (const auto& line : lines) {
+        Color color = WHITE;
+        
+        if (line == "Click on a player") {
+            color = DARKGRAY;
+        }
+        else if (line.find("Level:") != std::string::npos) color = YELLOW;
+        else if (line.find("Food:") != std::string::npos) color = ORANGE;
+        else if (line.find("Linemate:") != std::string::npos) color = SKYBLUE;
+        else if (line.find("Deraumere:") != std::string::npos) color = GOLD;
+        else if (line.find("Sibur:") != std::string::npos) color = PURPLE;
+        else if (line.find("Mendiane:") != std::string::npos) color = RED;
+        else if (line.find("Phiras:") != std::string::npos) color = GREEN;
+        else if (line.find("Thystame:") != std::string::npos) color = PINK;
+        
+        DrawText(line.c_str(), x, y, titleSize, color);
+        y += lineSpacing;
+    }
+}
+
+void Renderer::InfoBoxBoard() {
+    int titleSize = 20;
+    int lineSpacing = 20;
+    int padding = 10;
+
+    std::string title = "Info Box : ";
+    if (_selectedTile) {
+        int tx = static_cast<int>(_selectedTile->x);
+        int ty = static_cast<int>(_selectedTile->y);
+        title += std::to_string(tx) + "," + std::to_string(ty);
+    }
+
+    int maxWidth = MeasureText(title.c_str(), titleSize);
+    int contentLines = 1;
+
+    std::vector<std::pair<std::string, Color>> resourceLines;
+    std::string clickText = "Click on a box";
+ 
+    if (_selectedTile) {
+        int tx = static_cast<int>(_selectedTile->x);
+        int ty = static_cast<int>(_selectedTile->y);
+        const auto& res = _map.getTileResources(tx, ty);
+        
+        if (res.quantities[FOOD] > 0) {
+            std::string txt = TextFormat("Food: %d", res.quantities[FOOD]);
+            resourceLines.push_back({txt, ORANGE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[LINEMATE] > 0) {
+            std::string txt = TextFormat("Linemate: %d", res.quantities[LINEMATE]);
+            resourceLines.push_back({txt, SKYBLUE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[DERAUMERE] > 0) {
+            std::string txt = TextFormat("Deraumere: %d", res.quantities[DERAUMERE]);
+            resourceLines.push_back({txt, GOLD});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[SIBUR] > 0) {
+            std::string txt = TextFormat("Sibur: %d", res.quantities[SIBUR]);
+            resourceLines.push_back({txt, PURPLE});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[MENDIANE] > 0) {
+            std::string txt = TextFormat("Mendiane: %d", res.quantities[MENDIANE]);
+            resourceLines.push_back({txt, RED});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[PHIRAS] > 0) {
+            std::string txt = TextFormat("Phiras: %d", res.quantities[PHIRAS]);
+            resourceLines.push_back({txt, GREEN});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        if (res.quantities[THYSTAME] > 0) {
+            std::string txt = TextFormat("Thystame: %d", res.quantities[THYSTAME]);
+            resourceLines.push_back({txt, PINK});
+            maxWidth = std::max(maxWidth, MeasureText(txt.c_str(), titleSize));
+        }
+        
+        if (resourceLines.empty()) {
+            std::string emptyTxt = "Empty tile";
+            resourceLines.push_back({emptyTxt, DARKGRAY});
+            maxWidth = std::max(maxWidth, MeasureText(emptyTxt.c_str(), titleSize));
+        }
+        
+        contentLines += resourceLines.size();
+    } else {
+        maxWidth = std::max(maxWidth, MeasureText(clickText.c_str(), titleSize));
+        contentLines++;
+    }
+
+    int boxWidth = maxWidth + 2 * padding;
+    int boxHeight = contentLines * lineSpacing + 2 * padding;
+
+    const std::vector<std::string>& teamNames = Player::getTeamNames();
+    int teamsBoxHeight = (1 + teamNames.size()) * lineSpacing + 2 * padding;
+    
+    int playersBoxY = 10 + teamsBoxHeight + 10;
+    int playersBoxHeight = 0;
+    
+    if (_selectedPlayerId) {
+        const Player* selectedPlayer = nullptr;
+        for (const Player& p : _map.getPlayers()) {
+            if (p.getId() == *_selectedPlayerId) {
+                selectedPlayer = &p;
+                break;
+            }
+        }
+        
+        if (selectedPlayer) {
+            int lines = 11;
+            const int* inventory = selectedPlayer->getInventory();
+            if (inventory) {
+                for (int i = 0; i < 7; i++) {
+                    if (inventory[i] > 0) lines++;
+                }
+            }
+            playersBoxHeight = (1 + lines) * lineSpacing + 2 * padding;
+        } else {
+            playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding;
+        }
+    } else {
+        playersBoxHeight = (1 + 1) * lineSpacing + 2 * padding;
+    }
+
+    int boxX = _screenWidth - boxWidth - 10;
+    int boxY = playersBoxY + playersBoxHeight + 10;
+
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+
+    int x = boxX + padding;
+    int y = boxY + padding;
+
+    DrawText(title.c_str(), x, y, titleSize, BLACK);
+    y += lineSpacing;
+    
+    if (_selectedTile) {
+        for (const auto& [text, color] : resourceLines) {
+            DrawText(text.c_str(), x, y, titleSize, color);
+            y += lineSpacing;
+        }
+    } else {
+        DrawText(clickText.c_str(), x, y, titleSize, DARKGRAY);
+    }
+}
+
+void Renderer::gameLoop(Client &client) {
+    _assets.loadFonts();
+    _assets.loadAudio();
+    if (!_mapInitialized) {
+        showLoadingScreen("Loading...");
+    }
+
+    _assets.loadAllResources();
+    _assets.applyShaders();
+    initLights();
+
+    while (!WindowShouldClose()) {
+        bool wasConnected = client.isConnected();
+        client.update();
+        bool isConnected = client.isConnected();
+        
+        if (wasConnected && !isConnected) {
+            notifyServerDisconnect();
+            disconnected = true;
+        }
+
+        if (_disconnectTimer > 0) {
+            _disconnectTimer -= GetFrameTime();
+        }
+
+        _cameraController.update();
+        for (auto& l : _lights)
+            l.updateShader(_assets.shaders.getPBR());
+
+        UpdateMusicStream(_assets.mainMusic);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            handleMouseClick();
+        }
+
+        BeginDrawing();
+            ClearBackground(BLACK);
+
+            BeginMode3D(_cameraController.getCamera());
+                drawFloor();
+                drawRoomAndy();
+                drawWalls();
+                DrawGrid();
+                drawItems();
+                DrawEggs();
+                DrawPlayers();
+                DrawIncantations();
+                DrawSelectionMarkers();
+                DrawGameOver();
+            EndMode3D();
+
+            InfoItemsBoard();
+            InfoTeamsBoard();
+            InfoPlayersBoard();
+            InfoBoxBoard();
+            
+            if (_disconnectTimer > 0) {
+                handleServerDisconnect();
+            }
+        EndDrawing();
+    }
+}
+
+void Renderer::DrawIncantations() {
+    float time = GetTime();
+    const int segments = 16;
+    const float yLevel = 0.15f;
+    const float thickness = 0.07f;
+
+    for (const auto& inc : _map.getActiveIncantations()) {
+        float centerX = inc.x * 1.0f + 0.5f;
+        float centerZ = inc.y * 1.0f + 0.5f;
+        float radius = 0.5f + 0.2f * std::sin(time * 3);
+        Color color = GREEN;
+
+        for (int i = 0; i < segments; i++) {
+            float angle1 = 2 * PI * i / segments;
+            float angle2 = 2 * PI * (i + 1) / segments;
+
+            // Suppression des variables inutilisées `start` et `end`
+            for (float t = -thickness; t <= thickness; t += thickness / 2.0f) {
+                float r1 = radius + t;
+                float r2 = radius + t;
+                Vector3 s = {centerX + r1 * cos(angle1), yLevel, centerZ + r1 * sin(angle1)};
+                Vector3 e = {centerX + r2 * cos(angle2), yLevel, centerZ + r2 * sin(angle2)};
+                DrawLine3D(s, e, color);
+            }
+        }
+    }
+}
+
+void Renderer::handleServerDisconnect() {
+    static float slideOffset = 0.0f;
+    float targetOffset = (_disconnectTimer > 0) ? 0.0f : 50.0f;
+    slideOffset = Lerp(slideOffset, targetOffset, 0.2f);
+
+    const char* text = "Server disconnected";
+    const float width = MeasureText(text, 20) + 40;
+    const float height = 30.0f;
+    const float posX = (_screenWidth - width) / 2.0f;
+    const float posY = _screenHeight - height - slideOffset;
+
+    DrawRectangleRounded(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10,
+        Fade(MAROON, 0.7f)
+    );
+
+    DrawRectangleRoundedLines(
+        Rectangle{posX, posY, width, height},
+        0.3f,
+        10, RED);
+
+    DrawText(
+        text,
+        static_cast<int>(posX + (width - MeasureText(text, 20)) / 2),
+        static_cast<int>(posY + 5),
+        20,
+        WHITE
+    );
+}
+
+void Renderer::notifyServerDisconnect() {
+    _disconnectTimer = 5.0f;
 }
 
 void Renderer::DrawGrid() {
+    float cellSize = 1.0f;
     int width = _map.getWidth();
     int height = _map.getHeight();
-    float cellSize = 1.0f;
+
+    float yPos = 0.01f;
 
     for (int x = 0; x <= width; x++) {
-        Vector3 start = { x * cellSize, 0.0f, 0.0f };
-        Vector3 end = { x * cellSize, 0.0f, height * cellSize };
+        Vector3 start = { x * cellSize, yPos, 0.0f };
+        Vector3 end = { x * cellSize, yPos, height * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 
     for (int z = 0; z <= height; z++) {
-        Vector3 start = { 0.0f, 0.0f, z * cellSize };
-        Vector3 end = { width * cellSize, 0.0f, z * cellSize };
+        Vector3 start = { 0.0f, yPos, z * cellSize };
+        Vector3 end = { width * cellSize, yPos, z * cellSize };
         DrawLine3D(start, end, GRAY);
     }
 }
 
 void Renderer::renderWindow(Client &client) {
     SetTraceLogLevel(LOG_NONE);
-    InitWindow(_screenWidth, _screenHeight, "ZAPPY GUI");
+    InitWindow(_screenWidth, _screenHeight, "WOODY GUI");
     SetTargetFPS(60);
 
-    gameLoop(client);
+    try {
+        gameLoop(client);
+    } catch (...) {
+        // Handle any exceptions that may occur during the game loop
+        TraceLog(LOG_ERROR, "An error occurred during the game loop.");
+    }
 
-    unloadTextures();
-    unloadModels();
-    unloadShaders();
-
+    _assets.unloadAllResources();
+    
     CloseWindow();
     client.disconnect();
 }
+
+void Renderer::handleMouseClick() {
+    Ray ray = GetMouseRay(GetMousePosition(), _cameraController.getCamera());
+
+    // Player
+    for (const Player& p : _map.getPlayers()) {
+        float cellSize = 1.0f;
+        
+        float px = p.getPosition().x * cellSize + cellSize/2;
+        float pz = p.getPosition().z * cellSize + cellSize/2;
+        
+        float width = 0.4f;
+        float height = 1.0f;
+        float depth = 0.4f;
+        
+        BoundingBox playerBox = {
+            {
+                px - width/2,0.0f, pz - depth/2},
+            {
+                px + width/2,
+                height,
+                pz + depth/2
+            }
+        };
+        
+        RayCollision collision = GetRayCollisionBox(ray, playerBox);
+        if (collision.hit) {
+            _selectedPlayerId = p.getId();
+            return;
+        }
+    }
+
+    // Box
+    Vector3 hit;
+    if (GetRayGroundIntersection(ray, hit)) {
+        int tx = int(floor(hit.x));
+        int ty = int(floor(hit.z));
+        if (tx >= 0 && tx < _map.getWidth() && ty >= 0 && ty < _map.getHeight()) {
+            _selectedTile = Vector2{ float(tx), float(ty) };
+            return;
+        }
+    }
+}
+
+void Renderer::DrawSelectionMarkers() {
+    if (_selectedPlayerId) {
+        const Player* p = nullptr;
+        for (const Player& player : _map.getPlayers()) {
+            if (player.getId() == *_selectedPlayerId) {
+                p = &player;
+                break;
+            }
+        }
+        if (p) {
+            float cellSize = 1.0f;
+            float px = p->getPosition().x * cellSize + cellSize/2;
+            float pz = p->getPosition().z * cellSize + cellSize/2;
+            
+            float width = 0.4f;
+            float height = 1.0f;
+            float depth = 0.4f;
+            
+            BoundingBox playerBox = {
+                { px - width/2, 0.0f, pz - depth/2 },
+                { px + width/2, height, pz + depth/2 }
+            };
+            
+            DrawBoundingBox(playerBox, Fade(GREEN, 0.3f));
+        }
+    }
+    
+    if (_selectedTile) {
+        float tx = _selectedTile->x;
+        float tz = _selectedTile->y;
+        Vector3 center = { tx + 0.5f, 0.1f, tz + 0.5f };
+        
+        DrawCubeWires(center, 1.0f, 0.1f, 1.0f, Fade(RED, 0.5f));
+    }
+}
+
+bool Renderer::GetRayGroundIntersection(Ray ray, Vector3 &outPoint) {
+    if (ray.direction.y == 0) return false;
+    float t = -ray.position.y / ray.direction.y;
+    if (t < 0) return false;
+    outPoint = Vector3Add(ray.position, Vector3Scale(ray.direction, t));
+    return true;
+}
+
+void Renderer::DrawGameOver() {
+    if (!_map._gameOver) return;
+    const std::string winText = _map._winningTeam + " wins!";
+    const int winFontSize = 80;
+    const float spacing = 3.0f;
+
+    Vector2 winTextSize = MeasureTextEx(_assets.toyFont, winText.c_str(), winFontSize, spacing);
+    Vector2 winPos = {
+        (_screenWidth - winTextSize.x) / 2.0f,
+        (_screenHeight - winTextSize.y) / 2.0f
+    };
+    
+    // Overlay semi-transparent
+    DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.5f));
+    
+    // Message de victoire
+    Color outline = BLUE;
+    for (int dx = -3; dx <= 3; dx += 3) {
+        for (int dy = -3; dy <= 3; dy += 3) {
+            if (dx == 0 && dy == 0) continue;
+            Vector2 offsetPos = { winPos.x + dx, winPos.y + dy };
+            DrawTextEx(_assets.toyFont, winText.c_str(), offsetPos, winFontSize, spacing, outline);
+        }
+    }
+    DrawTextEx(_assets.toyFont, winText.c_str(), winPos, winFontSize, spacing, YELLOW);
+
+    // Instruction pour quitter
+    const char* instruction = "Press any key to exit";
+    int instFontSize = 30;
+    Vector2 instPos = {
+        (_screenWidth - MeasureText(instruction, instFontSize)) / 2.0f,
+        winPos.y + winTextSize.y + 50
+    };
+    DrawText(instruction, instPos.x, instPos.y, instFontSize, WHITE);
+}
+
+bool Renderer::firstCall = true;
+bool Renderer::disconnected = false;

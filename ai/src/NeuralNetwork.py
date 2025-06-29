@@ -5,7 +5,7 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Tue Jun 10 2:38:29 PM 2025 adrien.marette@epitech.eu
-## Last update Wed Jun 10 2:38:32 PM 2025 adrien.marette@epitech.eu
+## Last update Mon Jun 29 2:51:37 PM 2025 adrien.marette@epitech.eu
 ##
 
 ##
@@ -47,7 +47,7 @@ class NeuralNetwork:
         return np.maximum(0, x)
     
     def relu_derivative(self, x):
-        return (x > 0).astype(float)
+        return np.array(x > 0).astype(float)
     
     def forward(self, x):
         self.activations = [x]
