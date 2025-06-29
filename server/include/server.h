@@ -76,6 +76,7 @@ egg_t *get_unused_egg_for_team(server_config_t *conf, int team_idx);
 void send_ebo(int fd, int egg_id);
 int respond_to_server_fd(server_config_t *conf,
     char *client_message, client_t *client);
+
 void pin_graphics(client_t *client, server_config_t *conf);
 void add_resource_to_buffer(char *buffer, char *name, int count, int *first);
 void ppo_graphics(client_t *client, server_config_t *conf);
@@ -120,6 +121,4 @@ static void handle_eject_wrapper(client_t *client, server_config_t *conf,
     const char *cmd);
 static void handle_incantation_command(client_t *client,
     server_config_t *conf, const char *cmd);
-
-
 #endif /* !SERVER_H_ */

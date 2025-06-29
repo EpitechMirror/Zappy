@@ -10,12 +10,14 @@
 #include <string.h>
 #include <sys/socket.h>
 
+
 #include "../../include/client_info.h"
 #include "../../include/flag.h"
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
 void get_tile_contents(client_t *client, char *inventory)
+
 {
     snprintf(inventory, 256,
         "linemate %d, deraumere %d, sibur %d, mendiane %d,"
