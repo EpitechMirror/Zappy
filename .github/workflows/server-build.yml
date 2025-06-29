@@ -44,8 +44,23 @@ jobs:
     - name: Build Unit Tests
       run: |
         cd server/test
-        make clean
-        make all
+        echo "🏗️ Building unit test suite..."
+        echo "Current directory: $(pwd)"
+        echo "Makefile exists: $(test -f Makefile && echo 'YES' || echo 'NO')"
+        if [ -f Makefile ]; then
+          # Check if clean target exists
+          if make -n clean >/dev/null 2>&1; then
+            echo "Running make clean..."
+            make clean
+          else
+            echo "⚠️ Clean target not available, proceeding with build"
+          fi
+          make all
+        else
+          echo "❌ Makefile not found in $(pwd)"
+          ls -la
+          exit 1
+        fi
         echo "✅ Unit tests build completed successfully"
     
     - name: Run Unit Tests
