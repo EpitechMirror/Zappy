@@ -47,6 +47,12 @@ typedef struct {
     void (*handler)(client_t *, server_config_t *, const char *);
 } command_handler_t;
 
+typedef struct {
+    const char *name;
+    int *tile_ptr;
+    int *inventory_ptr;
+} resource_mapping_t;
+
 
 int create_server_socket(int port);
 void handle_new_connection(poll_context_t *ctx);

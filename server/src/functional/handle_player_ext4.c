@@ -10,49 +10,39 @@
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
+static int handle_resource(client_t *client, const char *resource,
+    const resource_mapping_t *mapping, int fd)
+{
+    if (strcmp(resource, mapping->name) == 0 && *mapping->inventory_ptr > 0) {
+        (*mapping->tile_ptr)++;
+        (*mapping->inventory_ptr)--;
+        send(fd, "ok\n", 3, 0);
+        return 1;
+    }
+    return 0;
+}
+
 void set_object(client_t *client, server_config_t *conf, char *client_message,
     int fd)
 {
     char *resourc = client_message + 4;
     tile_t *tile = &conf->map[client->y][client->x];
+    resource_mapping_t mappings[] = {
+        {"linemate", &tile->linemate, &client->inventory.linemate},
+        {"deraumere", &tile->deraumere, &client->inventory.deraumere},
+        {"sibur", &tile->sibur, &client->inventory.sibur},
+        {"mendiane", &tile->mendiane, &client->inventory.mendiane},
+        {"phiras", &tile->phiras, &client->inventory.phiras},
+        {"thystame", &tile->thystame, &client->inventory.thystame},
+        {"food", &tile->food, &client->inventory.food}
+    };
 
-    if (strcmp(resourc, "linemate") == 0 && client->inventory.linemate > 0) {
-        tile->linemate++;
-        client->inventory.linemate--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "deraumere") == 0 && client->inventory.deraumere > 0) {
-        tile->deraumere++;
-        client->inventory.deraumere--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "sibur") == 0 && client->inventory.sibur > 0) {
-        tile->sibur++;
-        client->inventory.sibur--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "mendiane") == 0 && client->inventory.mendiane > 0) {
-        tile->mendiane++;
-        client->inventory.mendiane--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "phiras") == 0 && client->inventory.phiras > 0) {
-        tile->phiras++;
-        client->inventory.phiras--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "thystame") == 0 && client->inventory.thystame > 0) {
-        tile->thystame++;
-        client->inventory.thystame--;
-        send(fd, "ok\n", 3, 0);
-    }
-    if (strcmp(resourc, "food") == 0 && client->inventory.food > 0) {
-        tile->food++;
-        client->inventory.food--;
-        send(fd, "ok\n", 3, 0);
-    } else
-        send(fd, "ko\n", 3, 0);
-    notify_graphics_player_update(client, conf);
+    for (int i = 0; i < 7; i++)
+        if (handle_resource(client, resourc, &mappings[i], fd)) {
+            notify_graphics_player_update(client, conf);
+            return;
+        }
+    send(fd, "ko\n", 3, 0);
 }
 
 int count_players_on_tile(server_config_t *conf, int x, int y, int level)
