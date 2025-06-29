@@ -10,6 +10,22 @@
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
+static const command_handler_t command_handlers[] = {
+    {"Forward", 7, handle_movement_commands},
+    {"Right", 5, handle_movement_commands},
+    {"Left", 4, handle_movement_commands},
+    {"Inventory", 9, handle_inventory_wrapper},
+    {"Take", 4, handle_take_command},
+    {"Look", 4, handle_look_command},
+    {"Fork", 4, handle_fork_command},
+    {"Broadcast", 9, handle_broadcast_command},
+    {"Connect_nbr", 11, handle_connect_nbr_command},
+    {"Set", 3, handle_set_command},
+    {"Eject", 5, handle_eject_wrapper},
+    {"Incantation", 11, handle_incantation_command},
+    {NULL, 0, NULL}
+};
+
 static void handle_movement_commands(client_t *client, server_config_t *conf,
     const char *cmd)
 {
@@ -84,53 +100,53 @@ static void handle_eject_command(client_t *client, server_config_t *conf)
     send(client->fd, "ok\n", 3, 0);
 }
 
-void execute_command(client_t *client, server_config_t *conf, const char *cmd)
+static void handle_connect_nbr_command(client_t *client, server_config_t *conf,
+    const char *cmd)
 {
     char response[32];
 
-    if (strncmp(cmd, "Forward", 7) == 0 || strncmp(cmd, "Right", 5) == 0 || strncmp(cmd, "Left", 4) == 0) {
-        handle_movement_commands(client, conf, cmd);
-        return;
-    }
-    if (strncmp(cmd, "Inventory", 9) == 0) {
-        handle_inventory_command(client);
-        return;
-    }
-    if (strncmp(cmd, "Take", 4) == 0) {
-        take_object(client, conf, (char *)cmd);
-        pin_graphics(client, conf);
-        return;
-    }
-    if (strncmp(cmd, "Look", 4) == 0) {
-        look_around(client, conf);
-        return;
-    }
-    if (strncmp(cmd, "Fork", 4) == 0) {
-        create_egg_fork(conf, client);
-        send(client->fd, "ok\n", 3, 0);
-        return;
-    }
-    if (strncmp(cmd, "Broadcast", 9) == 0) {
-        handle_broadcast_command(client, conf, cmd);
-        return;
-    }
-    if (strncmp(cmd, "Connect_nbr", 11) == 0) {
-        snprintf(response, sizeof(response), "%d\n", conf->team_count *
-            conf->clients_nb - find_nb_teams(client) + 1);
-        send(client->fd, response, strlen(response), 0);
-        return;
-    }
-    if (strncmp(cmd, "Set", 3) == 0) {
-        set_object(client, conf, (char *)cmd, client->fd);
-        return;
-    }
-    if (strncmp(cmd, "Eject", 5) == 0) {
-        handle_eject_command(client, conf);
-        return;
-    }
-    if (strncmp(cmd, "Incantation", 11) == 0) {
-        handle_incantation(client, conf, client->fd);
-        return;
+    (void)cmd;
+    snprintf(response, sizeof(response), "%d\n", conf->team_count *
+        conf->clients_nb - find_nb_teams(client) + 1);
+    send(client->fd, response, strlen(response), 0);
+}
+
+static void handle_set_command(client_t *client, server_config_t *conf,
+    const char *cmd)
+{
+    set_object(client, conf, (char *)cmd, client->fd);
+}
+
+static void handle_incantation_command(client_t *client, server_config_t *conf,
+    const char *cmd)
+{
+    (void)cmd;
+    handle_incantation(client, conf, client->fd);
+}
+
+static void handle_inventory_wrapper(client_t *client, server_config_t *conf,
+    const char *cmd)
+{
+    (void)conf;
+    (void)cmd;
+    handle_inventory_command(client);
+}
+
+static void handle_eject_wrapper(client_t *client, server_config_t *conf,
+    const char *cmd)
+{
+    (void)cmd;
+    handle_eject_command(client, conf);
+}
+
+void execute_command(client_t *client, server_config_t *conf, const char *cmd)
+{
+    for (int i = 0; command_handlers[i].command != NULL; i++) {
+        if (strncmp(cmd, command_handlers[i].command,
+            command_handlers[i].length) == 0) {
+            command_handlers[i].handler(client, conf, cmd);
+            return;
+        }
     }
     send(client->fd, "ko\n", 3, 0);
 }

@@ -41,6 +41,12 @@ typedef struct {
     server_config_t *conf;
 } auth_context_t;
 
+typedef struct {
+    const char *command;
+    int length;
+    void (*handler)(client_t *, server_config_t *, const char *);
+} command_handler_t;
+
 
 int create_server_socket(int port);
 void handle_new_connection(poll_context_t *ctx);
@@ -87,5 +93,27 @@ void get_look_coordinates(client_t *client, int dist_and_sideoff[2],
 void look_around(client_t *client, server_config_t *conf);
 void move_player(client_t *client, server_config_t *cnf,
     direction_t direction);
+void handle_take_command(client_t *client, server_config_t *conf,
+    const char *cmd);
+void handle_look_command(client_t *client, server_config_t *conf,
+    const char *cmd);
+void handle_fork_command(client_t *client, server_config_t *conf,
+    const char *cmd);
+
+static void handle_movement_commands(client_t *client, server_config_t *conf,
+    const char *cmd);
+static void handle_inventory_wrapper(client_t *client, server_config_t *conf,
+    const char *cmd);
+static void handle_broadcast_command(client_t *client, server_config_t *conf,
+    const char *cmd);
+static void handle_connect_nbr_command(client_t *client,
+    server_config_t *conf, const char *cmd);
+static void handle_set_command(client_t *client, server_config_t *conf,
+    const char *cmd);
+static void handle_eject_wrapper(client_t *client, server_config_t *conf,
+    const char *cmd);
+static void handle_incantation_command(client_t *client,
+    server_config_t *conf, const char *cmd);
+
 
 #endif /* !SERVER_H_ */
