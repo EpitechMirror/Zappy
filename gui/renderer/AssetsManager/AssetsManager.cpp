@@ -28,6 +28,7 @@ void AssetsManager::unloadAllResources()
     UnloadModel(playerModel);
     UnloadModel(wallLong);
     UnloadModel(wallShort);
+    UnloadModel(deskModel);
     
     shaders.unloadAll();
     
@@ -55,6 +56,7 @@ void AssetsManager::loadModels()
 
     floorModel = LoadModel("../resources/models/plane.glb");
     playerModel = LoadModel("../resources/models/pixar_lamp/scene.gltf");
+    deskModel = LoadModel("../resources/models/wooden_desk.glb");
     wallLong = LoadModelFromMesh(GenMeshCube(roomWidth + wallThickness, roomHeight, wallThickness));
     wallShort = LoadModelFromMesh(GenMeshCube(wallThickness, roomHeight, roomDepth + wallThickness));
 }
@@ -84,10 +86,17 @@ void AssetsManager::loadTextures()
         }
     }
 
-    Texture2D wallTex = LoadTexture("../resources/room_andy/textures/wallpaper.jpg");
+    Texture2D wallTex = LoadTexture("../resources/textures/wallpaper.jpg");
     if (wallTex.id > 0) {
         wallLong.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
         wallShort.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
+    }
+
+    Texture2D deskTex = LoadTexture("../resources/textures/wood_desk.jpg");
+    if (deskTex.id > 0) {
+        for (int i = 0; i < deskModel.materialCount; ++i) {
+            deskModel.materials[i].maps[MATERIAL_MAP_ALBEDO].texture = deskTex;
+        }
     }
 }
 

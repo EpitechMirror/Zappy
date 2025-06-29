@@ -5,6 +5,7 @@
 ** handle_client_data
 */
 
+#define _GNU_SOURCE
 #include "server.h"
 
 static int find_team_index(server_config_t *conf, const char *team_name)

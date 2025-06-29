@@ -60,7 +60,6 @@ class Client {
         int _mapWidth;
         int _mapHeight;
         bool _hasMapSize = false;
-
 };
 
 #endif /* !CLIENT_HPP_ */
