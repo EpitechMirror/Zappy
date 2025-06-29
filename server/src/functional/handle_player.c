@@ -15,6 +15,16 @@
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
+static const elevation_req_t elevation_requirements[] = {
+    {1, 1, 0, 0, 0, 0, 0},  // 1->2
+    {2, 1, 1, 1, 0, 0, 0},  // 2->3
+    {2, 2, 0, 1, 0, 2, 0},  // 3->4
+    {4, 1, 1, 2, 0, 1, 0},  // 4->5
+    {4, 1, 2, 1, 3, 0, 0},  // 5->6
+    {6, 1, 2, 3, 0, 1, 0},  // 6->7
+    {6, 2, 2, 2, 2, 2, 1}   // 7->8
+};
+
 static void move_north(client_t *client, server_config_t *conf)
 {
     client->y = (client->y + conf->height - 1) % conf->height;
@@ -74,42 +84,24 @@ char *parse_resource_name(char *client_message)
 int try_take_resource(client_t *client, server_config_t *conf, char *resource)
 {
     tile_t *tile = &conf->map[client->y][client->x];
+    struct { const char *name; int *tile_count; int *inventory_count; }
+        resources[] = {
+        {"linemate", &tile->linemate, &client->inventory.linemate},
+        {"deraumere", &tile->deraumere, &client->inventory.deraumere},
+        {"sibur", &tile->sibur, &client->inventory.sibur},
+        {"mendiane", &tile->mendiane, &client->inventory.mendiane},
+        {"phiras", &tile->phiras, &client->inventory.phiras},
+        {"thystame", &tile->thystame, &client->inventory.thystame},
+        {"food", &tile->food, &client->inventory.food}
+    };
 
-    if (strcmp(resource, "linemate") == 0 && tile->linemate > 0) {
-        client->inventory.linemate++;
-        tile->linemate--;
-        return 1;
-    }
-    if (strcmp(resource, "deraumere") == 0 && tile->deraumere > 0) {
-        client->inventory.deraumere++;
-        tile->deraumere--;
-        return 1;
-    }
-    if (strcmp(resource, "sibur") == 0 && tile->sibur > 0) {
-        client->inventory.sibur++;
-        tile->sibur--;
-        return 1;
-    }
-    if (strcmp(resource, "mendiane") == 0 && tile->mendiane > 0) {
-        client->inventory.mendiane++;
-        tile->mendiane--;
-        return 1;
-    }
-    if (strcmp(resource, "phiras") == 0 && tile->phiras > 0) {
-        client->inventory.phiras++;
-        tile->phiras--;
-        return 1;
-    }
-    if (strcmp(resource, "thystame") == 0 && tile->thystame > 0) {
-        client->inventory.thystame++;
-        tile->thystame--;
-        return 1;
-    }
-    if (strcmp(resource, "food") == 0 && tile->food > 0) {
-        client->inventory.food++;
-        tile->food--;
-        return 1;
-    }
+    for (int i = 0; i < 7; i++)
+        if (strcmp(resource, resources[i].name) == 0 &&
+            *resources[i].tile_count > 0) {
+            (*resources[i].inventory_count)++;
+            (*resources[i].tile_count)--;
+            return 1;
+        }
     return 0;
 }
 
@@ -133,18 +125,21 @@ void add_resource_to_buffer(char *buffer, char *name, int count, int *first)
     }
 }
 
-void get_tile_content_string(server_config_t *conf, int x, int y, char *buffer,
+/*TODO:Change to other file from here, already to many functions in this file*/
+
+void get_tile_content_string(server_config_t *conf, int xy[2], char *buffer,
     int buffer_size)
 {
     char temp[512] = "";
     int first = 1;
     tile_t *tile;
 
-    if (x < 0 || x >= conf->width || y < 0 || y >= conf->height) {
+    if (xy[0] < 0 || xy[0] >= conf->width || xy[1] < 0 ||
+        xy[1] >= conf->height) {
         strcpy(buffer, "");
         return;
     }
-    tile = &conf->map[y][x];
+    tile = &conf->map[xy[1]][xy[0]];
     add_resource_to_buffer(temp, "food", tile->food, &first);
     add_resource_to_buffer(temp, "linemate", tile->linemate, &first);
     add_resource_to_buffer(temp, "deraumere", tile->deraumere, &first);
@@ -156,13 +151,13 @@ void get_tile_content_string(server_config_t *conf, int x, int y, char *buffer,
     buffer[buffer_size - 1] = '\0';
 }
 
-void add_players_to_tile(int x, int y, char *buffer,
+void add_players_to_tile(int xy[2], char *buffer,
     int buffer_size, client_t *current_client)
 {
     char temp[512];
 
     strcpy(temp, buffer);
-    if (x == current_client->x && y == current_client->y) {
+    if (xy[0] == current_client->x && xy[1] == current_client->y) {
         if (strlen(temp) > 0)
             strcat(temp, " ");
         strcat(temp, "player");
@@ -171,31 +166,31 @@ void add_players_to_tile(int x, int y, char *buffer,
     buffer[buffer_size - 1] = '\0';
 }
 
-void get_look_coordinates(client_t *client, int distance, int side_offset,
-    int *x, int *y, server_config_t *conf)
+void get_look_coordinates(client_t *client, int dist_and_sideoff[2],
+    int **coords, server_config_t *conf)
 {
-    *x = client->x;
-    *y = client->y;
+    *coords[0] = client->x;
+    *coords[1] = client->y;
     switch (client->direction) {
         case NORTH:
-            *y -= distance;
-            *x += side_offset;
+            *coords[1] -= dist_and_sideoff[0];
+            *coords[0] += dist_and_sideoff[1];
             break;
         case EAST:
-            *x += distance;
-            *y += side_offset;
+            *coords[0] += dist_and_sideoff[0];
+            *coords[1] += dist_and_sideoff[1];
             break;
         case SOUTH:
-            *y += distance;
-            *x -= side_offset;
+            *coords[1] += dist_and_sideoff[0];
+            *coords[0] -= dist_and_sideoff[1];
             break;
         case WEST:
-            *x -= distance;
-            *y -= side_offset;
+            *coords[0] -= dist_and_sideoff[0];
+            *coords[1] -= dist_and_sideoff[1];
             break;
     }
-    *x = (*x + conf->width) % conf->width;
-    *y = (*y + conf->height) % conf->height;
+    *coords[0] = (*coords[0] + conf->width) % conf->width;
+    *coords[1] = (*coords[1] + conf->height) % conf->height;
 }
 
 void look_around(client_t *client, server_config_t *conf)
@@ -214,11 +209,12 @@ void look_around(client_t *client, server_config_t *conf)
         start_offset = -distance;
         for (int i = 0; i < tiles_at_distance; i++) {
             side_offset = start_offset + i;
-            get_look_coordinates(client, distance, side_offset, &x, &y, conf);
-            get_tile_content_string(conf, x, y, tile_content,
+            get_look_coordinates(client, (int[]){distance, side_offset},
+                (int *[]){&x, &y}, conf);
+            get_tile_content_string(conf, (int[]){x, y}, tile_content,
                 sizeof(tile_content));
-            add_players_to_tile(x, y, tile_content, sizeof(tile_content),
-                client);
+            add_players_to_tile((int[]){x, y}, tile_content,
+            sizeof(tile_content), client);
             if (strlen(response) > 1)
                 strcat(response, ",");
             strcat(response, tile_content);
@@ -360,17 +356,6 @@ void set_object(client_t *client, server_config_t *conf, char *client_message,
         send(fd, "ko\n", 3, 0);
     notify_graphics_player_update(client, conf);
 }
-
-// Elevation requirements table (level 1->2, 2->3, etc.)
-static const elevation_req_t elevation_requirements[] = {
-    {1, 1, 0, 0, 0, 0, 0},  // 1->2
-    {2, 1, 1, 1, 0, 0, 0},  // 2->3
-    {2, 2, 0, 1, 0, 2, 0},  // 3->4
-    {4, 1, 1, 2, 0, 1, 0},  // 4->5
-    {4, 1, 2, 1, 3, 0, 0},  // 5->6
-    {6, 1, 2, 3, 0, 1, 0},  // 6->7
-    {6, 2, 2, 2, 2, 2, 1}   // 7->8
-};
 
 int count_players_on_tile(server_config_t *conf, int x, int y, int level)
 {

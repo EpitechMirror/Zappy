@@ -39,9 +39,7 @@ void poll_clients(poll_context_t *ctx)
     int i = 0;
 
     for (i = 0; i < *ctx->client_count; i++) {
-        if (ctx->fds[i].fd < 0)
-            continue;
-        if (!(ctx->fds[i].revents & POLLIN))
+        if (ctx->fds[i].fd < 0 || !(ctx->fds[i].revents & POLLIN))
             continue;
         if (ctx->fds[i].fd == ctx->server_fd)
             handle_server_connection(ctx);
