@@ -5,7 +5,7 @@
 ## Login   <adrien.marette@epitech.eu>
 ##
 ## Started on  Wed Jun 25 11:39:38 AM 2025 adrien.marette@epitech.eu
-## Last update Thu Jun 25 11:39:51 AM 2025 adrien.marette@epitech.eu
+## Last update Mon Jun 29 2:49:47 PM 2025 adrien.marette@epitech.eu
 ##
 
 import json
@@ -233,6 +233,33 @@ class ZappyAI:
                 action = ActionType.LOOK  # Look for food
         
         return action
+    
+    def action_to_command(self, action: ActionType) -> str:
+        """Convert action to command string"""
+        if action == ActionType.MOVE_FORWARD:
+            return "Forward"
+        elif action == ActionType.TURN_LEFT:
+            return "Left"
+        elif action == ActionType.TURN_RIGHT:
+            return "Right"
+        elif action == ActionType.TAKE_RESOURCE:
+            return "Take Resource"
+        elif action == ActionType.LOOK:
+            return "Look"
+        elif action == ActionType.BROADCAST:
+            return f"Broadcast ELEVATE_L{self.state.level}"
+        elif action == ActionType.INCANTATION:
+            return "Incantation"
+        elif action == ActionType.FORK:
+            return "Fork"
+        elif action == ActionType.INVENTORY:
+            return "Inventory"
+        elif action == ActionType.EJECT:
+            return "Eject"
+        elif action == ActionType.DROP_RESOURCE:
+            return "Set "
+        else:
+            return "Unknown Command"
     
     def execute_action(self, action: ActionType):
         """Execute the chosen action"""
