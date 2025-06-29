@@ -84,5 +84,8 @@ void consume_tile_resources(server_config_t *conf, int x, int y,
 void elevate_players_on_tile(server_config_t *conf, int x, int y, int level);
 void get_look_coordinates(client_t *client, int dist_and_sideoff[2],
     int **coords, server_config_t *conf);
+void look_around(client_t *client, server_config_t *conf);
+void move_player(client_t *client, server_config_t *cnf,
+    direction_t direction);
 
 #endif /* !SERVER_H_ */
