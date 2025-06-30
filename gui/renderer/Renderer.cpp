@@ -696,7 +696,7 @@ void Renderer::gameLoop(Client &client) {
                 handleServerDisconnect();
             }
             if (_menuOpen) {
-                DrawMenu(client);
+                DrawMenu();
             }
         EndDrawing();
     }
@@ -714,7 +714,7 @@ void Renderer::DrawButton() {
     DrawText(text, textX, textY, 20, WHITE);
 }
 
-void Renderer::DrawMenu(Client &client) {
+void Renderer::DrawMenu() {
     DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.7f));
     
     const float menuWidth = 600;

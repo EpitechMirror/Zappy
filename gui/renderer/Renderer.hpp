@@ -79,7 +79,7 @@ class Renderer {
         void notifyServerDisconnect();
         void DrawIncantations();
         void DrawSelectionMarkers();
-        void DrawMenu(Client &client);
+        void DrawMenu();
         Rectangle _menuButton;
         bool _menuButtonHovered = false;
         bool _menuOpen = false;
