@@ -185,7 +185,7 @@ void Renderer::showLoadingScreen(const std::string &message) {
     if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
         PlayMusicStream(_assets.loadingMusic);
     }
-    float duration = 11.0f;
+    float duration = 13.0f;
     float startTime = GetTime();
     float nextTipTime = 3.0f; 
     
@@ -758,32 +758,40 @@ void Renderer::DrawMenu() {
     DrawText("MUSIC: ", menuX + 50, optionY + optionSpacing, optionSize, DARKGRAY);
     DrawText(musicStatus, menuX + 50 + MeasureText("MUSIC: ", optionSize), 
              optionY + optionSpacing, optionSize, musicColor);
+
+    const char* tabInfo = "Press TAB to toggle info panels";
+    DrawText(tabInfo, 
+             menuX + 50, 
+             optionY + optionSpacing + optionSize + 10, 
+             optionSize, DARKGRAY);
     
     const char* controlsTitle = "CAMERA CONTROLS";
     DrawText(controlsTitle, menuX + 50, optionY + 3*optionSpacing, optionSize, DARKBLUE);
     
     int controlSize = 25;
     int controlY = optionY + 3*optionSpacing + 40;
-    
+    int keyOffsetX = 30;
+    int keyOffsetY = 7;
+
     // Z (haut)
-    DrawCircle(menuX + 80, controlY, 25, Fade(BLUE, 0.2f));
-    DrawText("Z", menuX + 80 - MeasureText("Z", controlSize)/2, 
-             controlY - controlSize/2, controlSize, DARKBLUE);
-    
+    DrawCircle(menuX + keyOffsetX + 80, controlY + keyOffsetY, 25, Fade(BLUE, 0.2f));
+    DrawText("Z", menuX + keyOffsetX + 80 - MeasureText("Z", controlSize)/2, 
+             controlY + keyOffsetY - controlSize/2, controlSize, DARKBLUE);
+
     // Q (gauche)
-    DrawCircle(menuX + 40, controlY + 40, 25, Fade(BLUE, 0.2f));
-    DrawText("Q", menuX + 40 - MeasureText("Q", controlSize)/2, 
-             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
-    
+    DrawCircle(menuX + keyOffsetX + 40, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("Q", menuX + keyOffsetX + 40 - MeasureText("Q", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
+
     // S (bas)
-    DrawCircle(menuX + 80, controlY + 40, 25, Fade(BLUE, 0.2f));
-    DrawText("S", menuX + 80 - MeasureText("S", controlSize)/2, 
-             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
-    
+    DrawCircle(menuX + keyOffsetX + 80, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("S", menuX + keyOffsetX + 80 - MeasureText("S", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
+
     // D (droite)
-    DrawCircle(menuX + 120, controlY + 40, 25, Fade(BLUE, 0.2f));
-    DrawText("D", menuX + 120 - MeasureText("D", controlSize)/2, 
-             controlY + 40 - controlSize/2, controlSize, DARKBLUE);
+    DrawCircle(menuX + keyOffsetX + 120, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("D", menuX + keyOffsetX + 120 - MeasureText("D", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
     
     DrawText("MOUSE", menuX + 200, controlY, controlSize, DARKGRAY);
     DrawText("- Rotate view", menuX + 200, controlY + 30, controlSize, DARKGRAY);
