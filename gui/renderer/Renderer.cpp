@@ -202,15 +202,16 @@ void Renderer::showLoadingScreen(const std::string &message) {
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // === Titre principal : Y GUI ===
+            // === Titre principal : WOODY GUI ===
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
             float spacing = 5.0f;
             Vector2 logoTextSize = MeasureTextEx(_assets.toyFont, logo, sizeLogo, spacing);
-            float correction = spacing * 2.0f;
+            
+            // Position centrée horizontalement et verticalement
             Vector2 logoPos;
-            logoPos.x = (_screenWidth - logoTextSize.x + correction) / 3.4f;
-            logoPos.y = (_screenHeight / 2) - 200;
+            logoPos.x = (_screenWidth - logoTextSize.x) / 2.0f;
+            logoPos.y = (_screenHeight / 3) - 50;  // 1/3 de l'écran depuis le haut
 
             Color outline = BLUE;
             for (int dx = -3; dx <= 3; dx += 3) {
@@ -311,6 +312,7 @@ void Renderer::DrawPlayers() {
 }
 
 void Renderer::InfoItemsBoard() {
+    if (!_showInfoBoards) return;
     DrawRectangle(10, 10, 200, 235, Fade(SKYBLUE, 0.5f));
     DrawRectangleLines(10, 10, 200, 235, BLUE);
 
@@ -346,6 +348,7 @@ void Renderer::InfoItemsBoard() {
 }
 
 void Renderer::InfoTeamsBoard() {
+    if (!_showInfoBoards) return;
     const std::vector<std::string>& teamNames = Player::getTeamNames();
 
     int titleSize = 20;
@@ -381,6 +384,7 @@ void Renderer::InfoTeamsBoard() {
 }
 
 void Renderer::InfoPlayersBoard() {
+    if (!_showInfoBoards) return;
     int titleSize = 20;
     int lineSpacing = 20;
     int padding = 10;
@@ -616,7 +620,7 @@ void Renderer::gameLoop(Client &client) {
     _assets.applyShaders();
     initLights();
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !_shouldQuit) {
         bool wasConnected = client.isConnected();
         client.update();
         bool isConnected = client.isConnected();
@@ -638,6 +642,10 @@ void Renderer::gameLoop(Client &client) {
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             handleMouseClick();
+        }
+
+        if (IsKeyPressed(KEY_TAB)) {
+            _showInfoBoards = !_showInfoBoards;
         }
 
         Vector2 mousePos = GetMousePosition();
@@ -667,17 +675,19 @@ void Renderer::gameLoop(Client &client) {
                 DrawGameOver();
             EndMode3D();
 
-            InfoItemsBoard();
-            InfoTeamsBoard();
-            InfoPlayersBoard();
-            InfoBoxBoard();
+            if (_showInfoBoards) {
+                InfoItemsBoard();
+                InfoTeamsBoard();
+                InfoPlayersBoard();
+                InfoBoxBoard();
+            }
             DrawButton();
             
             if (_disconnectTimer > 0) {
                 handleServerDisconnect();
             }
             if (_menuOpen) {
-                DrawMenu();
+                DrawMenu(client);
             }
         EndDrawing();
     }
@@ -695,7 +705,7 @@ void Renderer::DrawButton() {
     DrawText(text, textX, textY, 20, WHITE);
 }
 
-void Renderer::DrawMenu() {
+void Renderer::DrawMenu(Client &client) {
     DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.7f));
     
     const float menuWidth = 600;
@@ -810,9 +820,7 @@ void Renderer::DrawMenu() {
         }
         // Quitter
         else if (CheckCollisionPointRec(mousePos, quitButton)) {
-            _menuOpen = false;
-            _disconnectTimer = 0;
-            CloseWindow();
+            _shouldQuit = true;
             return;
         }
         else if (CheckCollisionPointRec(mousePos, 
