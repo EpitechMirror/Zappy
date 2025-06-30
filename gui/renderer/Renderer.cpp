@@ -182,6 +182,9 @@ void Renderer::drawFloor() {
 }
 
 void Renderer::showLoadingScreen(const std::string &message) {
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        PlayMusicStream(_assets.loadingMusic);
+    }
     float duration = 11.0f;
     float startTime = GetTime();
     float nextTipTime = 3.0f; 
@@ -190,6 +193,9 @@ void Renderer::showLoadingScreen(const std::string &message) {
     std::string tip = _loadingTips[tipIndex];
 
     while ((GetTime() - startTime) < duration && !WindowShouldClose()) {
+        if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+            UpdateMusicStream(_assets.loadingMusic);
+        }
         float elapsed = GetTime() - startTime;
         float progress = elapsed / duration;
 
@@ -261,6 +267,9 @@ void Renderer::showLoadingScreen(const std::string &message) {
             DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
 
         EndDrawing();
+    }
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        StopMusicStream(_assets.loadingMusic);
     }
 }
 
