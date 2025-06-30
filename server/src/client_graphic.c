@@ -86,6 +86,14 @@ egg_t *create_egg_fork(server_config_t *conf, client_t *client)
     return egg;
 }
 
+static void send_sgt(int fd, server_config_t *conf)
+{
+    char msg[64];
+    snprintf(msg, sizeof(msg), "sgt %d\n", conf->freq);
+    send(fd, msg, strlen(msg), 0);
+    return;
+
+}
 void handle_graphic_auth(int fd, server_config_t *conf)
 {
     char msg[128];
@@ -97,6 +105,7 @@ void handle_graphic_auth(int fd, server_config_t *conf)
     send(fd, msg, strlen(msg), 0);
     snprintf(msg, sizeof(msg), "msz %d %d\n", conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
+    send_sgt(fd, conf);
     send_whole_map(fd, conf);
     send_team_names(fd, conf);
     for (t = 0; t < conf->team_count; t++) {
