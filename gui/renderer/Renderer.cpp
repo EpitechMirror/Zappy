@@ -322,14 +322,24 @@ void Renderer::DrawPlayers() {
 
 void Renderer::InfoItemsBoard() {
     if (!_showInfoBoards) return;
-    DrawRectangle(10, 10, 200, 235, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines(10, 10, 200, 235, BLUE);
+    DrawRectangle(10, 10, 200, 275, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(10, 10, 200, 275, BLUE);
 
     int x = 20;
     int y = 20;
     int lineSpacing = 20;
 
-    DrawText(("Map Size : " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
+    int timeInt = static_cast<int>(GetTime());
+    int minutes = timeInt / 60;
+    int seconds = timeInt % 60;
+    char timeBuffer[32];
+    snprintf(timeBuffer, sizeof(timeBuffer), "Time : %02d:%02d", minutes, seconds);
+    DrawText(timeBuffer, x, y, 20, BLACK);
+    y += lineSpacing;
+    std::string freqText = "Frequency : " + std::to_string(_map.getFrequency()) + " Hz";
+    DrawText(freqText.c_str(), x, y, 20, DARKGRAY);
+    y += lineSpacing;
+    DrawText(("Map : " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
     y += 2 * lineSpacing;
 
     DrawText(("Food : " + std::to_string(_map.getFoodCount())).c_str(), x, y, 20, ORANGE);
@@ -348,12 +358,6 @@ void Renderer::InfoItemsBoard() {
     y += lineSpacing;
     y += lineSpacing;
     DrawText(("Eggs : " + std::to_string(_map.getEggsCount())).c_str(), x, y, 20, WHITE);
-
-    int timeInt = static_cast<int>(GetTime());
-    std::string timeStr = "Time : " + std::to_string(timeInt);
-    int timeTextWidth = MeasureText(timeStr.c_str(), 20);
-    int timeCenterX = (_screenWidth - timeTextWidth) / 2;
-    DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
 }
 
 void Renderer::InfoTeamsBoard() {

@@ -76,12 +76,16 @@ class Map {
 
         bool _gameOver = false;
         std::string _winningTeam;
-        void setGameTime(int time) {
-            _gameTime = time;
+        void setFrequencyTime(int frequency) {
+            _frequency = frequency;
+        }
+
+        int getFrequency() const {
+            return _frequency;
         }
 
     private:
-        int _gameTime = 0;
+        int _frequency = 0;
         int _width;
         int _height;
         std::vector<Resources> _tiles;

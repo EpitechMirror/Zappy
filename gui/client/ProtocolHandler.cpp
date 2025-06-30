@@ -70,7 +70,7 @@ void ProtocolHandler::handleSgt(std::istringstream &iss) {
         return;
     }
 
-    _map.setGameTime(time);
+    _map.setFrequencyTime(time);
     Console::debug("handleSgt: Game time set to " + std::to_string(time));
 }
 
