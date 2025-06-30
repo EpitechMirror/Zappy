@@ -50,11 +50,11 @@ static void pic_graphics(client_t *client, server_config_t *conf)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
-static void pie_graphics(client_t *client, server_config_t *conf)
+static void pie_graphics(client_t *client, server_config_t *conf, int result)
 {
     char msg[256];
 
-    snprintf(msg, sizeof(msg), "pie %d %d %d\n", client->x, client->y, client->level);
+    snprintf(msg, sizeof(msg), "pie %d %d %d\n", client->x, client->y, result);
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
@@ -87,11 +87,11 @@ int find_nb_teams(client_t *client)
     return team_count;
 }
 
-void notify_graphics_player_update(client_t *client, server_config_t *conf)
+void notify_graphics_player_update(client_t *client, server_config_t *conf, int result)
 {
     ppo_graphics(client, conf);
     pic_graphics(client, conf);
     plv_graphics(client, conf);
-    pie_graphics(client, conf);
+    pie_graphics(client, conf, result);
     pin_graphics(client, conf);
 }

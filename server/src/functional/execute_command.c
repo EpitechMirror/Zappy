@@ -89,12 +89,13 @@ static void handle_broadcast_command(client_t *client, server_config_t *conf,
 static void handle_eject_command(client_t *client, server_config_t *conf)
 {
     int eject_direction;
+    int result = -1;
 
     for (client_t *c = conf->clients; c != NULL; c = c->next) {
         if (c != client && c->x == client->x && c->y == client->y) {
             eject_direction = (client->direction + 2) % 4;
             move_player(c, conf, eject_direction);
-            notify_graphics_player_update(c, conf);
+            notify_graphics_player_update(c, conf, result);
         }
     }
     send(client->fd, "ok\n", 3, 0);

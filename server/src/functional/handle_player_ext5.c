@@ -65,9 +65,11 @@ void handle_incantation(client_t *client, server_config_t *conf, int fd)
 {
     int players_on_tile;
     const elevation_req_t *req;
+    int result = 1;
 
     if (client->level >= 8) {
         send(fd, "ko\n", 3, 0);
+        result = 0;
         return;
     }
     req = &elevation_requirements[client->level - 1];
@@ -75,14 +77,16 @@ void handle_incantation(client_t *client, server_config_t *conf, int fd)
         client->level);
     if (players_on_tile < req->nb_players) {
         send(fd, "ko\n", 3, 0);
+        result = 0;
         return;
     }
     if (!check_tile_resources(conf, client->x, client->y, req)) {
         send(fd, "ko\n", 3, 0);
+        result = 0;
         return;
     }
     consume_tile_resources(conf, client->x, client->y, req);
-    elevate_players_on_tile(conf, client->x, client->y, client->level);
+    elevate_players_on_tile(conf, client->x, client->y, client->level, result);
 }
 
 int respond_to_server_fd(server_config_t *conf, char *c_message,

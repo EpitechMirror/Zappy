@@ -25,6 +25,7 @@ static int handle_resource(const char *resource,
 void set_object(client_t *client, server_config_t *conf, char *client_message,
     int fd)
 {
+    int result = -1;
     char *resourc = client_message + 4;
     tile_t *tile = &conf->map[client->y][client->x];
     resource_mapping_t mappings[] = {
@@ -39,7 +40,7 @@ void set_object(client_t *client, server_config_t *conf, char *client_message,
 
     for (int i = 0; i < 7; i++)
         if (handle_resource(resourc, &mappings[i], fd)) {
-            notify_graphics_player_update(client, conf);
+            notify_graphics_player_update(client, conf, result);
             return;
         }
     send(fd, "ko\n", 3, 0);
@@ -81,14 +82,14 @@ void consume_tile_resources(server_config_t *conf, int x, int y,
     tile->thystame -= req->thystame;
 }
 
-void elevate_players_on_tile(server_config_t *conf, int x, int y, int level)
+void elevate_players_on_tile(server_config_t *conf, int x, int y, int level, int result)
 {
     char level_msg[32];
 
     for (client_t *c = conf->clients; c != NULL; c = c->next) {
         if (c->x == x && c->y == y && c->level == level) {
             c->level++;
-            notify_graphics_player_update(c, conf);
+            notify_graphics_player_update(c, conf, result);
             send(c->fd, "Current level: ", 15, 0);
             snprintf(level_msg, sizeof(level_msg), "%d\n", c->level);
             send(c->fd, level_msg, strlen(level_msg), 0);

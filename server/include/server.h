@@ -86,14 +86,14 @@ int calculate_direction_tile(client_t *sender, client_t *receiver);
 int find_nb_teams(client_t *client);
 void set_object(client_t *client, server_config_t *conf, char *client_message,
     int fd);
-void notify_graphics_player_update(client_t *client, server_config_t *conf);
+void notify_graphics_player_update(client_t *client, server_config_t *conf, int result);
 void handle_incantation(client_t *client, server_config_t *conf, int fd);
 int count_players_on_tile(server_config_t *conf, int x, int y, int level);
 int check_tile_resources(server_config_t *conf, int x, int y,
     const elevation_req_t *req);
 void consume_tile_resources(server_config_t *conf, int x, int y,
     const elevation_req_t *req);
-void elevate_players_on_tile(server_config_t *conf, int x, int y, int level);
+void elevate_players_on_tile(server_config_t *conf, int x, int y, int level, int result);
 void get_look_coordinates(client_t *client, int dist_and_sideoff[2],
     int **coords, server_config_t *conf);
 void look_around(client_t *client, server_config_t *conf);
