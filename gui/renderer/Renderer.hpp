@@ -23,6 +23,7 @@
 #include "AssetsManager/AssetsManager.hpp"
 #include <ctime>
 #include <cstring>
+#include "../Console/Console.hpp"
 
 class Renderer {
     public:

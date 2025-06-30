@@ -6,12 +6,17 @@
 */
 
 #include "ProtocolHandler.hpp"
+#include "../Console/Console.hpp"
 
 ProtocolHandler::ProtocolHandler(Map &map) : _map(map) {
     registerHandlers();
 }
 
 void ProtocolHandler::registerHandlers() {
+    _handlers["WELCOME"] = [this](std::istringstream &) {
+        Console::debug("Received WELCOME from server");
+    };
+    _handlers["sgt"] = [this](std::istringstream &iss) { handleSgt(iss); };
     _handlers["msz"] = [this](std::istringstream &iss) { handleMsz(iss); };
     _handlers["bct"] = [this](std::istringstream &iss) { handleBct(iss); };
     _handlers["tna"] = [this](std::istringstream &iss) { handleTna(iss); };
@@ -45,12 +50,28 @@ void ProtocolHandler::handleLine(const std::string &line) {
     if (it != _handlers.end()) {
         it->second(iss);
     } else {
-        std::cerr << "Unknown command: " << cmd << "\n";
+        Console::error("Unknown command: " + cmd );
     }
 }
 
 bool ProtocolHandler::isMapReady() const {
     return _hasMapSize && _map.isFullyInitialized();
+}
+
+// --- Server game time
+void ProtocolHandler::handleSgt(std::istringstream &iss) {
+    int time = -1;
+    if (!(iss >> time)) {
+        Console::warning("handleSgt: Invalid sgt format received from server");
+        return;
+    }
+    if (time <= 0) {
+        Console::warning("handleSgt: Received non-positive game time value: " + std::to_string(time));
+        return;
+    }
+
+    _map.setGameTime(time);
+    Console::debug("handleSgt: Game time set to " + std::to_string(time));
 }
 
 //---Map size
@@ -69,7 +90,7 @@ void ProtocolHandler::handleBct(std::istringstream &iss) {
     if (iss >> x >> y) {
         for (int i = 0; i < RESOURCE_COUNT; ++i) {
             if (!(iss >> res.quantities[i])) {
-                std::cerr << "Invalid bct resource data\n";
+                Console::warning("Invalid bct resource data");
                 return;
             }
         }
@@ -94,7 +115,7 @@ void ProtocolHandler::handleEnw(std::istringstream &iss) {
         int eggId = std::stoi(eggIdStr.substr(1));
         _map.addEgg(eggId, x, y);
     } else {
-        std::cerr << "Invalid enw format\n";
+        Console::warning("Invalid enw format");
     }
 }
 
@@ -105,7 +126,7 @@ void ProtocolHandler::handleEboAndEdi(std::istringstream &iss) {
         int eggId = std::stoi(eggIdStr.substr(1));
         _map.removeEgg(eggId);
     } else {
-        std::cerr << "Invalid ebo/edi format\n";
+        Console::warning("Invalid ebo or edi format");
     }
 }
 
@@ -126,7 +147,7 @@ void ProtocolHandler::handlePnw(std::istringstream &iss) {
         );
         _map.addPlayer(player);
     } else {
-        std::cerr << "Invalid pnw format\n";
+        Console::warning("Invalide pnw format");
     }
 }
 
@@ -143,7 +164,7 @@ void ProtocolHandler::handlePpo(std::istringstream &iss) {
             orientation
         );
     } else {
-        std::cerr << "Invalid ppo format\n";
+        Console::warning("Invalid ppo format");
     }
 }
 
@@ -156,7 +177,7 @@ void ProtocolHandler::handlePlv(std::istringstream &iss) {
         int id = std::stoi(idStr.substr(1));
         _map.updatePlayerLevel(id, level);
     } else {
-        std::cerr << "Invalid plv format\n";
+        Console::warning("Invalid plv format");
     }
 }
 
@@ -169,14 +190,14 @@ void ProtocolHandler::handlePin(std::istringstream &iss) {
     if (iss >> idStr >> x >> y) {
         for (int i = 0; i < RESOURCE_COUNT; ++i) {
             if (!(iss >> inventory[i])) {
-                std::cerr << "Invalid pin inventory data\n";
+                Console::warning("Invalid pin inventory data");
                 return;
             }
         }
         int id = std::stoi(idStr.substr(1));
         _map.updatePlayerInventory(id, inventory);
     } else {
-        std::cerr << "Invalid pin format\n";
+        Console::warning("Invalid pin format");
     }
 }
 
@@ -187,7 +208,7 @@ void ProtocolHandler::handlePdi(std::istringstream &iss) {
         int id = std::stoi(idStr.substr(1));
         _map.removePlayerById(id);
     } else {
-        std::cerr << "Invalid pdi format\n";
+        Console::warning("Invalid pdi format");
     }
 }
 
@@ -197,19 +218,19 @@ void ProtocolHandler::handlePgt(std::istringstream &iss) {
     int resourceIndex;
 
     if (!(iss >> idStr >> resourceIndex)) {
-        std::cerr << "Invalid pgt format\n";
+        Console::warning("Invalid pgt format");
         return;
     }
 
     int id = std::stoi(idStr.substr(1));
     Player* player = _map.getPlayerById(id);
     if (!player) {
-        std::cerr << "Unknown player id in pgt: " << id << "\n";
+        Console::warning("Unknown player id in pgt: " + id);
         return;
     }
 
     if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
-        std::cerr << "Invalid resource index in pgt: " << resourceIndex << "\n";
+        Console::warning("Invalid resource index in pgt " + std::to_string(resourceIndex));
         return;
     }
 
@@ -229,19 +250,19 @@ void ProtocolHandler::handlePdr(std::istringstream &iss) {
     int resourceIndex;
 
     if (!(iss >> idStr >> resourceIndex)) {
-        std::cerr << "Invalid pdr format\n";
+        Console::warning("Invalid pdr format");
         return;
     }
 
     int id = std::stoi(idStr.substr(1));
     Player* player = _map.getPlayerById(id);
     if (!player) {
-        std::cerr << "Unknown player id in pdr: " << id << "\n";
+        Console::warning("Unknown player id in pdr: " + std::to_string(id));
         return;
     }
 
     if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
-        std::cerr << "Invalid resource index in pdr: " << resourceIndex << "\n";
+        Console::warning("Invalid resource index in pdr: " + std::to_string(resourceIndex));
         return;
     }
 
@@ -254,7 +275,7 @@ void ProtocolHandler::handlePdr(std::istringstream &iss) {
     if (updatedInventory[resourceIndex] > 0)
         updatedInventory[resourceIndex]--;
     else
-        std::cerr << "Warning: Player #" << id << " tried to drop resource " << resourceIndex << " with none in inventory\n";
+        Console::warning("Warning: Player #" + std::to_string(id) + " tried to drop resource " + std::to_string(resourceIndex) + " with none in inventory");
 
     player->setInventory(updatedInventory);
 }
@@ -288,7 +309,7 @@ void ProtocolHandler::handlePfk(std::istringstream &iss) {
 void ProtocolHandler::handlePic(std::istringstream &iss) {
     int x, y, level;
     if (!(iss >> x >> y >> level)) {
-        std::cerr << "Invalid pic format\n";
+        Console::warning("Invalid pic format");
         return;
     }
 
@@ -300,25 +321,27 @@ void ProtocolHandler::handlePic(std::istringstream &iss) {
                 int id = std::stoi(token.substr(1));
                 playerIds.push_back(id);
             } catch (...) {
-                std::cerr << "Invalid player ID in pic: " << token << "\n";
+                Console::warning("Invalid player ID in pic: " + token);
             }
         } else {
-            std::cerr << "Unexpected token in pic: " << token << "\n";
+            Console::warning("Unexpected token in pic: " + token);
         }
     }
 
     if (playerIds.empty()) {
-        std::cerr << "pic with no players\n";
+        Console::warning("pic with no players");
         return;
     }
 
     _map.startIncantation(x, y, level, playerIds);
 
-    std::cout << "Incantation started at (" << x << ", " << y << ") level " << level
-              << " with players: ";
-    for (int id : playerIds)
-        std::cout << "#" << id << " ";
-    std::cout << "\n";
+    std::string playersStr;
+    for (size_t i = 0; i < playerIds.size(); ++i) {
+        playersStr += std::to_string(playerIds[i]);
+        if (i != playerIds.size() - 1)
+            playersStr += ", ";
+    }
+    Console::debug("Incantation started at (" + std::to_string(x) + ", " + std::to_string(y) + ") level " + std::to_string(level) + " with players : " + playersStr);
 }
 
 //--- Player end incantation
@@ -327,18 +350,18 @@ void ProtocolHandler::handlePie(std::istringstream &iss) {
     std::string result;
 
     if (!(iss >> x >> y >> result)) {
-        std::cerr << "Invalid pie format\n";
+        Console::warning("Invalid pie format");
         return;
     }
 
     if (result == "0") {
         _map.clearIncantationAt(x, y);
-        std::cout << "Incantation at (" << x << ", " << y << ") failed\n";
+        Console::warning("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") failed");
     } else if (result == "1") {
         _map.clearIncantationAt(x, y);
-        std::cout << "Incantation at (" << x << ", " << y << ") succeeded\n";
+        Console::warning("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") succeeded");
     } else {
-        std::cerr << "Unknown result in pie: " << result << "\n";
+        Console::warning("Unknown result in pie: " + result);
     }
 }
 
@@ -346,13 +369,13 @@ void ProtocolHandler::handlePie(std::istringstream &iss) {
 void ProtocolHandler::handlePbc(std::istringstream &iss) {
     std::string idStr, message;
     if (!(iss >> idStr)) {
-        std::cerr << "Invalid pbc format\n";
+        Console::warning("Invalid pbc format");
         return;
     }
 
     int playerId = std::stoi(idStr.substr(1));
     if (!std::getline(iss, message)) {
-        std::cerr << "No message provided in pbc\n";
+        Console::warning("No message provided in pbc");
         return;
     }
 
@@ -361,11 +384,11 @@ void ProtocolHandler::handlePbc(std::istringstream &iss) {
 
     Player* player = _map.getPlayerById(playerId);
     if (!player) {
-        std::cerr << "Unknown player in pbc: #" << playerId << "\n";
+        Console::warning("Unknown player in pbc: #" + std::to_string(playerId));
         return;
     }
 
-    std::cout << "[Broadcast from #" << playerId << "] " << message << "\n";
+    Console::debug("[Broadcast from #" + std::to_string(playerId) + "] " + message);
 }
 
 //--- Server message
@@ -375,19 +398,19 @@ void ProtocolHandler::handleSmg(std::istringstream &iss) {
     if (!message.empty() && message[0] == ' ')
         message.erase(0, 1);
 
-    std::cout << "[Server Message] " << message << "\n";
+    Console::info("[Server Message] " + message);
     // Optionnel : stocker dans un historique, afficher?
 }
 
 //---Unknown command
 void ProtocolHandler::handleSuc(std::istringstream &) {
-    std::cerr << "Error: Unknown command sent to server (suc)\n";
+    Console::debug("Error: Unknown command sent to server (suc)");
     // Optionnel : Afficher dans l’interface ?
 }
 
 //---Bad parameter
 void ProtocolHandler::handleSbp(std::istringstream &) {
-    std::cerr << "Error: Invalid parameters in command (sbp)\n";
+    Console::debug("Error: Invalid parameters in command (sbp)");
     // Optionnel : Afficher dans l’interface ?
 }
 
@@ -395,11 +418,11 @@ void ProtocolHandler::handleSbp(std::istringstream &) {
 void ProtocolHandler::handleSeg(std::istringstream &iss) {
     std::string teamName;
     if (!(iss >> teamName)) {
-        std::cerr << "Invalid seg format\n";
+        Console::warning("Invalid seg format");
         return;
     }
 
     _map.setGameOver(true, teamName);
 
-    std::cout << "Game Over! Team " << teamName << " wins!\n";
+    Console::info("Game Over! Team " + teamName + " wins!");
 }

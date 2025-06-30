@@ -6,6 +6,7 @@
 */
 
 #include "Map.hpp"
+#include "../Console/Console.hpp"
 
 Map::Map() : _width(0), _height(0) {}
 
@@ -114,7 +115,7 @@ void Map::removeEgg(int eggId) {
     if (it != _eggs.end()) {
         _eggs.erase(it);
     } else {
-        std::cerr << "Warning: Tried to remove non-existent egg #" << eggId << "\n";
+        Console::warning("Tried to remove non-existent egg #" + std::to_string(eggId));
     }
 }
 

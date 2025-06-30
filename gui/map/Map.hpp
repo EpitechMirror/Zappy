@@ -76,8 +76,12 @@ class Map {
 
         bool _gameOver = false;
         std::string _winningTeam;
+        void setGameTime(int time) {
+            _gameTime = time;
+        }
 
     private:
+        int _gameTime = 0;
         int _width;
         int _height;
         std::vector<Resources> _tiles;

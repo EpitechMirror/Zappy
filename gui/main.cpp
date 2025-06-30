@@ -7,6 +7,7 @@
 
 #include "renderer/Renderer.hpp"
 
+
 constexpr int SCREEN_WIDTH = 1280;
 constexpr int SCREEN_HEIGHT = 720;
 
@@ -45,6 +46,9 @@ int main(int argc, char** argv) {
                 return EXIT_FAILURE;
         }
     }
+
+    Console::setDebugMode(debugMode);
+
     if (port <= 0) {
         printUsage(argv[0]);
         return EXIT_FAILURE;
@@ -54,7 +58,7 @@ int main(int argc, char** argv) {
         Client client(host, port);
 
         if (!client.connectToServer()) {
-            std::cerr << "Connection to server failed." << std::endl;
+            Console::error("Connection to server failed.");
             return EXIT_FAILURE;
         }
         
@@ -66,7 +70,7 @@ int main(int argc, char** argv) {
         std::cout << "===============================================" << std::endl;
 
         if (!client.sendGraphicCommand()) {
-            std::cerr << "Failed to send GRAPHIC command." << std::endl;
+            Console::error("Failed to send GRAPHIC command.");
             return EXIT_FAILURE;
         }
 
@@ -75,10 +79,9 @@ int main(int argc, char** argv) {
         }
         
         Renderer renderer(SCREEN_WIDTH, SCREEN_HEIGHT, client.getMap());
-        //renderer.setDebugMode(debugMode);
         renderer.renderWindow(client);
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        Console::error("Error: " + std::string(e.what())); // 🔹 Remplacé
         return EXIT_FAILURE;
     }
     return 0;
