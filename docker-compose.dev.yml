@@ -1,0 +1,84 @@
+# Development Docker Compose Override
+# This file extends docker-compose.yml with development-specific settings
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Development server with live reloading
+  server:
+    volumes:
+      - .:/app
+      - zappy-dev-build:/app/build
+    environment:
+      - ZAPPY_DEBUG=1
+      - ZAPPY_LOG_LEVEL=DEBUG
+    command: >
+      bash -c "
+        ./build.sh --debug &&
+        ./build/server/zappy_server -p 4242 -x 10 -y 10 -n team1 team2 -c 2 -f 100
+      "
+
+  # Development AI with debugging
+  ai-team1:
+    volumes:
+      - ./ai:/app/ai
+    environment:
+      - AI_DEBUG=true
+      - AI_LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app/ai/src
+    command: >
+      bash -c "
+        cd ai &&
+        python src/main_ai.py --host server --port 4242 --name team1 --debug
+      "
+
+  ai-team2:
+    volumes:
+      - ./ai:/app/ai
+    environment:
+      - AI_DEBUG=true
+      - AI_LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app/ai/src
+    command: >
+      bash -c "
+        cd ai &&
+        python src/main_ai.py --host server --port 4242 --name team2 --debug
+      "
+
+  # Interactive development shell
+  dev-shell:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+      - zappy-dev-build:/app/build
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY}
+    working_dir: /app
+    networks:
+      - zappy-network
+    tty: true
+    stdin_open: true
+    profiles:
+      - dev-shell
+
+  # Hot-reload documentation server
+  docs-dev:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+      - "8081:8081"  # Additional port for live reload
+    volumes:
+      - ./docs:/usr/share/nginx/html
+      - ./docs/_media:/usr/share/nginx/html/_media
+    networks:
+      - zappy-network
+    profiles:
+      - docs-dev
+
+volumes:
+  zappy-dev-build:
+    driver: local

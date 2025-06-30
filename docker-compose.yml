@@ -1,0 +1,159 @@
+version: '3.8'
+
+services:
+  # Zappy Server
+  server:
+    build:
+      context: .
+      target: server
+    ports:
+      - "4242:4242"
+    environment:
+      - ZAPPY_PORT=4242
+      - ZAPPY_WIDTH=10
+      - ZAPPY_HEIGHT=10
+      - ZAPPY_TEAMS=team1,team2
+      - ZAPPY_CLIENTS_NB=2
+      - ZAPPY_FREQ=100
+    networks:
+      - zappy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4242"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Zappy GUI (requires X11 forwarding for display)
+  gui:
+    build:
+      context: .
+      target: gui
+    environment:
+      - DISPLAY=${DISPLAY}
+      - ZAPPY_SERVER_HOST=server
+      - ZAPPY_SERVER_PORT=4242
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    networks:
+      - zappy-network
+    depends_on:
+      - server
+    profiles:
+      - gui
+
+  # AI Client 1
+  ai-team1:
+    build:
+      context: .
+      target: ai
+    environment:
+      - ZAPPY_SERVER_HOST=server
+      - ZAPPY_SERVER_PORT=4242
+      - ZAPPY_TEAM_NAME=team1
+      - AI_STRATEGY=aggressive
+    networks:
+      - zappy-network
+    depends_on:
+      - server
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # AI Client 2
+  ai-team2:
+    build:
+      context: .
+      target: ai
+    environment:
+      - ZAPPY_SERVER_HOST=server
+      - ZAPPY_SERVER_PORT=4242
+      - ZAPPY_TEAM_NAME=team2
+      - AI_STRATEGY=defensive
+    networks:
+      - zappy-network
+    depends_on:
+      - server
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # Development environment
+  dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+      - zappy-build:/app/build
+    working_dir: /app
+    networks:
+      - zappy-network
+    profiles:
+      - dev
+    tty: true
+    stdin_open: true
+
+  # Testing environment
+  test:
+    build:
+      context: .
+      target: builder
+    command: ["./build.sh", "--tests"]
+    volumes:
+      - .:/app
+      - zappy-test-results:/app/test-results
+    networks:
+      - zappy-network
+    profiles:
+      - test
+
+  # Documentation server
+  docs:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    networks:
+      - zappy-network
+    profiles:
+      - docs
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - zappy-network
+    profiles:
+      - monitoring
+
+  # Grafana dashboard (optional)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+    networks:
+      - zappy-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+networks:
+  zappy-network:
+    driver: bridge
+
+volumes:
+  zappy-build:
+  zappy-test-results:
+  grafana-storage:

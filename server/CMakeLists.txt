@@ -1,96 +1,103 @@
-cmake_minimum_required(VERSION 3.10)
-project(zappy_server)
+cmake_minimum_required(VERSION 3.16)
 
-# Enable C11
+# Project definition
+project(ZappyServer
+    VERSION 1.0.0
+    DESCRIPTION "Zappy Server - Game server component"
+    LANGUAGES C
+)
+
+# C standard
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Build configuration
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+# Compiler flags
+if(MSVC)
+    add_compile_options(/W4 /permissive-)
+else()
+    if(ZAPPY_ENABLE_COVERAGE)
+        # Less strict warnings for coverage builds to avoid blocking test runs
+        add_compile_options(-Wall -Wextra -std=c11 -Wno-unused-parameter -Wno-unused-function)
+    else()
+        add_compile_options(-Wall -Wextra -Wpedantic -std=c11)
+    endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_compile_options(-g -O0)
+    endif()
+endif()
+
+# Find required packages
+find_package(Threads REQUIRED)
 
 # Include directories
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-link_directories()
-
-# Collect all source files
-file(GLOB SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/functional/*.c"
+# Source files for the library (excluding main.c)
+set(SERVER_LIB_SOURCES
+    src/parse.c
+    src/functional/accept.c
+    src/functional/connection.c
+    src/functional/create_server_socket.c
+    src/functional/handle_client_data.c
+    src/functional/remove_client.c
 )
 
-add_executable(zappy_server ${SOURCES})
+# Create a static library for the server logic
+add_library(zappy_server_lib STATIC ${SERVER_LIB_SOURCES})
+target_include_directories(zappy_server_lib PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(zappy_server_lib PUBLIC Threads::Threads)
 
-# Link against Raylib and pthread
-target_link_libraries(zappy_server pthread)
+# Main executable
+add_executable(zappy_server src/main.c)
+target_link_libraries(zappy_server PRIVATE zappy_server_lib)
 
-# Set output directory to project root (one level above build)
+# Apply properties and coverage
+zappy_set_target_properties(zappy_server_lib)
+zappy_setup_coverage(zappy_server_lib)
+zappy_set_target_properties(zappy_server)
+zappy_setup_coverage(zappy_server)
+
+# Set output properties
 set_target_properties(zappy_server PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     OUTPUT_NAME "zappy_server"
 )
 
-# Compiler warnings
-if (MSVC)
-    target_compile_options(zappy_server PRIVATE /W4 /permissive-)
-else()
-    target_compile_options(zappy_server PRIVATE -Wall -Wextra -Wpedantic)
+# Installation
+install(TARGETS zappy_server zappy_server_lib
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/zappy_server)
+
+# Testing
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
 endif()
 
-# Optional install
-install(TARGETS zappy_server RUNTIME DESTINATION bin)
-
-# Enable testing
-enable_testing()
-
-# Add custom target to run unit tests
-add_custom_target(test-unit
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-    COMMENT "Running unit tests"
+# Custom targets
+add_custom_target(server-run
+    COMMAND $<TARGET_FILE:zappy_server>
     DEPENDS zappy_server
+    COMMENT "Running Zappy Server"
 )
 
-# Add custom target to run tests with memory checking
-add_custom_target(test-memory
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh memory
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-    COMMENT "Running unit tests with memory leak detection"
+add_custom_target(server-debug
+    COMMAND gdb --args $<TARGET_FILE:zappy_server>
     DEPENDS zappy_server
+    COMMENT "Debugging Zappy Server with GDB"
 )
 
-# Add custom target to run tests with coverage
-add_custom_target(test-coverage
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh coverage
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-    COMMENT "Running unit tests with code coverage analysis"
-    DEPENDS zappy_server
-)
 
-# Add custom target to run all tests
-add_custom_target(test-all
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh clean memory coverage
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
-    COMMENT "Running comprehensive test suite with all options"
-    DEPENDS zappy_server
-)
-
-# Add subdirectory for tests (optional, if you want CMake to manage tests too)
-# add_subdirectory(test)
-
-# Development targets
-add_custom_target(dev-setup
-    COMMAND echo "Setting up development environment..."
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
-    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
-    COMMENT "Setting up development environment with tests"
-    DEPENDS zappy_server
-)
