@@ -22,13 +22,13 @@ Client::~Client() {
 bool Client::connectToServer() {
     _socket = socket(AF_INET, SOCK_STREAM, 0);
     if (_socket < 0) {
-        std::cerr << "Socket creation failed\n";
+        Console::error("Socket creation failed: " + std::string(strerror(errno)));
         return false;
     }
 
     int flags = fcntl(_socket, F_GETFL, 0);
     if (flags < 0 || fcntl(_socket, F_SETFL, flags | O_NONBLOCK) < 0) {
-        std::cerr << "Failed to set non-blocking mode\n";
+        Console::error("Failed to set non-blocking mode: " + std::string(strerror(errno)));
         close(_socket);
         return false;
     }
@@ -38,14 +38,14 @@ bool Client::connectToServer() {
     serv_addr.sin_port = htons(_port);
 
     if (inet_pton(AF_INET, _host.c_str(), &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address\n";
+        Console::error("Invalid address: " + _host);
         close(_socket);
         return false;
     }
 
     if (connect(_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         if (errno != EINPROGRESS) {
-            std::cerr << "Connection failed: " << strerror(errno) << "\n";
+            Console::error("Connection failed: " + std::string(strerror(errno)));
             close(_socket);
             return false;
         }
@@ -72,7 +72,7 @@ bool Client::readLine(std::string &line) {
 void Client::parseData() {
     std::string line;
     while (readLine(line)) {
-        std::cout << "Received: [" << line << "]" << std::endl;
+        Console::debug("Received line: " + line);
         _protocolHandler.handleLine(line);
     }
 }
@@ -86,7 +86,7 @@ void Client::receiveData() {
         _buffer += temp;
     }
     else if (bytesRead == 0) {
-        std::cerr << "Server closed connection\n";
+        Console::warning("Server closed connection");
         close(_socket);
         _socket = -1;
     }
@@ -95,7 +95,7 @@ void Client::receiveData() {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // Pas de données pour l'instant : c'est OK en mode non-bloquant
         } else {
-            std::cerr << "Recv error: " << strerror(errno) << "\n";
+            Console::error("Failed to receive data: " + std::string(strerror(errno)));
             close(_socket);
             _socket = -1;
         }

@@ -34,6 +34,7 @@ private:
 
     void registerHandlers();
 
+    void handleSgt(std::istringstream &iss);
     void handleMsz(std::istringstream &iss);
     void handleBct(std::istringstream &iss);
     void handleTna(std::istringstream &iss);

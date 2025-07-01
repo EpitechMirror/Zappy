@@ -6,6 +6,7 @@
 */
 
 #include "ShadersManager.hpp"
+#include "../Console/Console.hpp"
 
 ShadersManager::~ShadersManager() {
     unloadAll();
@@ -23,7 +24,7 @@ void ShadersManager::loadPBR() {
     Shader shader = LoadShader("../../resources/shaders/pbr.vs", "../../resources/shaders/pbr.fs");
 
     if (shader.id == 0) {
-        std::cerr << "Failed to load PBR shader" << std::endl;
+        Console::error("Failed to load PBR shader: ");
         return;
     }
 

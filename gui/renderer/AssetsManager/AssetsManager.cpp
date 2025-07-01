@@ -33,6 +33,7 @@ void AssetsManager::unloadAllResources()
     shaders.unloadAll();
     
     if (IsAudioDeviceReady()) {
+        UnloadMusicStream(loadingMusic);
         UnloadMusicStream(mainMusic);
         CloseAudioDevice();
     }
@@ -115,14 +116,17 @@ void AssetsManager::loadAudio()
     if (!IsAudioDeviceReady()) {
         InitAudioDevice();
     }
-    //_loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
-    //_loadingMusic.looping = true;
-    if (IsAudioDeviceReady()) {
-        mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
-        if (mainMusic.stream.buffer != nullptr) {
-            mainMusic.looping = true;
-            PlayMusicStream(mainMusic);
-        }
+    
+    // musique d'attente
+    loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
+    if (loadingMusic.stream.buffer != nullptr) {
+        loadingMusic.looping = true;
+    }
+    
+    // musique principale
+    mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
+    if (mainMusic.stream.buffer != nullptr) {
+        mainMusic.looping = true;
     }
 }
 

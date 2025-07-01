@@ -30,6 +30,7 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/Shaders/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/renderer/AssetsManager/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/player/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Console/*.cpp"
 )
 
 add_executable(zappy_gui ${SOURCES})
@@ -71,6 +72,7 @@ add_executable(unit_tests
     renderer/Renderer.cpp
     renderer/Shaders/ShadersManager.cpp
     client/ProtocolHandler.cpp
+    Console/Console.cpp
 )
 target_link_libraries(unit_tests
     criterion pthread raylib

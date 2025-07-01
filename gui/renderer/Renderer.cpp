@@ -17,7 +17,9 @@ Renderer::Renderer(int width, int height, const Map &map)
       _cameraController(map.getWidth(), map.getHeight()),
       _mapInitialized(false),
       _disconnectTimer(0.0f)
-{}
+{
+    _menuButton = {20, static_cast<float>(height - 60), 100, 40};
+}
 
 float Renderer::getDesktopY() {
     return 0.0f;
@@ -180,7 +182,10 @@ void Renderer::drawFloor() {
 }
 
 void Renderer::showLoadingScreen(const std::string &message) {
-    float duration = 11.0f;
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        PlayMusicStream(_assets.loadingMusic);
+    }
+    float duration = 13.0f;
     float startTime = GetTime();
     float nextTipTime = 3.0f; 
     
@@ -188,6 +193,9 @@ void Renderer::showLoadingScreen(const std::string &message) {
     std::string tip = _loadingTips[tipIndex];
 
     while ((GetTime() - startTime) < duration && !WindowShouldClose()) {
+        if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+            UpdateMusicStream(_assets.loadingMusic);
+        }
         float elapsed = GetTime() - startTime;
         float progress = elapsed / duration;
 
@@ -200,15 +208,16 @@ void Renderer::showLoadingScreen(const std::string &message) {
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // === Titre principal : Y GUI ===
+            // === Titre principal : WOODY GUI ===
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
             float spacing = 5.0f;
             Vector2 logoTextSize = MeasureTextEx(_assets.toyFont, logo, sizeLogo, spacing);
-            float correction = spacing * 2.0f;
+            
+            // Position centrée horizontalement et verticalement
             Vector2 logoPos;
-            logoPos.x = (_screenWidth - logoTextSize.x + correction) / 3.4f;
-            logoPos.y = (_screenHeight / 2) - 200;
+            logoPos.x = (_screenWidth - logoTextSize.x) / 2.0f;
+            logoPos.y = (_screenHeight / 3) - 50;  // 1/3 de l'écran depuis le haut
 
             Color outline = BLUE;
             for (int dx = -3; dx <= 3; dx += 3) {
@@ -258,6 +267,9 @@ void Renderer::showLoadingScreen(const std::string &message) {
             DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
 
         EndDrawing();
+    }
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        StopMusicStream(_assets.loadingMusic);
     }
 }
 
@@ -309,14 +321,25 @@ void Renderer::DrawPlayers() {
 }
 
 void Renderer::InfoItemsBoard() {
-    DrawRectangle(10, 10, 200, 235, Fade(SKYBLUE, 0.5f));
-    DrawRectangleLines(10, 10, 200, 235, BLUE);
+    if (!_showInfoBoards) return;
+    DrawRectangle(10, 10, 200, 275, Fade(SKYBLUE, 0.5f));
+    DrawRectangleLines(10, 10, 200, 275, BLUE);
 
     int x = 20;
     int y = 20;
     int lineSpacing = 20;
 
-    DrawText(("Map Size : " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
+    int timeInt = static_cast<int>(GetTime());
+    int minutes = timeInt / 60;
+    int seconds = timeInt % 60;
+    char timeBuffer[32];
+    snprintf(timeBuffer, sizeof(timeBuffer), "Time : %02d:%02d", minutes, seconds);
+    DrawText(timeBuffer, x, y, 20, BLACK);
+    y += lineSpacing;
+    std::string freqText = "Frequency : " + std::to_string(_map.getFrequency()) + " Hz";
+    DrawText(freqText.c_str(), x, y, 20, DARKGRAY);
+    y += lineSpacing;
+    DrawText(("Map : " + std::to_string(_map.getWidth()) + " x " + std::to_string(_map.getHeight())).c_str(), x, y, 20, BLACK);
     y += 2 * lineSpacing;
 
     DrawText(("Food : " + std::to_string(_map.getFoodCount())).c_str(), x, y, 20, ORANGE);
@@ -335,15 +358,10 @@ void Renderer::InfoItemsBoard() {
     y += lineSpacing;
     y += lineSpacing;
     DrawText(("Eggs : " + std::to_string(_map.getEggsCount())).c_str(), x, y, 20, WHITE);
-
-    int timeInt = static_cast<int>(GetTime());
-    std::string timeStr = "Time : " + std::to_string(timeInt);
-    int timeTextWidth = MeasureText(timeStr.c_str(), 20);
-    int timeCenterX = (_screenWidth - timeTextWidth) / 2;
-    DrawText(timeStr.c_str(), timeCenterX, 10, 20, WHITE);
 }
 
 void Renderer::InfoTeamsBoard() {
+    if (!_showInfoBoards) return;
     const std::vector<std::string>& teamNames = Player::getTeamNames();
 
     int titleSize = 20;
@@ -379,6 +397,7 @@ void Renderer::InfoTeamsBoard() {
 }
 
 void Renderer::InfoPlayersBoard() {
+    if (!_showInfoBoards) return;
     int titleSize = 20;
     int lineSpacing = 20;
     int padding = 10;
@@ -606,12 +625,15 @@ void Renderer::gameLoop(Client &client) {
     if (!_mapInitialized) {
         showLoadingScreen("Loading...");
     }
+    if (_musicEnabled) {
+        PlayMusicStream(_assets.mainMusic);
+    }
 
     _assets.loadAllResources();
     _assets.applyShaders();
     initLights();
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !_shouldQuit) {
         bool wasConnected = client.isConnected();
         client.update();
         bool isConnected = client.isConnected();
@@ -635,6 +657,21 @@ void Renderer::gameLoop(Client &client) {
             handleMouseClick();
         }
 
+        if (IsKeyPressed(KEY_TAB)) {
+            _showInfoBoards = !_showInfoBoards;
+        }
+
+        Vector2 mousePos = GetMousePosition();
+        _menuButtonHovered = CheckCollisionPointRec(mousePos, _menuButton);
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && _menuButtonHovered) {
+            _menuOpen = true;
+        }
+
+        if (_musicEnabled) {
+            UpdateMusicStream(_assets.mainMusic);
+        }
+
         BeginDrawing();
             ClearBackground(BLACK);
 
@@ -651,15 +688,183 @@ void Renderer::gameLoop(Client &client) {
                 DrawGameOver();
             EndMode3D();
 
-            InfoItemsBoard();
-            InfoTeamsBoard();
-            InfoPlayersBoard();
-            InfoBoxBoard();
+            if (_showInfoBoards) {
+                InfoItemsBoard();
+                InfoTeamsBoard();
+                InfoPlayersBoard();
+                InfoBoxBoard();
+            }
+            DrawButton();
             
             if (_disconnectTimer > 0) {
                 handleServerDisconnect();
             }
+            if (_menuOpen) {
+                DrawMenu();
+            }
         EndDrawing();
+    }
+}
+
+void Renderer::DrawButton() {
+    Color btnColor = _menuButtonHovered ? BLUE : SKYBLUE;
+    DrawRectangleRounded(_menuButton, 0.4f, 8, btnColor);
+    DrawRectangleRoundedLines(_menuButton, 0.4f, 8, DARKBLUE);
+
+    const char* text = "Menu";
+    int textWidth = MeasureText(text, 20);
+    int textX = _menuButton.x + (_menuButton.width - textWidth) / 2;
+    int textY = _menuButton.y + (_menuButton.height - 20) / 2;
+    DrawText(text, textX, textY, 20, WHITE);
+}
+
+void Renderer::DrawMenu() {
+    DrawRectangle(0, 0, _screenWidth, _screenHeight, Fade(BLACK, 0.7f));
+    
+    const float menuWidth = 600;
+    const float menuHeight = 500;
+    const float menuX = (_screenWidth - menuWidth) / 2;
+    const float menuY = (_screenHeight - menuHeight) / 2;
+    
+    DrawRectangleRounded(
+        Rectangle{menuX, menuY, menuWidth, menuHeight}, 
+        0.05f, 
+        10, 
+        Fade(RAYWHITE, 0.95f)
+    );
+    DrawRectangleRoundedLines(
+        Rectangle{menuX, menuY, menuWidth, menuHeight}, 
+        0.05f, 
+        10, 
+        BLUE);
+    
+    const char* title = "WOODY GUI - MENU";
+    int titleSize = 40;
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, menuX + (menuWidth - titleWidth)/2, menuY + 20, titleSize, DARKBLUE);
+    
+    DrawLine(
+        menuX + 20, 
+        menuY + 70, 
+        menuX + menuWidth - 20, 
+        menuY + 70, 
+        BLUE
+    );
+    
+    int optionSize = 30;
+    int optionY = menuY + 100;
+    int optionSpacing = 50;
+    
+    DrawText("RESUME GAME", menuX + 50, optionY, optionSize, DARKGRAY);
+    
+    const char* musicStatus = _musicEnabled ? "ON" : "OFF";
+    Color musicColor = _musicEnabled ? GREEN : RED;
+    DrawText("MUSIC: ", menuX + 50, optionY + optionSpacing, optionSize, DARKGRAY);
+    DrawText(musicStatus, menuX + 50 + MeasureText("MUSIC: ", optionSize), 
+             optionY + optionSpacing, optionSize, musicColor);
+
+    const char* tabInfo = "Press TAB to toggle info panels";
+    DrawText(tabInfo, 
+             menuX + 50, 
+             optionY + optionSpacing + optionSize + 10, 
+             optionSize, DARKGRAY);
+    
+    const char* controlsTitle = "CAMERA CONTROLS";
+    DrawText(controlsTitle, menuX + 50, optionY + 3*optionSpacing, optionSize, DARKBLUE);
+    
+    int controlSize = 25;
+    int controlY = optionY + 3*optionSpacing + 40;
+    int keyOffsetX = 30;
+    int keyOffsetY = 7;
+
+    // Z (haut)
+    DrawCircle(menuX + keyOffsetX + 80, controlY + keyOffsetY, 25, Fade(BLUE, 0.2f));
+    DrawText("Z", menuX + keyOffsetX + 80 - MeasureText("Z", controlSize)/2, 
+             controlY + keyOffsetY - controlSize/2, controlSize, DARKBLUE);
+
+    // Q (gauche)
+    DrawCircle(menuX + keyOffsetX + 40, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("Q", menuX + keyOffsetX + 40 - MeasureText("Q", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
+
+    // S (bas)
+    DrawCircle(menuX + keyOffsetX + 80, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("S", menuX + keyOffsetX + 80 - MeasureText("S", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
+
+    // D (droite)
+    DrawCircle(menuX + keyOffsetX + 120, controlY + keyOffsetY + 40, 25, Fade(BLUE, 0.2f));
+    DrawText("D", menuX + keyOffsetX + 120 - MeasureText("D", controlSize)/2, 
+             controlY + keyOffsetY + 40 - controlSize/2, controlSize, DARKBLUE);
+    
+    DrawText("MOUSE", menuX + 200, controlY, controlSize, DARKGRAY);
+    DrawText("- Rotate view", menuX + 200, controlY + 30, controlSize, DARKGRAY);
+    DrawText("- Zoom", menuX + 200, controlY + 60, controlSize, DARKGRAY);
+    
+    Rectangle quitButton = {
+        menuX + menuWidth - 210,
+        menuY + menuHeight - 70,
+        200,
+        50
+    };
+    
+    bool quitHovered = CheckCollisionPointRec(GetMousePosition(), quitButton);
+    Color quitColor = quitHovered ? Fade(RED, 0.8f) : Fade(RED, 0.6f);
+    
+    DrawRectangleRounded(quitButton, 0.3f, 10, quitColor);
+    DrawRectangleRoundedLines(quitButton, 0.3f, 10, MAROON);
+    
+    const char* quitText = "QUIT GAME";
+    DrawText(quitText, 
+             quitButton.x + (quitButton.width - MeasureText(quitText, optionSize))/2,
+             quitButton.y + (quitButton.height - optionSize)/2,
+             optionSize, WHITE);
+    
+    Vector2 mousePos = GetMousePosition();
+    
+    Rectangle musicRect = {
+        menuX + 50,
+        static_cast<float>(optionY + optionSpacing),
+        static_cast<float>(MeasureText("MUSIC: OFF", optionSize)),
+        static_cast<float>(optionSize)
+    };
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        // Musique
+        if (CheckCollisionPointRec(mousePos, musicRect)) {
+            _musicEnabled = !_musicEnabled;
+            if (_musicEnabled) {
+                PlayMusicStream(_assets.mainMusic);
+            } else {
+                StopMusicStream(_assets.mainMusic);
+            }
+        }
+        // Quitter
+        else if (CheckCollisionPointRec(mousePos, quitButton)) {
+            _shouldQuit = true;
+            return;
+        }
+        else if (CheckCollisionPointRec(mousePos, 
+                Rectangle{menuX, menuY, menuWidth, menuHeight})) {
+            _menuOpen = false;
+        }
+    }
+    
+    // Bouton fermeture en haut à droite
+    Rectangle closeButton = {menuX + menuWidth - 40, menuY + 10, 30, 30};
+    bool closeHovered = CheckCollisionPointRec(mousePos, closeButton);
+    
+    DrawCircle(closeButton.x + closeButton.width/2, 
+               closeButton.y + closeButton.height/2, 
+               15, 
+               closeHovered ? Fade(RED, 0.7f) : Fade(GRAY, 0.5f));
+    DrawText("X", 
+             closeButton.x + (closeButton.width - MeasureText("X", 20))/2,
+             closeButton.y + (closeButton.height - 20)/2,
+             20, WHITE);
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && closeHovered) {
+        _menuOpen = false;
     }
 }
 

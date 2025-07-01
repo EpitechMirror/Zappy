@@ -29,6 +29,7 @@ public:
     Model wallShort;
     Font toyFont;
     Music mainMusic;
+    Music loadingMusic;
     ShadersManager shaders;
 
     bool isModelLoaded(const std::string &modelPath) const;
