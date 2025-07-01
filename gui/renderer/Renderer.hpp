@@ -23,6 +23,7 @@
 #include "AssetsManager/AssetsManager.hpp"
 #include <ctime>
 #include <cstring>
+#include "../Console/Console.hpp"
 
 class Renderer {
     public:
@@ -79,6 +80,14 @@ class Renderer {
         void notifyServerDisconnect();
         void DrawIncantations();
         void DrawSelectionMarkers();
+        void DrawMenu();
+        Rectangle _menuButton;
+        bool _menuButtonHovered = false;
+        bool _menuOpen = false;
+        bool _musicEnabled = true;
+        bool _showInfoBoards = true;
+        bool _shouldQuit = false;
+        void DrawButton();
 };
 
 #endif

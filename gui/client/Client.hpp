@@ -26,6 +26,7 @@
 #include "../map/Map.hpp"
 #include "ProtocolHandler.hpp"
 #include "../player/Player.hpp"
+#include "../Console/Console.hpp"
 
 class Client {
     public:
