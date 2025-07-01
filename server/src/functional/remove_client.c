@@ -5,11 +5,12 @@
 ** remove_client
 */
 
-#include "server.h"
+#include "../../include/server.h"
 
 static void free_client(client_t *client)
 {
-    close(client->fd);
+    if (client->fd >= 0)
+        close(client->fd);
     free(client->team_name);
     free(client);
 }

@@ -5,8 +5,20 @@
 ** handle_client_data
 */
 
-#define _GNU_SOURCE
-#include "server.h"
+#include <stdbool.h>
+
+#include "../../include/server.h"
+#include "../../include/flag.h"
+
+void strip_newline(char *str)
+{
+    size_t len = strlen(str);
+
+    if (len > 0 && (str[len - 1] == '\n' || str[len - 1] == '\r'))
+        str[len - 1] = '\0';
+    if (len > 1 && str[len - 2] == '\r')
+        str[len - 2] = '\0';
+}
 
 static int find_team_index(server_config_t *conf, const char *team_name)
 {
@@ -20,59 +32,106 @@ static int find_team_index(server_config_t *conf, const char *team_name)
     return -1;
 }
 
-static void send_auth_success(int fd, server_config_t *conf)
+void send_pnw_to_graphics(client_t *player, server_config_t *conf)
+{
+    char msg[256];
+
+    snprintf(msg, sizeof(msg), "pnw #%d %d %d %d %d %s\n", player->fd,
+        player->x, player->y, player->direction + 1, player->level,
+        player->team_name);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
+}
+
+void send_ebo_to_graphics(int egg_id, server_config_t *conf)
 {
     char msg[64];
 
-    snprintf(msg, sizeof(msg), "%d\n", conf->clients_nb);
-    send(fd, msg, strlen(msg), 0);
-    snprintf(msg, sizeof(msg), "%d %d\n", conf->width, conf->height);
-    send(fd, msg, strlen(msg), 0);
+    snprintf(msg, sizeof(msg), "ebo #%d\n", egg_id);
+    for (int i = 0; i < conf->nb_graphics; i++)
+        send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
-static int count_team_members(client_t *clients, const char *team_name)
+static void handle_egg_auth(egg_t *egg, client_t *client,
+    server_config_t *conf, char *team)
 {
-    int count = 0;
-    while (clients) {
-        if (clients->team_name && strcmp(clients->team_name, team_name) == 0 && !clients->is_graphic)
-            count++;
-        clients = clients->next;
-    }
-    return count;
+    egg->used = 1;
+    client->is_graphic = false;
+    client->state = AUTHENTICATED;
+    client->is_alive = true;
+    client->inventory.food = 10;
+    client->hunger_tick = 0;
+    client->x = egg->x;
+    client->y = egg->y;
+    client->direction = NORTH;
+    client->level = 1;
+    client->team_name = strdup(team);
+    client->inventory.food = 10;
+    client->next = conf->clients;
+    conf->clients = client;
+    send_pnw_to_graphics(client, conf);
+    send_ebo_to_graphics(egg->id, conf);
 }
 
-bool handle_auth(client_t **clients, client_t *client, int fd, server_config_t *conf, char *buffer)
+static void handle_player_auth(client_t *client, int fd,
+    server_config_t *conf, char *team)
 {
-    buffer[strcspn(buffer, "\r\n")] = 0; // enlever \r\n
-    char *team = strdup(buffer);
-    if (!team) {
-        perror("strdup");
-        remove_client(clients, fd);
-        return false;
-    }
-    client->team_name = team;
+    char msg[128];
+    int team_idx = find_team_index(conf, team);
+    egg_t *egg = NULL;
 
-    if (strcmp(team, "GRAPHIC") == 0) {
-        client->is_graphic = true;
-        char msg[64];
-        snprintf(msg, sizeof(msg), "msz %d %d\n", conf->width, conf->height);
-        send(fd, msg, strlen(msg), 0);
-        client->state = AUTHENTICATED;
-        printf("Client %d authenticated as GRAPHIC\n", fd);
-        return true;
-    } else {
-        client->is_graphic = false;
-        char msg[128];
-        snprintf(msg, sizeof(msg), "Bienvenue joueur de l'équipe %s\n%d\n%d %d\n",
-            team, conf->clients_nb, conf->width, conf->height);
-        send(fd, msg, strlen(msg), 0);
-        client->state = AUTHENTICATED;
-        printf("Client %d authenticated as PLAYER (%s)\n", fd, team);
-        return true;
+    if (team_idx == -1 || conf->team_slots[team_idx] <= 0) {
+        send(fd, "ko\n", 3, 0);
+        remove_client(&conf->clients, fd);
+        return;
     }
+    conf->team_slots[team_idx]--;
+    client->is_graphic = false;
+    snprintf(msg, sizeof(msg),
+        "%d\n%d %d\n",
+        conf->clients_nb, conf->width, conf->height);
+    send(fd, msg, strlen(msg), 0);
+    client->state = AUTHENTICATED;
+    egg = get_unused_egg_for_team(conf, team_idx);
+    if (egg)
+        handle_egg_auth(egg, client, conf, team);
 }
 
-bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
+bool handle_auth(auth_context_t *ctx, char *buffer)
+{
+    strip_newline(buffer);
+    if (strcmp(buffer, "GRAPHIC") == 0) {
+        ctx->client->is_graphic = true;
+        ctx->client->state = AUTHENTICATED;
+        ctx->conf->graphic_fds[ctx->conf->nb_graphics] = ctx->client->fd;
+        ctx->conf->nb_graphics++;
+        handle_graphic_auth(ctx->client->fd, ctx->conf);
+        return true;
+    }
+    handle_player_auth(ctx->client, ctx->client->fd, ctx->conf, buffer);
+    return true;
+}
+
+static bool process_client_request(client_t *client, server_config_t *conf,
+    char *buffer)
+{
+    auth_context_t ctx = {&conf->clients, client, conf};
+
+    if (client->state == WAITING_NAME)
+        handle_auth(&ctx, buffer);
+    if (client->state == AUTHENTICATED) {
+        if (!client->is_graphic && !conf->game_started) {
+            conf->game_started = true;
+            pthread_create(&conf->game_thread, NULL, game_tick_thread, conf);
+        }
+        if (!client->is_graphic)
+            respond_to_server_fd(conf, buffer, client);
+    }
+    return false;
+}
+
+bool handle_client_data(client_t **clients, int fd,
+    server_config_t *conf)
 {
     char buffer[1024];
     ssize_t r;
@@ -82,7 +141,6 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
         client = client->next;
     if (!client)
         return true;
-
     r = read(fd, buffer, sizeof(buffer) - 1);
     if (r <= 0) {
         remove_client(clients, fd);
@@ -90,9 +148,5 @@ bool handle_client_data(client_t **clients, int fd, server_config_t *conf)
     }
     buffer[r] = '\0';
     printf("[DEBUG] Data from fd %d: %s\n", fd, buffer);
-
-    if (client->state == WAITING_NAME) {
-        handle_auth(clients, client, fd, conf, buffer);
-    }
-    return false;
+    return process_client_request(client, conf, buffer);
 }

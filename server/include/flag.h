@@ -7,6 +7,27 @@
 
 #ifndef FLAG_H_
     #define FLAG_H_
+    #include "ressources.h"
+    #include <pthread.h>
+    #include <unistd.h>
+    #include <stdbool.h>
+
+#ifndef MAX_GRAPHICS
+    #define MAX_GRAPHICS 16
+#endif
+
+typedef struct egg_s {
+    int id;
+    int x;
+    int y;
+    int team_idx;
+    int used;
+    struct egg_s *next;
+} egg_t;
+
+struct tile_s;
+struct client_s;
+
 
 typedef struct server_config_s {
     int port;
@@ -14,8 +35,19 @@ typedef struct server_config_s {
     int height;
     int clients_nb;
     int freq;
+    egg_t *eggs;
     int team_count;
     char **team_names;
+    int *team_slots;
+    struct tile_s **map;
+    struct client_s *clients;
+    int next_egg_id;
+    int graphic_fds[MAX_GRAPHICS];
+    int nb_graphics;
+    bool running;
+    pthread_mutex_t mutex;
+    bool game_started;
+    pthread_t game_thread;
 } server_config_t;
 
 typedef struct {
@@ -27,6 +59,5 @@ typedef struct {
 int parse(int argc, char **argv, server_config_t *conf);
 int handle_int(int *field, int *i, char **argv);
 int handle_teams(server_config_t *conf, int *i, char **argv);
-
 
 #endif /* !FLAG_H_ */

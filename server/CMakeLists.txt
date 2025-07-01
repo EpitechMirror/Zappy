@@ -19,6 +19,12 @@ file(GLOB SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/functional/*.c"
 )
+# Retirer les fichiers de test
+list(REMOVE_ITEM SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_client.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/test_graphic_client.c"
+)
+
 
 add_executable(zappy_server ${SOURCES})
 
