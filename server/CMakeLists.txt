@@ -46,3 +46,57 @@ endif()
 
 # Optional install
 install(TARGETS zappy_server RUNTIME DESTINATION bin)
+
+# Enable testing
+enable_testing()
+
+# Add custom target to run unit tests
+add_custom_target(test-unit
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    COMMENT "Running unit tests"
+    DEPENDS zappy_server
+)
+
+# Add custom target to run tests with memory checking
+add_custom_target(test-memory
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh memory
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    COMMENT "Running unit tests with memory leak detection"
+    DEPENDS zappy_server
+)
+
+# Add custom target to run tests with coverage
+add_custom_target(test-coverage
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh coverage
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    COMMENT "Running unit tests with code coverage analysis"
+    DEPENDS zappy_server
+)
+
+# Add custom target to run all tests
+add_custom_target(test-all
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test/run_tests.sh clean memory coverage
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
+    COMMENT "Running comprehensive test suite with all options"
+    DEPENDS zappy_server
+)
+
+# Add subdirectory for tests (optional, if you want CMake to manage tests too)
+# add_subdirectory(test)
+
+# Development targets
+add_custom_target(dev-setup
+    COMMAND echo "Setting up development environment..."
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test clean
+    COMMAND ${CMAKE_MAKE_PROGRAM} -C ${CMAKE_CURRENT_SOURCE_DIR}/test all
+    COMMENT "Setting up development environment with tests"
+    DEPENDS zappy_server
+)

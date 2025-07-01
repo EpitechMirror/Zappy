@@ -88,7 +88,6 @@ CMakeCache.txt
 CMakeFiles
 CMakeScripts
 Testing
-Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
@@ -383,4 +382,10 @@ gui/unit_tests
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,linux,c,c++,cmake,python,ruby,rust
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+
+
+*.pkl
+*.gcda
+*.gcno
+*.gcov
 

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zappy - Multiplayer Network Game</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Zappy - A multiplayer network game where teams of autonomous agents compete to gather resources and level up">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  
+  <!-- Theme -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  
+  <!-- Custom styles -->
+  <style>
+    :root {
+      --theme-color: #42b883;
+      --theme-color-dark: #369870;
+      --text-color-base: #2c3e50;
+      --text-color-secondary: #7f8c8d;
+      --sidebar-nav-link-color: #505d6b;
+      --sidebar-nav-link-color--hover: var(--theme-color);
+      --sidebar-nav-link-color--active: var(--theme-color);
+      --sidebar-width: 300px;
+    }
+
+    .app-name-link img {
+      width: 2rem;
+      height: 2rem;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .cover.show {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .cover-main {
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .cover h1 {
+      color: white;
+      font-size: 4rem;
+      font-weight: 300;
+      margin: 0.625rem 0 2.5rem;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .cover h1 small {
+      bottom: -0.5rem;
+      font-size: 2rem;
+      position: relative;
+    }
+
+    .cover blockquote {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .cover .cover-main > p:last-child a {
+      background: var(--theme-color);
+      border: 2px solid var(--theme-color);
+      border-radius: 2rem;
+      box-sizing: border-box;
+      color: #fff;
+      display: inline-block;
+      font-size: 1.05rem;
+      letter-spacing: 0.1rem;
+      margin: 0.5rem 1rem;
+      padding: 0.75rem 2rem;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .cover .cover-main > p:last-child a:hover {
+      background: transparent;
+      color: var(--theme-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(66, 184, 131, 0.4);
+    }
+
+    .sidebar ul li strong {
+      color: var(--theme-color);
+      font-weight: 600;
+    }
+
+    .markdown-section h1 {
+      color: var(--theme-color);
+      border-bottom: 2px solid var(--theme-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .markdown-section h2 {
+      color: var(--theme-color-dark);
+      border-bottom: 1px solid #eaecef;
+      padding-bottom: 0.3rem;
+    }
+
+    .markdown-section code {
+      background: #f8f9fa;
+      border-radius: 3px;
+      color: #e83e8c;
+      font-family: 'Source Code Pro', 'Monaco', courier, monospace;
+      font-size: 0.9em;
+      padding: 0.2em 0.4em;
+    }
+
+    .markdown-section pre {
+      background: #f6f8fa;
+      border-radius: 6px;
+      overflow: auto;
+      padding: 1.2em 1.4em;
+      word-wrap: normal;
+    }
+
+    .markdown-section blockquote {
+      border-left: 4px solid var(--theme-color);
+      background: rgba(66, 184, 131, 0.1);
+      margin: 2em 0;
+      padding: 0.25em 0 0.25em 1em;
+    }
+
+    .pagination-item-label svg {
+      width: 0.8em;
+      height: 0.8em;
+    }
+
+    .app-nav {
+      font-weight: 500;
+    }
+
+    .app-nav a {
+      color: var(--text-color-base);
+    }
+
+    .app-nav a:hover {
+      color: var(--theme-color);
+    }
+
+    /* Feature cards */
+    .feature-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .feature-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.5rem;
+      border-left: 4px solid var(--theme-color);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-card h3 {
+      color: var(--theme-color);
+      margin-top: 0;
+    }
+
+    /* Code language labels */
+    .lang-label {
+      position: absolute;
+      top: 0;
+      right: 10px;
+      background: var(--theme-color);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 0 0 4px 4px;
+      font-size: 0.7em;
+      font-weight: bold;
+    }
+
+    pre {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'Zappy',
+      repo: 'https://github.com/EpitechMirror/Zappy',
+      homepage: 'README.md',
+      coverpage: '_coverpage.md',
+      onlyCover: false,
+      loadSidebar: '_sidebar.md',
+      loadNavbar: '_navbar.md',
+      autoHeader: true,
+      subMaxLevel: 3,
+      maxLevel: 4,
+      auto2top: true,
+      
+      // Search
+      search: {
+        maxAge: 86400000,
+        paths: 'auto',
+        placeholder: 'Search documentation...',
+        noData: 'No results found.',
+        depth: 6,
+        hideOtherSidebarContent: false,
+      },
+
+      // Copy code
+      copyCode: {
+        buttonText: 'Copy to clipboard',
+        errorText: 'Error',
+        successText: 'Copied'
+      },
+
+      // Pagination
+      pagination: {
+        previousText: 'Previous',
+        nextText: 'Next',
+        crossChapter: true,
+        crossChapterText: true,
+      },
+
+      // Tabs
+      tabs: {
+        persist: true,
+        sync: true,
+        theme: 'classic',
+        tabComments: true,
+        tabHeadings: true
+      },
+
+      // Flexible alerts
+      'flexible-alerts': {
+        style: 'flat',
+        note: {
+          label: "Note"
+        },
+        tip: {
+          label: "Tip"
+        },
+        warning: {
+          label: "Warning"
+        },
+        attention: {
+          label: "Attention"
+        }
+      },
+
+      // Footer
+      footer: {
+        copy: '<span>&copy; 2024 Zappy Team. Built with ❤️ at Epitech.</span>',
+        auth: 'Team: Anaïs Parenti, Adrien Marette, Ridjan Xhika, Gabriel Mchiri, Sara Himmich, Pierre-Louis Vie',
+        pre: '<hr/>',
+        style: 'text-align: center;',
+      },
+
+      // Logo
+      logo: '/_media/logo.png',
+
+      // Theme color
+      themeColor: '#42b883',
+
+      // Execute script
+      executeScript: true,
+
+      // Plugins
+      plugins: [
+        function (hook, vm) {
+          hook.beforeEach(function (html) {
+            var url = 'https://github.com/EpitechMirror/Zappy/blob/main/docs/' + vm.route.file;
+            var editHtml = '[:memo: Edit this page](' + url + ')\n';
+            return editHtml + html;
+          });
+        }
+      ]
+    }
+  </script>
+
+  <!-- Docsify core -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
+  
+  <!-- Search plugin -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  
+  <!-- Copy code plugin -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
+  
+  <!-- Pagination -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  
+  <!-- Zoom image -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  
+  <!-- Tabs -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-tabs@1"></script>
+  
+  <!-- Flexible alerts -->
+  <script src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+  
+  <!-- Footer -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-footer-enh/dist/docsify-footer-enh.min.js"></script>
+  
+  <!-- Syntax highlighting -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cmake.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+  
+  <!-- External link target -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
+</body>
+</html>
