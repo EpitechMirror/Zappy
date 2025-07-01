@@ -27,6 +27,15 @@ static void send_team_names(int fd, server_config_t *conf)
     }
 }
 
+void send_pfk(int fd, egg_t *egg, int player_id)
+{
+    char msg[128];
+
+    snprintf(msg, sizeof(msg), "pfk #%d %d %d %d\n",
+        egg->id, player_id, egg->x, egg->y);
+    send(fd, msg, strlen(msg), 0);
+}
+
 static void send_enw(int fd, egg_t *egg, int player_id)
 {
     char msg[128];
@@ -81,8 +90,10 @@ egg_t *create_egg_fork(server_config_t *conf, client_t *client)
         return NULL;
     egg->used = 1;
     add_egg_to_list(conf, egg);
-    for (int i = 0; i < conf->nb_graphics; i++)
+    for  (int i = 0; i < conf->nb_graphics; i++) {
+        send_pfk(conf->graphic_fds[i], egg, client->id);
         send_enw(conf->graphic_fds[i], egg, client->fd);
+    }
     return egg;
 }
 

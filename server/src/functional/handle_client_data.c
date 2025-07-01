@@ -88,8 +88,8 @@ static void handle_player_auth(client_t *client, int fd,
     conf->team_slots[team_idx]--;
     client->is_graphic = false;
     snprintf(msg, sizeof(msg),
-        "Bienvenue joueur de l'équipe %s\n%d\n%d %d\n",
-        team, conf->clients_nb, conf->width, conf->height);
+        "%d\n%d %d\n",
+        conf->clients_nb, conf->width, conf->height);
     send(fd, msg, strlen(msg), 0);
     client->state = AUTHENTICATED;
     egg = get_unused_egg_for_team(conf, team_idx);

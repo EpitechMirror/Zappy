@@ -87,6 +87,7 @@ int find_nb_teams(client_t *client)
     return team_count;
 }
 
+
 void notify_graphics_player_update(client_t *client, server_config_t *conf, int result)
 {
     ppo_graphics(client, conf);

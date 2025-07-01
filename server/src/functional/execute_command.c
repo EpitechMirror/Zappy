@@ -10,6 +10,47 @@
 #include "../../include/ressources.h"
 #include "../../include/server.h"
 
+void send_pdr(int client_id, int resource_index, server_config_t *conf)
+{
+    char buffer[64];
+    int len = snprintf(buffer, sizeof(buffer), "pdr %d %d\n", client_id, resource_index);
+    
+    for (int i = 0; i < conf->clients_nb; i++) {
+        if (conf->clients[i].is_graphic && conf->clients[i].fd != -1) {
+            send(conf->clients[i].fd, buffer, len, 0);
+        }
+    }
+}
+
+
+void handle_drop_command(client_t *client, server_config_t *conf,
+    const char *cmd)
+{
+    char *resource = (char *)cmd + 5;
+    tile_t *tile = &conf->map[client->y][client->x];
+    resource_mapping_t mappings[] = {
+        {"linemate", &tile->linemate, &client->inventory.linemate},
+        {"deraumere", &tile->deraumere, &client->inventory.deraumere},
+        {"sibur", &tile->sibur, &client->inventory.sibur},
+        {"mendiane", &tile->mendiane, &client->inventory.mendiane},
+        {"phiras", &tile->phiras, &client->inventory.phiras},
+        {"thystame", &tile->thystame, &client->inventory.thystame},
+        {"food", &tile->food, &client->inventory.food}
+    };
+
+    for (int i = 0; i < 7; i++) {
+        if (strcmp(resource, mappings[i].name) == 0 && *mappings[i].inventory_ptr > 0) {
+            (*mappings[i].tile_ptr)++;
+            (*mappings[i].inventory_ptr)--;
+            send(client->fd, "ok\n", 3, 0);
+            send_pdr(client->fd, i, conf);
+            notify_graphics_player_update(client, conf, 1);
+            return;
+        }
+    }
+    send(client->fd, "ko\n", 3, 0);
+}
+
 static const command_handler_t command_handlers[] = {
     {"Forward", 7, handle_movement_commands},
     {"Right", 5, handle_movement_commands},
@@ -23,6 +64,7 @@ static const command_handler_t command_handlers[] = {
     {"Set", 3, handle_set_command},
     {"Eject", 5, handle_eject_wrapper},
     {"Incantation", 11, handle_incantation_command},
+    {"Drop", 4, handle_drop_command},
     {NULL, 0, NULL}
 };
 
