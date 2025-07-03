@@ -87,7 +87,7 @@ void AssetsManager::loadTextures()
         }
     }
 
-    Texture2D wallTex = LoadTexture("../resources/textures/wallpaper.jpg");
+    Texture2D wallTex = wallpaperTexture;
     if (wallTex.id > 0) {
         wallLong.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
         wallShort.materials[0].maps[MATERIAL_MAP_ALBEDO].texture = wallTex;
@@ -106,8 +106,7 @@ void AssetsManager::loadShaders()
     shaders.loadPBR();
 }
 
-void AssetsManager::loadFonts()
-{
+void AssetsManager::loadFonts() {
     toyFont = LoadFont("../resources/fonts/Woody.ttf");
 }
 
@@ -116,21 +115,13 @@ void AssetsManager::loadAudio()
     if (!IsAudioDeviceReady()) {
         InitAudioDevice();
     }
-    
-    // musique d'attente
-    loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
-    if (loadingMusic.stream.buffer != nullptr) {
-        loadingMusic.looping = true;
-    }
-    
-    // musique principale
     mainMusic = LoadMusicStream("../resources/music/main_music.ogg");
     if (mainMusic.stream.buffer != nullptr) {
         mainMusic.looping = true;
     }
 }
 
-// CHECK IF ASSETS IS LOADED
+// CHECK IF ASSETS ARE LOADED
 
 bool AssetsManager::isModelLoaded(const std::string &modelPath) const {
     Model model = LoadModel(modelPath.c_str());

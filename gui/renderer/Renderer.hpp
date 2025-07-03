@@ -73,6 +73,7 @@ class Renderer {
         void handleMouseClick();
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
+        void showLoadingScreenWithProgress();
         Color getColorForResource(ResourceType type);
         void DrawFallingEggs();
 

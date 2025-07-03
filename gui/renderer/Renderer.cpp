@@ -7,6 +7,7 @@
 
 #include "Renderer.hpp"
 #include <algorithm>
+#include <cmath>
 constexpr float TILE_SIZE = 64.0f;
 
 Renderer::Renderer(int width, int height, const Map &map)
@@ -19,7 +20,7 @@ Renderer::Renderer(int width, int height, const Map &map)
       _mapInitialized(false),
       _disconnectTimer(0.0f)
 {
-    _menuButton = {20, static_cast<float>(height - 60), 100, 40};
+    _menuButton = {static_cast<float>(width/2 - 50), static_cast<float>(height - 60), 100, 40};
     
     const_cast<Map&>(_map).setFallingEggCallback([this](int x, int y) {
         this->addFallingEgg(x, y);
@@ -213,6 +214,30 @@ void Renderer::showLoadingScreen(const std::string &message) {
         BeginDrawing();
             ClearBackground(BLACK);
 
+            // === Arrière-plan avec texture wallpaper qui défile ===
+            if (_assets.wallpaperTexture.id > 0) {
+                float scrollSpeed = 50.0f; // pixels par seconde
+                float offsetX = fmod(elapsed * scrollSpeed, _assets.wallpaperTexture.width);
+                float offsetY = fmod(elapsed * scrollSpeed * 0.3f, _assets.wallpaperTexture.height);
+                
+                // Calculer combien de tiles on a besoin pour couvrir l'écran
+                int tilesX = (_screenWidth / _assets.wallpaperTexture.width) + 2;
+                int tilesY = (_screenHeight / _assets.wallpaperTexture.height) + 2;
+                
+                // Dessiner les tiles avec décalage pour l'effet de défilement
+                for (int y = -1; y < tilesY; y++) {
+                    for (int x = -1; x < tilesX; x++) {
+                        float posX = x * _assets.wallpaperTexture.width - offsetX;
+                        float posY = y * _assets.wallpaperTexture.height - offsetY;
+                        
+                        Rectangle dest = {posX, posY, (float)_assets.wallpaperTexture.width, (float)_assets.wallpaperTexture.height};
+                        Rectangle source = {0, 0, (float)_assets.wallpaperTexture.width, (float)_assets.wallpaperTexture.height};
+                        
+                        DrawTexturePro(_assets.wallpaperTexture, source, dest, {0, 0}, 0.0f, ColorAlpha(WHITE, 0.3f));
+                    }
+                }
+            }
+
             // === Titre principal : WOODY GUI ===
             const char* logo = "WOODY GUI";
             int sizeLogo = 100;
@@ -273,6 +298,202 @@ void Renderer::showLoadingScreen(const std::string &message) {
 
         EndDrawing();
     }
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        StopMusicStream(_assets.loadingMusic);
+    }
+}
+
+void Renderer::showLoadingScreenWithProgress() {
+    // Démarrer la musique dès le début si elle n'est pas déjà en cours
+    if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+        if (!IsMusicStreamPlaying(_assets.loadingMusic)) {
+            PlayMusicStream(_assets.loadingMusic);
+        }
+    }
+    
+    float startTime = GetTime();
+    float nextTipTime = 3.0f; 
+    int tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+    std::string tip = _loadingTips[tipIndex];
+    
+    // Étapes de chargement
+    enum LoadingStage {
+        STAGE_INITIAL,
+        LOADING_MODELS,
+        LOADING_TEXTURES, 
+        LOADING_SHADERS,
+        APPLYING_SHADERS,
+        INITIALIZING_LIGHTS,
+        COMPLETED
+    };
+    
+    LoadingStage stage = STAGE_INITIAL;
+    float progress = 0.0f;
+    std::string currentTask = "Initializing...";
+    
+    // Durée minimale d'affichage pour chaque étape (pour éviter les flashs)
+    const float minStageTime = 0.3f;
+    float stageStartTime = GetTime();
+    
+    while (stage != COMPLETED && !WindowShouldClose()) {
+        // Mettre à jour la musique en continu
+        if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
+            UpdateMusicStream(_assets.loadingMusic);
+        }
+        
+        float elapsed = GetTime() - startTime;
+        float stageElapsed = GetTime() - stageStartTime;
+        
+        // Changer les tips
+        if (elapsed >= nextTipTime) {
+            tipIndex = GetRandomValue(0, _loadingTips.size() - 1);
+            tip = _loadingTips[tipIndex];
+            nextTipTime += 3.0f;
+        }
+        
+        // Dessiner l'écran de chargement en continu
+        BeginDrawing();
+            ClearBackground(BLACK);
+
+            // === Arrière-plan avec texture wallpaper qui défile ===
+            if (_assets.wallpaperTexture.id > 0) {
+                float scrollSpeed = 50.0f;
+                float offsetX = fmod(elapsed * scrollSpeed, _assets.wallpaperTexture.width);
+                float offsetY = fmod(elapsed * scrollSpeed * 0.3f, _assets.wallpaperTexture.height);
+                
+                int tilesX = (_screenWidth / _assets.wallpaperTexture.width) + 2;
+                int tilesY = (_screenHeight / _assets.wallpaperTexture.height) + 2;
+                
+                for (int y = -1; y < tilesY; y++) {
+                    for (int x = -1; x < tilesX; x++) {
+                        float posX = x * _assets.wallpaperTexture.width - offsetX;
+                        float posY = y * _assets.wallpaperTexture.height - offsetY;
+                        
+                        Rectangle dest = {posX, posY, (float)_assets.wallpaperTexture.width, (float)_assets.wallpaperTexture.height};
+                        Rectangle source = {0, 0, (float)_assets.wallpaperTexture.width, (float)_assets.wallpaperTexture.height};
+                        
+                        DrawTexturePro(_assets.wallpaperTexture, source, dest, {0, 0}, 0.0f, ColorAlpha(WHITE, 0.3f));
+                    }
+                }
+            }
+
+            // === Titre principal : WOODY GUI ===
+            const char* logo = "WOODY GUI";
+            int sizeLogo = 100;
+            float spacing = 5.0f;
+            Vector2 logoTextSize = MeasureTextEx(_assets.toyFont, logo, sizeLogo, spacing);
+            
+            Vector2 logoPos;
+            logoPos.x = (_screenWidth - logoTextSize.x) / 2.0f;
+            logoPos.y = (_screenHeight / 3) - 50;
+
+            Color outline = BLUE;
+            for (int dx = -3; dx <= 3; dx += 3) {
+                for (int dy = -3; dy <= 3; dy += 3) {
+                    if (dx == 0 && dy == 0) continue;
+                    Vector2 offsetPos = { logoPos.x + dx, logoPos.y + dy };
+                    DrawTextEx(_assets.toyFont, logo, offsetPos, sizeLogo, spacing, outline);
+                }
+            }
+            DrawTextEx(_assets.toyFont, logo, logoPos, sizeLogo, spacing, YELLOW);
+
+            // === Texte Loading animé ===
+            int loadingFontSize = 40;
+            int textWidth = MeasureText(currentTask.c_str(), loadingFontSize);
+            int posX = (_screenWidth - textWidth) / 2;
+            int posY = _screenHeight / 2 - 80;
+            DrawText(currentTask.c_str(), posX, posY, loadingFontSize, WHITE);
+
+            // === Barre de chargement ===
+            int barWidth = 300;
+            int barHeight = 20;
+            int barX = (_screenWidth - barWidth) / 2;
+            int barY = posY + 60;
+
+            DrawRectangle(barX, barY, barWidth, barHeight, GRAY);
+            DrawRectangle(barX, barY, progress * barWidth, barHeight, GREEN);
+            DrawRectangleLines(barX, barY, barWidth, barHeight, DARKGRAY);
+
+            // Pourcentage
+            std::string percent = std::to_string((int)(progress * 100)) + "%";
+            int percentWidth = MeasureText(percent.c_str(), 20);
+            DrawText(percent.c_str(), barX + barWidth - percentWidth, barY - 25, 20, WHITE);
+
+            // === Boîte TIPS ===
+            int tipFontSize = 20;
+            int tipBoxWidth = MeasureText(tip.c_str(), tipFontSize) + 40;
+            int tipBoxHeight = 80;
+            int tipBoxX = (_screenWidth - tipBoxWidth) / 2;
+            int tipBoxY = barY + 60;
+
+            DrawRectangle(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, Fade(SKYBLUE, 0.25f));
+            DrawRectangleLines(tipBoxX, tipBoxY, tipBoxWidth, tipBoxHeight, BLUE);
+            
+            float tipAlpha = 1.0f;
+            if (nextTipTime - elapsed < 0.5f) {
+                tipAlpha = (nextTipTime - elapsed) * 2.0f;
+            }
+
+            DrawText("TIPS :", tipBoxX + 10, tipBoxY + 5, tipFontSize, ColorAlpha(DARKBLUE, tipAlpha));
+            DrawText(tip.c_str(), tipBoxX + 10, tipBoxY + 35, tipFontSize, ColorAlpha(WHITE, tipAlpha));
+
+        EndDrawing();
+        
+        // Exécuter l'étape de chargement seulement si suffisamment de temps s'est écoulé
+        if (stageElapsed >= minStageTime) {
+            switch (stage) {
+                case STAGE_INITIAL:
+                    stage = LOADING_MODELS;
+                    progress = 0.1f;
+                    currentTask = "Loading models...";
+                    stageStartTime = GetTime();
+                    break;
+                    
+                case LOADING_MODELS:
+                    _assets.loadModels();
+                    stage = LOADING_TEXTURES;
+                    progress = 0.35f;
+                    currentTask = "Loading textures...";
+                    stageStartTime = GetTime();
+                    break;
+                    
+                case LOADING_TEXTURES:
+                    _assets.loadTextures();
+                    stage = LOADING_SHADERS;
+                    progress = 0.6f;
+                    currentTask = "Loading shaders...";
+                    stageStartTime = GetTime();
+                    break;
+                    
+                case LOADING_SHADERS:
+                    _assets.loadShaders();
+                    stage = APPLYING_SHADERS;
+                    progress = 0.8f;
+                    currentTask = "Applying shaders...";
+                    stageStartTime = GetTime();
+                    break;
+                    
+                case APPLYING_SHADERS:
+                    _assets.applyShaders();
+                    stage = INITIALIZING_LIGHTS;
+                    progress = 0.95f;
+                    currentTask = "Initializing lights...";
+                    stageStartTime = GetTime();
+                    break;
+                    
+                case INITIALIZING_LIGHTS:
+                    initLights();
+                    stage = COMPLETED;
+                    progress = 1.0f;
+                    currentTask = "Ready!";
+                    break;
+                    
+                case COMPLETED:
+                    break;
+            }
+        }
+    }
+    
     if (IsAudioDeviceReady() && _assets.loadingMusic.stream.buffer != nullptr) {
         StopMusicStream(_assets.loadingMusic);
     }
@@ -613,7 +834,7 @@ void Renderer::InfoBoxBoard() {
 
     DrawText(title.c_str(), x, y, titleSize, BLACK);
     y += lineSpacing;
-    
+
     if (_selectedTile) {
         for (const auto& [text, color] : resourceLines) {
             DrawText(text.c_str(), x, y, titleSize, color);
@@ -625,18 +846,27 @@ void Renderer::InfoBoxBoard() {
 }
 
 void Renderer::gameLoop(Client &client) {
-    _assets.loadFonts();
-    _assets.loadAudio();
-    if (!_mapInitialized) {
-        showLoadingScreen("Loading...");
+    _assets.wallpaperTexture = LoadTexture("../resources/textures/wallpaper.jpg");
+    
+    if (!IsAudioDeviceReady()) {
+        InitAudioDevice();
     }
+    _assets.loadingMusic = LoadMusicStream("../resources/music/loading_music.ogg");
+    if (_assets.loadingMusic.stream.buffer != nullptr) {
+        _assets.loadingMusic.looping = true;
+        PlayMusicStream(_assets.loadingMusic);
+    }
+    
+    _assets.loadFonts();
+    
+    if (!_mapInitialized) {
+        showLoadingScreenWithProgress();
+        _assets.loadAudio();
+    }
+    
     if (_musicEnabled) {
         PlayMusicStream(_assets.mainMusic);
     }
-
-    _assets.loadAllResources();
-    _assets.applyShaders();
-    initLights();
 
     while (!WindowShouldClose() && !_shouldQuit) {
         bool wasConnected = client.isConnected();
@@ -1208,8 +1438,8 @@ void Renderer::NotificationsBoard() {
     int boxWidth = maxWidth + 2 * padding;
     int boxHeight = (1 + _notifications.size()) * lineSpacing + 2 * padding;
     
-    // Posizione
-    int boxX = _screenWidth - boxWidth - 10;
+    // Position sur le côté gauche
+    int boxX = 10;
     int boxY = _screenHeight - boxHeight - 10;
     
     DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(BLACK, 0.7f));
