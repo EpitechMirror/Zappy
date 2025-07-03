@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+from Team import TeamRole
+from TeamExplorer import TeamExplorer
+from TeamCollector import TeamCollector
+from TeamGuardian import TeamGuardian
+from TeamCoordinator import TeamCoordinator
+
+def main():
+    """Main function to create and run the appropriate AI based on role."""
+    parser = argparse.ArgumentParser(description="Team-based Zappy AI")
+    parser.add_argument("-p", "--port", type=int, required=True, help="Port number")
+    parser.add_argument("-n", "--name", type=str, required=True, help="Team name")
+    parser.add_argument("-H", "--host", type=str, default="localhost", help="Server hostname")
+    parser.add_argument("-r", "--role", type=str, default="explorer",
+                        choices=["explorer", "collector", "guardian", "coordinator"],
+                        help="AI role in team")
+    parser.add_argument("--spawned", action="store_true", 
+                        help="Flag indicating this AI was spawned by another AI")
+    
+    args = parser.parse_args()
+    
+    # Create the appropriate AI based on role
+    if args.role == "explorer":
+        ai = TeamExplorer(args.host, args.port, args.name, args.spawned)
+    elif args.role == "collector":
+        ai = TeamCollector(args.host, args.port, args.name, args.spawned)
+    elif args.role == "guardian":
+        ai = TeamGuardian(args.host, args.port, args.name, args.spawned)
+    elif args.role == "coordinator":
+        ai = TeamCoordinator(args.host, args.port, args.name, args.spawned)
+    else:
+        print(f"Unknown role: {args.role}")
+        sys.exit(1)
+    
+    # Run the AI
+    try:
+        ai.run()
+    except KeyboardInterrupt:
+        print("\nShutting down AI...")
+    except Exception as e:
+        print(f"Error running AI: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
