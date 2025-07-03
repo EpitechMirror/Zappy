@@ -6,7 +6,7 @@
 */
 
 #include "ShadersManager.hpp"
-#include "../Console/Console.hpp"
+#include "../../Console/Console.hpp"
 
 ShadersManager::~ShadersManager() {
     unloadAll();

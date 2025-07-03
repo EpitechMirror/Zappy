@@ -112,8 +112,12 @@ void ProtocolHandler::handleEnw(std::istringstream &iss) {
     int x, y;
 
     if (iss >> eggIdStr >> playerIdStr >> x >> y) {
-        int eggId = std::stoi(eggIdStr.substr(1));
-        _map.addEgg(eggId, x, y);
+        try {
+            int eggId = std::stoi(eggIdStr.substr(1));
+            _map.addEgg(eggId, x, y);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid egg ID format in enw: " + eggIdStr);
+        }
     } else {
         Console::warning("Invalid enw format");
     }
@@ -123,8 +127,12 @@ void ProtocolHandler::handleEnw(std::istringstream &iss) {
 void ProtocolHandler::handleEboAndEdi(std::istringstream &iss) {
     std::string eggIdStr;
     if (iss >> eggIdStr) {
-        int eggId = std::stoi(eggIdStr.substr(1));
-        _map.removeEgg(eggId);
+        try {
+            int eggId = std::stoi(eggIdStr.substr(1));
+            _map.removeEgg(eggId);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid egg ID format in ebo/edi: " + eggIdStr);
+        }
     } else {
         Console::warning("Invalid ebo or edi format");
     }
@@ -137,17 +145,21 @@ void ProtocolHandler::handlePnw(std::istringstream &iss) {
     std::string teamName;
 
     if (iss >> idStr >> x >> y >> orientation >> level >> teamName) {
-        int id = std::stoi(idStr.substr(1));
-        Player player(
-            id,
-            { static_cast<float>(x), 0.0f, static_cast<float>(y) },
-            orientation,
-            level,
-            teamName
-        );
-        _map.addPlayer(player);
+        try {
+            int id = std::stoi(idStr.substr(1));
+            Player player(
+                id,
+                { static_cast<float>(x), 0.0f, static_cast<float>(y) },
+                orientation,
+                level,
+                teamName
+            );
+            _map.addPlayer(player);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid player ID format in pnw: " + idStr);
+        }
     } else {
-        Console::warning("Invalide pnw format");
+        Console::warning("Invalid pnw format");
     }
 }
 
@@ -157,12 +169,16 @@ void ProtocolHandler::handlePpo(std::istringstream &iss) {
     int x, y, orientation;
 
     if (iss >> idStr >> x >> y >> orientation) {
-        int id = std::stoi(idStr.substr(1));
-        _map.updatePlayerPosition(
-            id,
-            { static_cast<float>(x), 0.0f, static_cast<float>(y) },
-            orientation
-        );
+        try {
+            int id = std::stoi(idStr.substr(1));
+            _map.updatePlayerPosition(
+                id,
+                { static_cast<float>(x), 0.0f, static_cast<float>(y) },
+                orientation
+            );
+        } catch (const std::exception& e) {
+            Console::warning("Invalid player ID format in ppo: " + idStr);
+        }
     } else {
         Console::warning("Invalid ppo format");
     }
@@ -174,8 +190,12 @@ void ProtocolHandler::handlePlv(std::istringstream &iss) {
     int level;
 
     if (iss >> idStr >> level) {
-        int id = std::stoi(idStr.substr(1));
-        _map.updatePlayerLevel(id, level);
+        try {
+            int id = std::stoi(idStr.substr(1));
+            _map.updatePlayerLevel(id, level);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid player ID format in plv: " + idStr);
+        }
     } else {
         Console::warning("Invalid plv format");
     }
@@ -194,8 +214,12 @@ void ProtocolHandler::handlePin(std::istringstream &iss) {
                 return;
             }
         }
-        int id = std::stoi(idStr.substr(1));
-        _map.updatePlayerInventory(id, inventory);
+        try {
+            int id = std::stoi(idStr.substr(1));
+            _map.updatePlayerInventory(id, inventory);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid player ID format in pin: " + idStr);
+        }
     } else {
         Console::warning("Invalid pin format");
     }
@@ -205,8 +229,12 @@ void ProtocolHandler::handlePin(std::istringstream &iss) {
 void ProtocolHandler::handlePdi(std::istringstream &iss) {
     std::string idStr;
     if (iss >> idStr) {
-        int id = std::stoi(idStr.substr(1));
-        _map.removePlayerById(id);
+        try {
+            int id = std::stoi(idStr.substr(1));
+            _map.removePlayerById(id);
+        } catch (const std::exception& e) {
+            Console::warning("Invalid player ID format in pdi: " + idStr);
+        }
     } else {
         Console::warning("Invalid pdi format");
     }
@@ -222,26 +250,30 @@ void ProtocolHandler::handlePgt(std::istringstream &iss) {
         return;
     }
 
-    int id = std::stoi(idStr.substr(1));
-    Player* player = _map.getPlayerById(id);
-    if (!player) {
-        Console::warning("Unknown player id in pgt: " + id);
-        return;
-    }
+    try {
+        int id = std::stoi(idStr.substr(1));
+        Player* player = _map.getPlayerById(id);
+        if (!player) {
+            Console::warning("Unknown player id in pgt: " + std::to_string(id));
+            return;
+        }
 
-    if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
-        Console::warning("Invalid resource index in pgt " + std::to_string(resourceIndex));
-        return;
-    }
+        if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
+            Console::warning("Invalid resource index in pgt " + std::to_string(resourceIndex));
+            return;
+        }
 
-    const int* currentInventory = player->getInventory();
-    int updatedInventory[RESOURCE_COUNT];
-    for (int i = 0; i < RESOURCE_COUNT; ++i) {
-        updatedInventory[i] = currentInventory[i];
-    }
-    updatedInventory[resourceIndex]++;
+        const int* currentInventory = player->getInventory();
+        int updatedInventory[RESOURCE_COUNT];
+        for (int i = 0; i < RESOURCE_COUNT; ++i) {
+            updatedInventory[i] = currentInventory[i];
+        }
+        updatedInventory[resourceIndex]++;
 
-    player->setInventory(updatedInventory);
+        player->setInventory(updatedInventory);
+    } catch (const std::exception& e) {
+        Console::warning("Invalid player ID format in pgt: " + idStr);
+    }
 }
 
 //---Player drop a resource
@@ -254,30 +286,34 @@ void ProtocolHandler::handlePdr(std::istringstream &iss) {
         return;
     }
 
-    int id = std::stoi(idStr.substr(1));
-    Player* player = _map.getPlayerById(id);
-    if (!player) {
-        Console::warning("Unknown player id in pdr: " + std::to_string(id));
-        return;
+    try {
+        int id = std::stoi(idStr.substr(1));
+        Player* player = _map.getPlayerById(id);
+        if (!player) {
+            Console::warning("Unknown player id in pdr: " + std::to_string(id));
+            return;
+        }
+
+        if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
+            Console::warning("Invalid resource index in pdr: " + std::to_string(resourceIndex));
+            return;
+        }
+
+        const int* currentInventory = player->getInventory();
+        int updatedInventory[RESOURCE_COUNT];
+        for (int i = 0; i < RESOURCE_COUNT; ++i) {
+            updatedInventory[i] = currentInventory[i];
+        }
+
+        if (updatedInventory[resourceIndex] > 0)
+            updatedInventory[resourceIndex]--;
+        else
+            Console::warning("Warning: Player #" + std::to_string(id) + " tried to drop resource " + std::to_string(resourceIndex) + " with none in inventory");
+
+        player->setInventory(updatedInventory);
+    } catch (const std::exception& e) {
+        Console::warning("Invalid player ID format in pdr: " + idStr);
     }
-
-    if (resourceIndex < 0 || resourceIndex >= RESOURCE_COUNT) {
-        Console::warning("Invalid resource index in pdr: " + std::to_string(resourceIndex));
-        return;
-    }
-
-    const int* currentInventory = player->getInventory();
-    int updatedInventory[RESOURCE_COUNT];
-    for (int i = 0; i < RESOURCE_COUNT; ++i) {
-        updatedInventory[i] = currentInventory[i];
-    }
-
-    if (updatedInventory[resourceIndex] > 0)
-        updatedInventory[resourceIndex]--;
-    else
-        Console::warning("Warning: Player #" + std::to_string(id) + " tried to drop resource " + std::to_string(resourceIndex) + " with none in inventory");
-
-    player->setInventory(updatedInventory);
 }
 
 //----Player drop an egg
@@ -373,22 +409,26 @@ void ProtocolHandler::handlePbc(std::istringstream &iss) {
         return;
     }
 
-    int playerId = std::stoi(idStr.substr(1));
-    if (!std::getline(iss, message)) {
-        Console::warning("No message provided in pbc");
-        return;
+    try {
+        int playerId = std::stoi(idStr.substr(1));
+        if (!std::getline(iss, message)) {
+            Console::warning("No message provided in pbc");
+            return;
+        }
+
+        if (message.empty() || message[0] == ' ')
+            message.erase(0, 1);
+
+        Player* player = _map.getPlayerById(playerId);
+        if (!player) {
+            Console::warning("Unknown player in pbc: #" + std::to_string(playerId));
+            return;
+        }
+
+        Console::debug("[Broadcast from #" + std::to_string(playerId) + "] " + message);
+    } catch (const std::exception& e) {
+        Console::warning("Invalid player ID format in pbc: " + idStr);
     }
-
-    if (message.empty() || message[0] == ' ')
-        message.erase(0, 1);
-
-    Player* player = _map.getPlayerById(playerId);
-    if (!player) {
-        Console::warning("Unknown player in pbc: #" + std::to_string(playerId));
-        return;
-    }
-
-    Console::debug("[Broadcast from #" + std::to_string(playerId) + "] " + message);
 }
 
 //--- Server message
