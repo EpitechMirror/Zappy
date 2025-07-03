@@ -77,24 +77,29 @@ Ensure you have the required dependencies:
 #### **Ubuntu/Debian**
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake pkg-config libsfml-dev libglfw3-dev libgl1-mesa-dev
+sudo apt install -y build-essential cmake libraylib-dev libglfw3-dev libgl1-mesa-dev
 ```
 
 #### **CentOS/RHEL**
 ```bash
 sudo yum groupinstall "Development Tools"
-sudo yum install cmake sfml-devel glfw-devel mesa-libGL-devel
+sudo yum install cmake glfw-devel mesa-libGL-devel
+# Install raylib from source
+git clone https://github.com/raysan5/raylib.git
+cd raylib && mkdir build && cd build
+cmake -DBUILD_SHARED_LIBS=ON ..
+make && sudo make install
 ```
 
 #### **macOS**
 ```bash
-brew install cmake sfml glfw
+brew install cmake glfw raylib
 ```
 
 #### **Windows**
 ```powershell
 # Using vcpkg
-vcpkg install sfml glfw3
+vcpkg install raylib
 ```
 
 <!-- tabs:end -->
@@ -103,9 +108,9 @@ vcpkg install sfml glfw3
 
 ```bash
 # From the project root
-mkdir build && cd build
+cd gui && mkdir build && cd build
 cmake ..
-make zappy_gui
+make
 ```
 
 ### Running
@@ -133,16 +138,13 @@ make zappy_gui
 |--------|-------|-------------|
 | **Rotate View** | Q / D | Free-look camera rotation |
 | **Zoom In/Out** | Z / S | Adjust camera distance |
-| **Reset View** | `R` | Return to default camera position |
-| **Top View** | `T` | Switch to top-down orthographic view |
 
 ### Interface Controls
 
 | Action | Input | Description |
 |--------|-------|-------------|
-| **Toggle UI** | `F1` | Show/hide all UI elements |
-| **Toggle Debug** | `F2` | Show/hide debug information |
-| **Menu** | `M` | Activate menu |
+| **Toggle Debug** | `Tab` | Show/hide debug information |
+| **Menu** | `Button` | Activate menu |
 
 ### Selection
 
@@ -173,18 +175,6 @@ make zappy_gui
 
 #### Information Panels
 
-**Team Statistics Panel**
-```
-┌─ Team Alpha (Red) ────────────┐
-│ Players: 3/5                  │
-│ Level 1: 2 players            │
-│ Level 2: 1 player             │
-│ Level 3: 0 players            │
-│ Resources: 45 total           │
-│ Status: Active                │
-└───────────────────────────────┘
-```
-
 **Player Details Panel**
 ```
 ┌──────── Player #42 ──────────┐
@@ -199,15 +189,30 @@ make zappy_gui
 └──────────────────────────────┘
 ```
 
+**Tile Details Panel**
+```
+┌─── Info Box : 6, 1 ──────────┐
+│ Food: 3                      │
+│ Linemate: 1                  │
+│ Deraumere: 0                 │
+└──────────────────────────────┘
+```
+
 **Game Status Panel**
 ```
 ┌─ Game Status ─────────────────┐
 │ Time: 05:23.4                 │
 │ Frequency: 100 Hz             │
-│ Map: 10x10 (Toroidal)         │
-│ Teams: 3 active               │
-│ Players: 8 total              │
-│ Victory: First to 6 @ Lv8     │
+│ Map: 10x10                    │
+| Food: 49                      |
+└───────────────────────────────┘
+```
+
+**Team Status Panel**
+```
+┌─ Teams ───────────────────────┐
+│ TeamA                         │
+│ TeamB                         │
 └───────────────────────────────┘
 ```
 
@@ -216,8 +221,10 @@ make zappy_gui
 The debug console shows raw protocol messages:
 
 ```
-Received: [WELCOME]
-Received: [bct 0 0 0 1 1 0 0 0 0]
+INFO: [WELCOME]
+INFO: [bct 0 0 0 1 1 0 0 0 0]
+ERROR: Invalid bct format
+WARNING: Server disconected
 ```
 
 ## 🔗 Reference
@@ -225,7 +232,10 @@ Received: [bct 0 0 0 1 1 0 0 0 0]
 ### Main Classes
 
 - **`Renderer`** - 3D rendering engine
-- **`CLient`** - Server communication
+- **`Client`** - Server communication
+- **`Player`** - Player informations
+- **`Ressources`** - Ressources informations
+
 - **`Camera`** - Camera control system
 
 ## 🔗 Related Documentation
