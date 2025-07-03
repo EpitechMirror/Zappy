@@ -43,9 +43,10 @@ void plv_graphics(client_t *client, server_config_t *conf)
 static void pic_graphics(client_t *client, server_config_t *conf)
 {
     char msg[256];
-    int team_count = find_nb_teams(client);
 
-    snprintf(msg, sizeof(msg), "pic %d %d %d %d\n", client->x, client->y, client->level, team_count);
+    snprintf(msg, sizeof(msg), "pic %d %d %d #%d\n", 
+             client->x, client->y, client->level, client->fd);
+    
     for (int i = 0; i < conf->nb_graphics; i++)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
@@ -91,8 +92,8 @@ int find_nb_teams(client_t *client)
 void notify_graphics_player_update(client_t *client, server_config_t *conf, int result)
 {
     ppo_graphics(client, conf);
-    pic_graphics(client, conf);
-    plv_graphics(client, conf);
     pie_graphics(client, conf, result);
+    plv_graphics(client, conf);
+    pic_graphics(client, conf);
     pin_graphics(client, conf);
 }
