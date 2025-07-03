@@ -23,23 +23,23 @@ int find_resource_index(char *resource_name) {
     return -1;
 }
 
-void send_pgt(int client_id, int resource_index, server_config_t *conf)
-{
-    char buffer[64];
-    int len = snprintf(buffer, sizeof(buffer), "pgt %d %d\n", client_id, resource_index);
+// void send_pgt(int client_id, int resource_index, server_config_t *conf)
+// {
+//     char buffer[64];
+//     int len = snprintf(buffer, sizeof(buffer), "pgt %d %d\n", client_id, resource_index);
 
-    for (int i = 0; i < conf->nb_graphics; i++) {
-        if (conf->graphic_fds[i] != -1) {
-            send(conf->graphic_fds[i], buffer, len, 0);
-        }
-    }
-}
+//     for (int i = 0; i < conf->nb_graphics; i++) {
+//         if (conf->graphic_fds[i] != -1) {
+//             send(conf->graphic_fds[i], buffer, len, 0);
+//         }
+//     }
+// }
 
 void handle_take_command(client_t *client, server_config_t *conf,
     const char *cmd)
 {
     take_object(client, conf, (char *)cmd);
-    send_pgt(client->id, find_resource_index((char *)cmd + 5), conf);
+    // send_pgt(client->id, find_resource_index((char *)cmd + 5), conf);
     pin_graphics(client, conf);
 }
 

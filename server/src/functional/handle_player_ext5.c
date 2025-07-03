@@ -118,16 +118,20 @@ void execute_pending_commands(server_config_t *conf)
 {
     double now = get_current_time();
     command_t *cmd;
+    command_t *next_cmd;
 
     for (client_t *c = conf->clients; c; c = c->next) {
         if (!c->is_alive || !c->command_queue)
             continue;
-        cmd = c->command_queue;
-        if (cmd->execute_at <= now) {
+        
+        while (c->command_queue && c->command_queue->execute_at <= now) {
+            cmd = c->command_queue;
+            next_cmd = cmd->next;
             execute_command(c, conf, cmd->cmd);
-            c->command_queue = cmd->next;
+            c->command_queue = next_cmd;
             free(cmd->cmd);
             free(cmd);
+            now = get_current_time();
         }
     }
 }
