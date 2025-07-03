@@ -1,0 +1,426 @@
+* e2b322d (HEAD -> bash) Refactor and enhance server workflow, testing framework, and documentation
+*   d09c825 (origin/dev, dev) Merge pull request #85 from EpitechMirror/server
+|\  
+| *   b3522b7 (origin/server) Merge branch 'dev' into server
+| |\  
+| |/  
+|/|   
+* |   76ef71f Merge pull request #84 from EpitechMirror/Console
+|\ \  
+| * | 7913edd (origin/Console, Console) feat: Add console logging functionality with various log levels
+* | |   d5d8f2c Merge pull request #82 from EpitechMirror/gui
+|\ \ \  
+| |/ /  
+|/| |   
+| | *   8112dda (server) Merge branch 'gui' into server
+| | |\  
+| | |/  
+| |/|   
+| * | ef9536d (origin/gui, origin/Design_chamber, gui) [+] add frequency to the game status board
+| * | d73641c [~] update menu
+| * | 0acb4da [+] add debug mode with class console + beginning handle of sgt
+| * | a32cbb8 discard warning
+| * | eec8bdd [+] add waiting music
+| * | 8daf88e [~] center title on loading screen, fix quit game on menu, implement beginning of debug mode
+| * | 39d94a4 [+] add menu
+| | * b675d8b feat: implement resource drop command and update graphics notifications
+| | * 14f599f [+] sgt command
+| | * 164b9c1 [~] pie command
+| | * 1432eca (origin/repair_server) [+] pic and pie command
+| | * 3be83f8 (repair_server) refactor: simplify handle_resource function signature and update calls in set_object
+| | * 174e6e4 refactor: enhance resource handling and player death management in game state
+| | * 5156b04 refactor: implement command handling structure and functions for client commands
+| | * 38d862f refactor: add movement and command handling functions for player actions
+| | * 86bd346 Refactor player handling and graphics notification functions
+| | * aa4dd8b refactor: streamline client polling logic and enhance resource handling in player functions
+| | * b6124b3 refactor: update AI script path and improve function signatures for clarity
+| | * 22d1039 refactor: clean up code formatting and improve readability across multiple files
+| | * 6eab77c refactor: update include paths for consistency across source files
+| | * ba97419 refactor: improve code organization and readability in main.c
+| | * 2ce58b6 [-] suppressing command
+| | * 1ccc82e [+] command queue for time-based execution
+| | * 2d4e3a3 [+] plv function
+| | * ad6bbd3 [+] consumption of the food and player incantation
+| | *   5f83544 Merge branch 'server' of github.com:EpitechMirror/Zappy into server
+| | |\  
+| | | *   2eed185 Merge branch 'gui' into server
+| | | |\  
+| | |_|/  
+| |/| |   
+| | * | b452dfa [~] game state
+| | |/  
+| | *   7a17b23 Merge pull request #71 from EpitechMirror/server_graphic
+| | |\  
+| | | * 22ea048 (origin/server_graphic) [~] palyer decplacement
+| | | *   d2eb807 Merge branch 'gui' into server_graphic
+| | | |\  
+| | | * \   c865b6c Merge branch 'server_graphic' of github.com:EpitechMirror/Zappy into server_graphic
+| | | |\ \  
+| | | | * \   3aa790e Merge pull request #70 from EpitechMirror/gui
+| | | | |\ \  
+| | | * | | | fb17efa [+] hunger and ressource spawn
+| | | |/ / /  
+| | | * | |   5a21d86 Merge pull request #69 from EpitechMirror/server
+| | | |\ \ \  
+| | | * \ \ \   01bcf97 Merge pull request #64 from EpitechMirror/server
+| | | |\ \ \ \  
+| | * | | | | | dd59d84 [+] Added Connect_nbr Incantation and ejet only for and death missing and time
+| | * | | | | | 3f8f6d4 [+] Added Connect_nbr Incantation and ejet only for and death missing and time
+| | * | | | | | 5f74646 [+] Added working broadcast
+| | * | | | | | 270e736 [+] Added working broadcast
+| | | |_|/ / /  
+| | |/| | | |   
+| | * | | | |   aeb5c7d Merge pull request #68 from EpitechMirror/gui
+| | |\ \ \ \ \  
+| | * | | | | | 1120c30 [~] egg handling and moving player
+| | * | | | | | a1a0c82 [+] Connection server-client with the new ai
+| | * | | | | |   292636e Merge pull request #67 from EpitechMirror/ai
+| | |\ \ \ \ \ \  
+| | * \ \ \ \ \ \   e56e7b2 Merge branch 'server' of github.com:EpitechMirror/Zappy into server
+| | |\ \ \ \ \ \ \  
+| | | | |_|_|/ / /  
+| | | |/| | | | |   
+| | | * | | | | | 68275f9 [+] connection player to an egg
+| | * | | | | | | 55b4008 [+] Added Take object for ai client and also added look command
+| | |/ / / / / /  
+| | * | | | | | c59eef0 [+] Added Take object for ai client and also added look command
+| | * | | | | |   9eaaa18 Merge pull request #63 from EpitechMirror/gui
+| | |\ \ \ \ \ \  
+| | * \ \ \ \ \ \   00b35bc Merge pull request #62 from EpitechMirror/server_graphic
+| | |\ \ \ \ \ \ \  
+| | | | |_|_|/ / /  
+| | | |/| | | | |   
+| | | * | | | | |   39059cc Merge branch 'server' into server_graphic
+| | | |\ \ \ \ \ \  
+| | | |/ / / / / /  
+| | |/| | | | | |   
+| | * | | | | | | aee60c1 Add client structure and refactor movement functions for clarity
+| | * | | | | | | 6b1f970 [~] changed commands to correct ones and changed how the command is handeled so it doesnt work graphic side
+| | * | | | | | | 1b7e45a [~] changed commands to correct ones and changed how the command is handeled so it doesnt work graphic side
+| | * | | | | | | 1499ead [+] Added ppo still needs oreintation and need for inventory to make plv
+| | * | | | | | | 1f72816 [+] added tna and fixed the string comparingù
+| | * | | | | | | 0a9454d [+] added mct and bct but send_whole_map funtion is to be remade
+| | * | | | | | | 15db3a7 [+] server response to ai msz
+| | | * | | | | | 5edc672 [~] changes client data graphic
+| | | * | | | | | 311a955 [+] egg structure + send team graphic
+| | |/ / / / / /  
+| | * | | | | | 0d5eaec [+] handle client data and connections for slots and clients
+| | * | | | | |   3dcba59 Merge pull request #53 from EpitechMirror/ressources
+| | |\ \ \ \ \ \  
+| | | * \ \ \ \ \   472e501 (origin/ressources) Merge branch 'server' into ressources
+| | | |\ \ \ \ \ \  
+| | | |/ / / / / /  
+| | |/| | | | | |   
+| | * | | | | | | 7c420b5 [FIX] coding style and warning error
+| | | * | | | | | b876fc3 [~] calcul of ressources and send to gui
+| | | * | | | | |   1882305 Merge branch 'ressources' of github.com:EpitechMirror/Zappy into ressources
+| | | |\ \ \ \ \ \  
+| | | | * \ \ \ \ \   536ead9 Merge pull request #52 from EpitechMirror/gui
+| | | | |\ \ \ \ \ \  
+| | | * | \ \ \ \ \ \   16fa645 Merge remote-tracking branch 'origin/gui' into ressources
+| | | |\ \ \ \ \ \ \ \  
+| | | | |/ / / / / / /  
+| | | |/| | | | | | |   
+| | | * | | | | | | | 401e2b0 [+] handle and send ressources to GUI and coding style
+| | | * | | | | | | | a523355 [+] CMakelists
+| | |/ / / / / / / /  
+| | * | | | | | | |   d566362 Merge remote-tracking branch 'refs/remotes/origin/server' into server
+| | |\ \ \ \ \ \ \ \  
+| | | * | | | | | | | 06f7a42 [~] readd print help as it asnt orking
+| | * | | | | | | | | 72dc084 Refactor server connection handling and improve client management
+| | |/ / / / / / / /  
+| | | | | | | | | | * e24e20d (origin/automation, automation) feat: Add comprehensive CMake configuration and build scripts for Zappy project
+| |_|_|_|_|_|_|_|_|/  
+|/| | | | | | | | |   
+| | | | | | | | | | *   b5c5cf8 (origin/main, origin/HEAD) Merge pull request #81 from EpitechMirror/ananasparenti-patch-1
+| | | | | | | | | | |\  
+| | | | | | | | | | | * 62c57d8 (origin/ananasparenti-patch-12, origin/ananasparenti-patch-1) Update README.md
+| | | | | | | | | | |/  
+| | | | | | | | | | | * 63a45a4 (origin/ananasparenti-patch-1-1) Update README.md
+| | | | | | | | | | |/  
+| | | | | | | | | | *   1806108 Merge pull request #80 from EpitechMirror/dev
+| | | | | | | | | | |\  
+| |_|_|_|_|_|_|_|_|_|/  
+|/| | | | | | | | | |   
+* | | | | | | | | | | ddc0f15 fix: Update AI script path in build script to point to simple_ai_manager.py
+* | | | | | | | | | |   faccf18 Merge pull request #79 from EpitechMirror/ai
+|\ \ \ \ \ \ \ \ \ \ \  
+| * \ \ \ \ \ \ \ \ \ \   8cbed17 (origin/ai) Merge branch 'dev' into ai
+| |\ \ \ \ \ \ \ \ \ \ \  
+| |/ / / / / / / / / / /  
+|/| | | | | | | | | | |   
+* | | | | | | | | | | |   d37ea4a Merge pull request #78 from EpitechMirror/server_test
+|\ \ \ \ \ \ \ \ \ \ \ \  
+| * | | | | | | | | | | | 616e22c (origin/server_test, server_test) fix: Enhance GitHub Actions workflow for Ubuntu 24.04 compatibility and improve error handling in unit test builds
+| * | | | | | | | | | | | 9aae974 fix: Update GitHub Actions workflow for Ubuntu 24.04 compatibility and enhance coverage reporting
+| * | | | | | | | | | | | 92d074c Add unit tests for server functionality and implement a simple test framework
+|/ / / / / / / / / / / /  
+* | | | | | | | | | | |   12367d6 Merge pull request #77 from EpitechMirror/docs
+|\ \ \ \ \ \ \ \ \ \ \ \  
+| * | | | | | | | | | | | 905868f (origin/docs, docs) chore: Remove configuration files (.clang-format, .editorconfig, .pre-commit-config.yaml, setup.cfg) and update README and index.html to reflect team changes
+* | | | | | | | | | | | | 7994733 Merge pull request #76 from EpitechMirror/docs
+|\| | | | | | | | | | | | 
+| * | | | | | | | | | | | 49f7c94 fix: Remove raylib submodule and .gitmodules to fix CI/CD pipeline
+* | | | | | | | | | | | | 27de0bb Merge pull request #75 from EpitechMirror/docs
+|\| | | | | | | | | | | | 
+| * | | | | | | | | | | | 06816f0 Add comprehensive documentation for Zappy protocol, quick start guide, and server architecture
+|/ / / / / / / / / / / /  
+* | | | | | | | | | | |   edd13de Merge pull request #74 from EpitechMirror/ai
+|\ \ \ \ \ \ \ \ \ \ \ \  
+| | * | | | | | | | | | | 3bf6b36 (ai) Remove empty CMakeLists.txt file from AI directory
+| | * | | | | | | | | | | 6a0260e Add unit tests for ZappyAIManager and initial AI metrics
+| |/ / / / / / / / / / /  
+| * | | | | | | | | | | 32054ca Refactor GitHub Actions workflows: consolidate build, test, and notification processes; remove obsolete workflows; enhance AI directory checks and testing infrastructure.
+| * | | | | | | | | | | a63b6a0 Add comprehensive unit tests for AI components including MemorySystem, NeuralNetwork, ThinkingModule, and ZappyAI
+| | |_|_|_|_|/ / / / /  
+| |/| | | | | | | | |   
+| | | | | | | | | | *   f63dfd5 Merge pull request #54 from EpitechMirror/dev
+| | | | | | | | | | |\  
+| | | | | | | | | | | | * 2aaf153 (origin/auto-correct-pre-commit) Auto-fix pre-commit issues
+| |_|_|_|_|_|_|_|_|_|_|/  
+|/| | | | | | | | | | |   
+* | | | | | | | | | | |   98d2264 Merge pull request #72 from EpitechMirror/gui
+|\ \ \ \ \ \ \ \ \ \ \ \  
+| | |/ / / / / / / / / /  
+| |/| | | | | | | | | |   
+| * | | | | | | | | | |   e5b905b Merge branch 'gui' of github.com:EpitechMirror/Zappy into gui
+| |\ \ \ \ \ \ \ \ \ \ \  
+| | * | | | | | | | | | | 91e1f71 [FIX] Cleaning resources files
+| * | | | | | | | | | | | 178c1a2 [+]handle  seg
+| |/ / / / / / / / / / /  
+| * | | | | | | | | | | 2fd99de [ADD] walls of chamber
+| * | | | | | | | | | | 3bb7b97 [ADD] Adding 4 walls of a chamber in a method associated
+| * | | | | | | | | | | c8101f7 [+] handle incantation
+| | |_|_|_|_|_|_|/ / /  
+| |/| | | | | | | | |   
+| * | | | | | | | | | 337d932 ia model
+| | |_|_|_|_|_|/ / /  
+| |/| | | | | | | |   
+| * | | | | | | | | 7d5bd24 [+] add pic and pie
+| * | | | | | | | | 67876fb [ADD] New floor (model, texture, rendering)
+| * | | | | | | | | 233ae9b [ADD] Replace manually the desk and the game on it
+| | |_|_|_|_|/ / /  
+| |/| | | | | | |   
+| * | | | | | | | 175a837 [+] add pgt, pdr, pfk, smg, suc, sbp
+| * | | | | | | | 15cb066 [~] fix
+| * | | | | | | |   4ba835e Merge branch 'gui' of github.com:EpitechMirror/Zappy into gui
+| |\ \ \ \ \ \ \ \  
+| | * | | | | | | | 38514c7 [ADD] new desk that will be our center of game, need to delete some functions and to replace well all elements items players... todo: finish the chamber
+| * | | | | | | | | a0f11a2 [+] improve player detection + tile
+|/ / / / / / / / /  
+* | | | | | | | |   fd0cfcb Merge pull request #66 from EpitechMirror/ai
+|\ \ \ \ \ \ \ \ \  
+| |/ / / / / / / /  
+|/| / / / / / / /   
+| |/ / / / / / /    
+| * | | | | | | d58c34e Update timestamps and clean up unused variables in AI classes
+| * | | | | | |   0e2ee61 Merge pull request #65 from EpitechMirror/dev
+| |\ \ \ \ \ \ \  
+| |/ / / / / / /  
+|/| | | | | | |   
+* | | | | | | |   ac2e4e7 Merge pull request #61 from EpitechMirror/gui
+|\ \ \ \ \ \ \ \  
+| * | | | | | | | eb0d7eb [+] notif when server disconnect
+| * | | | | | | |   67c5d32 Merge branch 'dev' into gui
+| |\ \ \ \ \ \ \ \  
+| | | |_|_|_|_|_|/  
+| | |/| | | | | |   
+| * | | | | | | |   f2abe72 Merge branch 'dev' into gui
+| |\ \ \ \ \ \ \ \  
+| * | | | | | | | | 028f41b [~] Refactor Renderer class with the creation of the AssetsManager class, which load every texture etc out the Renderer class
+| * | | | | | | | | 24a347f update doc
+| | |_|_|_|_|_|/ /  
+| |/| | | | | | |   
+| * | | | | | | | caa3792 [~] Improve InfoBoxBoard and begin InfoPlayersBoard
+| * | | | | | | | f4923f3 [+] Improve loading window + handle click on box
+| * | | | | | | | ba0e55b [+] improve loading window
+| * | | | | | | | acc0c75 [+] more unit tests
+| * | | | | | | | ca06f7d [ADD] andy resources
+| * | | | | | | | 6f3f230 [ADD] Walls of chamber of andy with calculs to place it with the grid, changing the fllor textures too
+| * | | | | | | | 04b2dea [~] improve camera
+| * | | | | | | | a99223a [+] music for wait
+| * | | | | | | | 2e833d9 [~] Plays op
+| * | | | | | | | f6f845f [FIX] Camera, fix the cursor, zoom and dezoom with z and s, need to add a key to enter this mode
+* | | | | | | | | 9b6c170 fix ai
+| |_|/ / / / / /  
+|/| | | | | | |   
+* | | | | | | | 8e6e8e2 Merge pull request #55 from EpitechMirror/gui
+|\| | | | | | | 
+| * | | | | | | ba1b8db [+] Handle player but need to be fix
+| * | | | | | | e583d14 [+] Implement ebo + edi
+| * | | | | | | 297e10b [ADD] Final unit tests
+| | |_|_|_|/ /  
+| |/| | | | |   
+| * | | | | | bf7eb43 [ADD] first unit test, to be completed
+| * | | | | | 4739bd0 [ADD] First unit test to see
+| * | | | | | 88fd7df [~] improve parse management and add ProtocolHandler
+* | | | | | |   933eb80 Merge pull request #51 from EpitechMirror/ai
+|\ \ \ \ \ \ \  
+| | |_|/ / / /  
+| |/| | | | |   
+| * | | | | | ce94ce0 Implement Zappy AI with neural networks, learning capabilities, and enhanced decision-making logic
+| * | | | | | e3ead16 Refactor Zappy AI implementation: - Consolidated AI logic into a single file (ai.py) and removed main.py. - Enhanced AI capabilities with neural networks, adaptive learning, and advanced decision-making. - Introduced performance metrics tracking and experience-based learning. - Removed deprecated methods and streamlined action execution. - Updated connection handling and response processing for improved reliability. - Added model persistence for saving and loading AI state.
+* | | | | | | 1867152 Delete ai/src/ai.py
+* | | | | | |   da7971d Merge pull request #49 from EpitechMirror/gui
+|\ \ \ \ \ \ \  
+| | |/ / / / /  
+| |/| / / / /   
+| |_|/ / / /    
+|/| | | | |     
+| * | | | | fc69aec [+] parse eggs + display
+| * | | | | 35776a5 [+] Implement Infor Boards for Teams and Players, TeamsName completely parsed
+| * | | | | 067e8e5 [~] positionnement des items sur une case mieux
+| | |_|/ /  
+| |/| | |   
+* | | | | a856ed3 Merge pull request #46 from EpitechMirror/gui
+|\| | | | 
+| * | | |   d5be073 Merge branch 'dev' into gui
+| |\ \ \ \  
+| |/ / / /  
+|/| | | |   
+* | | | |   cfce521 Merge pull request #45 from EpitechMirror/server
+|\ \ \ \ \  
+| | |_|/ /  
+| |/| | |   
+| * | | | 0a27557 [+] print info of server
+| * | | | 74d8f47 [+] adding working server with build
+| * | | | 8747cae [+] adding working server with build
+| * | | |   af60c36 Merge pull request #44 from EpitechMirror/dev
+| |\ \ \ \  
+* | \ \ \ \   e8d031e Merge pull request #40 from EpitechMirror/ai
+|\ \ \ \ \ \  
+| |_|/ / / /  
+|/| | | / /   
+| | |_|/ /    
+| |/| | |     
+| * | | | cb83e90 Implement core AI components for Zappy, including Classes, MemorySystem, NeuralNetwork, ThinkingModule, and main execution logic
+| * | | | a094a19 Add TODO for level 8 info in ZappyAI and update test file permissions
+* | | | |   7160341 Merge branch 'server' into dev
+|\ \ \ \ \  
+| | |/ / /  
+| |/| | |   
+| * | | | 6d1af20 [+] Connection and communication graphic client and server team client and server
+| * | | | af9a207 [+] functional directory with server functionality
+| * | | | b7b5654 [-] test_client.c
+| * | | | 513bea1 [+] basic connection handling
+| * | | | 48405e4 [~] server code architecture
+| * | | | f661226 [+] validate arguments parsing
+| * | | | 5435252 [+] parsing arguments
+| * | | | 02667fa [+] Added initialization for sockets and begining of parsing
+| * | | | dbf7328 [+] Added initial server source files with CMake configuration
+| | |_|/  
+| |/| |   
+| * | | 57adf40 (main) Update integration-test.yml
+* | | | 7bd0c3b Add libcriterion-dev to integration test dependencies
+* | | |   8e56f18 Merge pull request #43 from EpitechMirror/workflows-edit
+|\ \ \ \  
+| * | | | 29dc7e8 (origin/workflows-edit, workflows-edit) Add raylib installation script and update integration test workflow to include it
+* | | | | f72c7e8 Merge pull request #41 from EpitechMirror/workflows-edit
+|\| | | | 
+| * | | | a02b1fe Update integration test workflow to install g++ and cmake; replace make with build.sh for building components
+| * | | | 5537fd7 Refactor build process and add AI script checks; update CMake configurations for server and GUI
+|/ / / /  
+* | | |   23ee9f8 Merge pull request #39 from EpitechMirror/auto-correct-pre-commit
+|\ \ \ \  
+| * | | | 306783b Auto-fix pre-commit issues
+|/ / / /  
+* | | |   b43837a Merge pull request #36 from EpitechMirror/ai
+|\ \ \ \  
+| | |/ /  
+| |/| |   
+| * | | cee5867 Update ai-build.yml
+| * | |   7fdabed Merge branch 'dev' into ai
+| |\ \ \  
+| |/ / /  
+|/| | |   
+* | | | 690b14a Fix line break in connection message for better readability
+* | | |   eabacf6 Merge pull request #37 from EpitechMirror/auto-correct-pre-commit
+|\ \ \ \  
+| * | | | 9d49af4 Auto-fix pre-commit issues
+|/ / / /  
+* | | | 995fa55 Update code-quality.yml
+* | | | 25a5ecd Update .pre-commit-config.yaml
+* | | | 6464253 Update code-quality.yml
+* | | | 53e2715 Update code-quality.yml
+* | | | 2e3dc81 Update code-quality.yml
+* | | | 7ff70db Update code-quality.yml
+* | | | 969c120 Update code-quality.yml
+* | | | 16ab6b6 Update code-quality.yml
+* | | | ea2ed9c Update code-quality.yml
+* | | | 2ad8239 Update code-quality.yml
+* | | | d30e58a Update gui-build.yml
+* | | | 231616b Rename test_ai to test_ai.py
+* | | | 085eb64 Update ai-build.yml
+* | | | b29c276 Update ai-build.yml
+* | | |   4c665da Merge pull request #35 from EpitechMirror/gui
+|\ \ \ \  
+* \ \ \ \   20ee1fd Merge pull request #34 from EpitechMirror/gui
+|\ \ \ \ \  
+| | | * | | e27fcdb Refactor ai.py: remove unused imports and clean up code structure; add unit tests for ZappyAI and related components
+| | | * | | b3c1de0 Create __init__.py
+| | | * | | 5fcc721 Create __init__.py
+| | | | | * 1edb19d [+] add Loading window and time
+| | | | | * 55b804a [~] improve items placement and gestion
+| | | | | * 52ae3cf [ADD] other textures not clean and unload funtcions to not crash
+| | | | | * 9c62a3f [ADD] Pixar lamp models as player with his textures and shaders
+| | | | | * 7b660d7 [ADD] New elements to renderer, new plane with his texture, camera zoom, example of player, lights and shaders in associated classes
+| | | | | * eb181bf Implement resource management in Map class; add methods for setting and retrieving tile resources, and counting specific resource types
+| | | | | * 69c1e29 Refactor Client and Renderer classes to improve data handling; add map information display and update methods
+| | | |_|/  
+| | |/| |   
+| | * | | 2d5008e Refactor Client and Renderer classes to improve map handling and connection error reporting; update .gitignore for IDE files
+| | * | |   8e824eb Add Renderer and Camera classes with rendering functionality in zappy_gui
+| | |\ \ \  
+| | | * | | cb4287c (origin/Renderer) [ADD] Grid and camera that we can move, in a class associated. Reorganizing Game loop too
+| | | * | | 761b48a [ADD] add class renderer with render window method
+| | * | | | 159f2ec Add unit tests for Client and Map classes with CMake configuration
+| | * | | | 8d700b1 Add Map class and update CMake configuration for map source files
+| | |/ / /  
+| | * / / 18860a4 Implement zappy_gui with CMake configuration and client-server communication
+| |/ / /  
+| * / / 6727047 Add initial implementation of ZappyClient and main GUI functionality
+|/ / /  
+* | | 7dab1f7 Refactor code structure for improved readability and maintainability
+* | |   baa769c Merge pull request #33 from EpitechMirror/image
+|\ \ \  
+| * | | ffe2fd1 (origin/image) Implement code changes to enhance functionality and improve performance
+|/ / /  
+* | |   12328ee Merge pull request #32 from EpitechMirror/readme
+|\ \ \  
+| * | | cf681fc (origin/readme) Update README.md
+|/ / /  
+* | | 53c65d1 Update integration-test.yml
+* | |   60700c8 Merge pull request #31 from EpitechMirror/main
+|\ \ \  
+| | |/  
+| |/|   
+| * |   463104d Merge branch 'dev' into main
+| |\ \  
+| |/ /  
+|/| |   
+* | |   b8dd4f1 Merge pull request #30 from EpitechMirror/ai
+|\ \ \  
+| | |/  
+| |/|   
+| * | a11235f Add unit tests for ZappyAI and related components; create comprehensive documentation
+|/ /  
+| * 6540c20 Update push-to-mirror.yml
+| * f01578d Update dependency-check.yml
+| * 2b54a8a Rename requirement.txt to requirements.txt
+| * 32a706e Create requirement.txt
+| * e1db4ad Add files via upload
+| * 79f60ab Add files via upload
+| * 44657cd Add files via upload
+| * 2260312 Delete .github/workflows/issue-automation.yml
+| * ead5e07 Update issue-automation.yml v6
+| * 968f571 Update issue-automation.yml
+| * dd8648d Update issue-automation.yml
+| * e0b71a4 Update issue-automation.yml
+| * 48f09df Update issue-automation.yml
+| * 5d49bdf Add workflow_dispatch trigger and schedule to issue automation workflow
+| * eff558c Refactor issue automation workflow to use GitHub CLI for project management actions
+| | * 1c97794 (origin/Adrien-Marette-patch-1) Create CriticalPathAndParallelWorkStreams.md
+| |/  
+| * ad63c62 Add configuration files and workflows for project setup, code quality, and issue management
+|/  
+* edebdf0 Initial commit

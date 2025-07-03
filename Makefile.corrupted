@@ -1,0 +1,457 @@
+# Zappy Project - Professional Makefile
+# Enterprise-grade build system for multi-component project
+
+# Project configuration
+PROJECT_NAME = Zappy
+VERSION = 1.0.0
+BUILD_TYPE ?= Release
+
+# Directoriebuild-gui:
+	@echo "$(BLUE)[BUILD]$(NC) Building GUI component..."
+	@if [ -d "$(GUI_DIR)" ]; then \
+		mkdir -p $(GUI_DIR)/build; \
+		cd $(GUI_DIR)/build && cmake .. && $(MAKE) -j$(NPROC); \
+	else \
+		echo "$(RED)[ERROR]$(NC) GUI directory not found"; \
+		exit 1; \
+	fi
+	@if [ -f "$(GUI_DIR)/zappy_gui" ]; then \
+		cp $(GUI_DIR)/zappy_gui $(DIST_DIR)/; \
+		echo "$(GREEN)[COPY]$(NC) GUI binary copied to $(DIST_DIR)/"; \
+	else \
+		echo "$(YELLOW)[WARNING]$(NC) GUI binary not found"; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) GUI built successfully"build
+DIST_DIR = dist
+COVERAGE_DIR = coverage
+SERVER_DIR = server
+GUI_DIR = gui
+AI_DIR = ai
+
+# Colors for output
+GREEN = \033[0;32m
+YELLOW = \033[1;33m
+RED = \033[0;31m
+BLUE = \033[0;34m
+PURPLE = \033[0;35m
+CYAN = \033[0;36m
+NC = \033[0m
+
+# Default target
+.DEFAULT_GOAL := help
+
+# Detect number of CPU cores
+NPROC := $(shell nproc 2>/dev/null || echo 1)
+
+# System detection
+OS := $(shell uname -s)
+ARCH := $(shell uname -m)
+
+# Timestamp
+BUILD_TIME := $(shell date '+%Y-%m-%d_%H-%M-%S')
+
+# Phony targets
+.PHONY: all clean setup build test coverage memory analyze format release ci help
+.PHONY: build-server build-gui setup-ai test-server test-gui test-ai
+.PHONY: clean-server clean-gui clean-ai install-deps check-deps
+
+# Help target (default)
+help:
+	@echo "$(CYAN)=================================================$(NC)"
+	@echo "$(CYAN)$(PROJECT_NAME) Build System v$(VERSION)$(NC)"
+	@echo "$(CYAN)Professional build system for multi-component project$(NC)"
+	@echo "$(CYAN)=================================================$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Main Targets:$(NC)"
+	@echo "  all           - Build all components"
+	@echo "  clean         - Clean all build artifacts"
+	@echo "  setup         - Setup build environment"
+	@echo "  build         - Build all components"
+	@echo "  test          - Run all tests"
+	@echo "  coverage      - Generate coverage reports"
+	@echo "  memory        - Run memory leak detection"
+	@echo "  analyze       - Run static code analysis"
+	@echo "  format        - Format all code"
+	@echo "  release       - Create release package"
+	@echo "  ci            - Run CI pipeline"
+	@echo ""
+	@echo "$(YELLOW)Component Targets:$(NC)"
+	@echo "  build-server  - Build server component"
+	@echo "  build-gui     - Build GUI component"
+	@echo "  setup-ai      - Setup AI component"
+	@echo "  test-server   - Test server component"
+	@echo "  test-gui      - Test GUI component"
+	@echo "  test-ai       - Test AI component"
+	@echo ""
+	@echo "$(YELLOW)Utility Targets:$(NC)"
+	@echo "  check-deps    - Check system dependencies"
+	@echo "  install-deps  - Install development dependencies"
+	@echo "  clean-all     - Deep clean all artifacts"
+	@echo "  info          - Show build information"
+	@echo "  help          - Show this help message"
+	@echo ""
+	@echo "$(YELLOW)Examples:$(NC)"
+	@echo "  make all              # Build everything"
+	@echo "  make test             # Run all tests"
+	@echo "  make ci               # Full CI pipeline"
+	@echo "  make release          # Create release package"
+	@echo "  make BUILD_TYPE=Debug # Build debug version"
+
+# Build information
+info:
+	@echo "$(CYAN)Build Information:$(NC)"
+	@echo "  Project: $(PROJECT_NAME) v$(VERSION)"
+	@echo "  Build Type: $(BUILD_TYPE)"
+	@echo "  OS: $(OS)"
+	@echo "  Architecture: $(ARCH)"
+	@echo "  CPU Cores: $(NPROC)"
+	@echo "  Build Time: $(BUILD_TIME)"
+
+# Check system dependencies
+check-deps:
+	@echo "$(BLUE)[CHECK]$(NC) Checking system dependencies..."
+	@$(MAKE) -s check-tool TOOL=gcc DESC="GCC Compiler"
+	@$(MAKE) -s check-tool TOOL=g++ DESC="G++ Compiler"
+	@$(MAKE) -s check-tool TOOL=make DESC="Make Build System"
+	@$(MAKE) -s check-tool TOOL=cmake DESC="CMake Build System"
+	@$(MAKE) -s check-tool TOOL=python3 DESC="Python 3"
+	@$(MAKE) -s check-tool TOOL=pip3 DESC="Python Package Manager"
+	@echo "$(GREEN)[SUCCESS]$(NC) All required dependencies found"
+
+# Internal target to check individual tools
+check-tool:
+	@if command -v $(TOOL) >/dev/null 2>&1; then \
+		echo "$(GREEN)  ✓$(NC) $(DESC) found"; \
+	else \
+		echo "$(RED)  ✗$(NC) $(DESC) not found"; \
+		exit 1; \
+	fi
+
+# Install development dependencies
+install-deps:
+	@echo "$(BLUE)[INSTALL]$(NC) Installing development dependencies..."
+	@if [ "$(OS)" = "Linux" ]; then \
+		sudo apt-get update; \
+		sudo apt-get install -y \
+			build-essential gcc g++ make cmake \
+			python3 python3-pip python3-venv \
+			valgrind lcov cppcheck clang-format \
+			pkg-config libssl-dev; \
+	elif [ "$(OS)" = "Darwin" ]; then \
+		brew install gcc make cmake python3 valgrind cppcheck clang-format; \
+	else \
+		echo "$(YELLOW)[WARNING]$(NC) Unsupported OS. Please install dependencies manually."; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Dependencies installation completed"
+
+# Setup build environment
+setup: check-deps
+	@echo "$(BLUE)[SETUP]$(NC) Setting up build environment..."
+	@mkdir -p $(BUILD_DIR) $(DIST_DIR) $(COVERAGE_DIR)
+	@echo "Build started at $(BUILD_TIME)" > $(BUILD_DIR)/build.log
+	@$(MAKE) -s setup-ai
+	@echo "$(GREEN)[SUCCESS]$(NC) Environment setup completed"
+
+# Clean all build artifacts
+clean:
+	@echo "$(BLUE)[CLEAN]$(NC) Cleaning all build artifacts..."
+	@rm -rf $(BUILD_DIR) $(DIST_DIR) $(COVERAGE_DIR)
+	@rm -f build.log error.log
+	@$(MAKE) -s clean-server
+	@$(MAKE) -s clean-gui
+	@$(MAKE) -s clean-ai
+	@echo "$(GREEN)[SUCCESS]$(NC) All build artifacts cleaned"
+
+# Deep clean including dependencies
+clean-all: clean
+	@echo "$(BLUE)[CLEAN]$(NC) Deep cleaning all artifacts..."
+	@if [ -d "$(AI_DIR)/.venv" ]; then \
+		rm -rf $(AI_DIR)/.venv; \
+	fi
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -name "*.pyc" -delete 2>/dev/null || true
+	@echo "$(GREEN)[SUCCESS]$(NC) Deep clean completed"
+
+# Build all components
+all: build
+
+build: setup build-server build-gui setup-ai
+	@echo "$(GREEN)[SUCCESS]$(NC) All components built successfully"
+
+# Server component
+build-server:
+	@echo "$(BLUE)[BUILD]$(NC) Building server component..."
+	@if [ -d "$(SERVER_DIR)" ]; then \
+		mkdir -p $(SERVER_DIR)/build; \
+		cd $(SERVER_DIR)/build && cmake .. && $(MAKE) -j$(NPROC); \
+	else \
+		echo "$(RED)[ERROR]$(NC) Server directory not found"; \
+		exit 1; \
+	fi
+	@if [ -f "$(SERVER_DIR)/build/zappy_server" ]; then \
+		cp $(SERVER_DIR)/build/zappy_server $(DIST_DIR)/; \
+		echo "$(GREEN)[COPY]$(NC) Server binary copied to $(DIST_DIR)/"; \
+	else \
+		echo "$(YELLOW)[WARNING]$(NC) Server binary not found"; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Server built successfully"
+
+clean-server:
+	@if [ -d "$(SERVER_DIR)" ]; then \
+		rm -rf $(SERVER_DIR)/build/; \
+	fi
+
+test-server:
+	@echo "$(BLUE)[TEST]$(NC) Testing server component..."
+	@if [ -d "$(SERVER_DIR)/test" ]; then \
+		cd $(SERVER_DIR)/test && ./run_tests.sh; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) Server tests not found"; \
+	fi
+
+# GUI component
+build-gui:
+	@echo "$(BLUE)[BUILD]$(NC) Building GUI component..."
+	@if [ -d "$(GUI_DIR)" ]; then \
+		mkdir -p $(GUI_DIR)/build; \
+		cd $(GUI_DIR)/build && cmake .. && $(MAKE) -j$(NPROC); \
+		if [ -f $(GUI_DIR)/zappy_gui ]; then \
+			cp $(GUI_DIR)/zappy_gui $(DIST_DIR)/; \
+		fi; \
+	else \
+		echo "$(RED)[ERROR]$(NC) GUI directory not found"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) GUI built successfully"
+
+clean-gui:
+	@if [ -d "$(GUI_DIR)" ]; then \
+		rm -rf $(GUI_DIR)/build/; \
+	fi
+
+test-gui:
+	@echo "$(BLUE)[TEST]$(NC) Testing GUI component..."
+	@if [ -d "$(GUI_DIR)" ] && [ -f "$(GUI_DIR)/build/unit_tests" ]; then \
+		cd $(GUI_DIR)/build && ./unit_tests; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) GUI tests not available"; \
+	fi
+
+# AI component
+setup-ai:
+	@echo "$(BLUE)[SETUP]$(NC) Setting up AI component..."
+	@if [ -d "$(AI_DIR)" ]; then \
+		cd $(AI_DIR); \
+		if [ ! -d ".venv" ]; then \
+			python3 -m venv .venv; \
+		fi; \
+		source .venv/bin/activate && pip install --upgrade pip; \
+		source .venv/bin/activate && pip install -r requirements.txt; \
+		echo '#!/bin/bash' > ../$(DIST_DIR)/run_ai.sh; \
+		echo '# AI Component Launcher' >> ../$(DIST_DIR)/run_ai.sh; \
+		echo 'cd "$$(dirname "$$0")/../$(AI_DIR)"' >> ../$(DIST_DIR)/run_ai.sh; \
+		echo 'source .venv/bin/activate' >> ../$(DIST_DIR)/run_ai.sh; \
+		echo 'python3 src/main_ai.py "$$@"' >> ../$(DIST_DIR)/run_ai.sh; \
+		chmod +x ../$(DIST_DIR)/run_ai.sh; \
+	else \
+		echo "$(RED)[ERROR]$(NC) AI directory not found"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) AI setup completed"
+
+clean-ai:
+	@if [ -d "$(AI_DIR)" ]; then \
+		cd $(AI_DIR); \
+		rm -rf .pytest_cache/ __pycache__/ htmlcov/ .coverage; \
+		find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true; \
+		find . -name "*.pyc" -delete 2>/dev/null || true; \
+	fi
+
+test-ai:
+	@echo "$(BLUE)[TEST]$(NC) Testing AI component..."
+	@if [ -d "$(AI_DIR)" ]; then \
+		cd $(AI_DIR) && source .venv/bin/activate && python3 run_tests.py; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) AI directory not found"; \
+	fi
+
+# Testing
+test: test-server test-gui test-ai
+	@echo "$(GREEN)[SUCCESS]$(NC) All tests completed"
+
+# Coverage analysis
+coverage:
+	@echo "$(BLUE)[COVERAGE]$(NC) Generating coverage reports..."
+	@mkdir -p $(COVERAGE_DIR)
+	@if [ -d "$(SERVER_DIR)/test" ]; then \
+		cd $(SERVER_DIR)/test && ./run_tests.sh coverage; \
+		if ls *.gcov 1> /dev/null 2>&1; then \
+			cp *.gcov ../../$(COVERAGE_DIR)/; \
+		fi; \
+	fi
+	@if [ -d "$(AI_DIR)" ]; then \
+		cd $(AI_DIR) && source .venv/bin/activate && python3 run_tests.py -c; \
+		if [ -d "htmlcov" ]; then \
+			cp -r htmlcov ../$(COVERAGE_DIR)/ai_coverage; \
+		fi; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Coverage reports generated in $(COVERAGE_DIR)"
+
+# Memory leak detection
+memory:
+	@echo "$(BLUE)[MEMORY]$(NC) Running memory leak detection..."
+	@if command -v valgrind >/dev/null 2>&1; then \
+		if [ -d "$(SERVER_DIR)/test" ]; then \
+			cd $(SERVER_DIR)/test && ./run_tests.sh memory; \
+		fi; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) Valgrind not found"; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Memory check completed"
+
+# Static code analysis
+analyze:
+	@echo "$(BLUE)[ANALYZE]$(NC) Running static code analysis..."
+	@if command -v cppcheck >/dev/null 2>&1; then \
+		if [ -d "$(SERVER_DIR)" ]; then \
+			cppcheck --enable=all --error-exitcode=1 \
+				--suppress=missingIncludeSystem \
+				--suppress=unusedFunction \
+				$(SERVER_DIR)/src/ $(SERVER_DIR)/include/ || true; \
+		fi; \
+		if [ -d "$(GUI_DIR)" ]; then \
+			cppcheck --enable=all --error-exitcode=1 \
+				--suppress=missingIncludeSystem \
+				--suppress=unusedFunction \
+				$(GUI_DIR)/*.cpp $(GUI_DIR)/*/*.cpp || true; \
+		fi; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) cppcheck not found"; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Static analysis completed"
+
+# Code formatting
+format:
+	@echo "$(BLUE)[FORMAT]$(NC) Formatting code..."
+	@if [ -d "$(AI_DIR)" ]; then \
+		cd $(AI_DIR) && source .venv/bin/activate; \
+		if command -v black >/dev/null 2>&1; then \
+			black src/ tests/ 2>/dev/null || true; \
+		fi; \
+		if command -v isort >/dev/null 2>&1; then \
+			isort src/ tests/ 2>/dev/null || true; \
+		fi; \
+	fi
+	@if command -v clang-format >/dev/null 2>&1; then \
+		find $(SERVER_DIR) $(GUI_DIR) -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | \
+		xargs clang-format -i 2>/dev/null || true; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Code formatting completed"
+
+# Create release package
+release: clean build test
+	@echo "$(BLUE)[RELEASE]$(NC) Creating release package..."
+	@mkdir -p $(DIST_DIR)/zappy-$(VERSION)
+	@cp $(DIST_DIR)/zappy_server $(DIST_DIR)/zappy-$(VERSION)/
+	@cp $(DIST_DIR)/zappy_gui $(DIST_DIR)/zappy-$(VERSION)/
+	@cp $(DIST_DIR)/run_ai.sh $(DIST_DIR)/zappy-$(VERSION)/
+	@cp -r resources $(DIST_DIR)/zappy-$(VERSION)/
+	@cp -r docs $(DIST_DIR)/zappy-$(VERSION)/
+	@echo "# Zappy v$(VERSION)" > $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "## Quick Start" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "1. Start the server:" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```bash' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ./zappy_server -p 8080 -x 10 -y 10 -n team1 team2 -c 5 -f 100' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "2. Start the GUI:" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```bash' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ./zappy_gui -p 8080 -h localhost' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "3. Start AI client:" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```bash' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ./run_ai.sh -p 8080 -n team1 -h localhost' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo '   ```' >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@echo "Built on: $(BUILD_TIME)" >> $(DIST_DIR)/zappy-$(VERSION)/README.md
+	@cd $(DIST_DIR) && tar -czf zappy-$(VERSION).tar.gz zappy-$(VERSION)
+	@echo "$(GREEN)[SUCCESS]$(NC) Release package created: $(DIST_DIR)/zappy-$(VERSION).tar.gz"
+
+# Continuous Integration pipeline
+ci: clean setup build test coverage memory analyze
+	@echo "$(GREEN)[SUCCESS]$(NC) CI pipeline completed successfully"
+
+# Quick development cycle
+dev: clean build test
+	@echo "$(GREEN)[SUCCESS]$(NC) Development cycle completed"
+
+# Watch mode for development (requires inotify-tools)
+watch:
+	@echo "$(BLUE)[WATCH]$(NC) Starting watch mode..."
+	@if command -v inotifywait >/dev/null 2>&1; then \
+		while true; do \
+			inotifywait -r modify,create,delete $(SERVER_DIR) $(GUI_DIR) $(AI_DIR); \
+			echo "$(YELLOW)[REBUILD]$(NC) Files changed, rebuilding..."; \
+			$(MAKE) -s dev || true; \
+		done; \
+	else \
+		echo "$(YELLOW)[SKIP]$(NC) inotifywait not found. Install inotify-tools for watch mode."; \
+	fi
+
+# Debug build
+debug:
+	@$(MAKE) build BUILD_TYPE=Debug
+
+# Benchmark
+benchmark: build
+	@echo "$(BLUE)[BENCHMARK]$(NC) Running performance benchmarks..."
+	@if [ -f "$(DIST_DIR)/zappy_server" ]; then \
+		echo "Server startup time:"; \
+		time timeout 1s $(DIST_DIR)/zappy_server -p 8080 -x 10 -y 10 -n team1 team2 -c 5 -f 100 2>/dev/null || true; \
+	fi
+	@echo "$(GREEN)[SUCCESS]$(NC) Benchmarks completed"
+
+# Docker support
+docker-build:
+	@echo "$(BLUE)[DOCKER]$(NC) Building Docker image..."
+	@docker build -t zappy:$(VERSION) .
+	@echo "$(GREEN)[SUCCESS]$(NC) Docker image built: zappy:$(VERSION)"
+
+docker-run:
+	@echo "$(BLUE)[DOCKER]$(NC) Running Docker container..."
+	@docker run -p 8080:8080 zappy:$(VERSION)
+
+# Installation
+install: build
+	@echo "$(BLUE)[INSTALL]$(NC) Installing Zappy..."
+	@mkdir -p /usr/local/bin
+	@cp $(DIST_DIR)/zappy_server /usr/local/bin/
+	@cp $(DIST_DIR)/zappy_gui /usr/local/bin/
+	@cp $(DIST_DIR)/run_ai.sh /usr/local/bin/
+	@chmod +x /usr/local/bin/zappy_server /usr/local/bin/zappy_gui /usr/local/bin/run_ai.sh
+	@echo "$(GREEN)[SUCCESS]$(NC) Zappy installed to /usr/local/bin"
+
+# Status check
+status:
+	@echo "$(CYAN)Project Status:$(NC)"
+	@echo "  Server: $(shell [ -f $(DIST_DIR)/zappy_server ] && echo 'Built' || echo 'Not built')"
+	@echo "  GUI: $(shell [ -f $(DIST_DIR)/zappy_gui ] && echo 'Built' || echo 'Not built')"
+	@echo "  AI: $(shell [ -f $(DIST_DIR)/run_ai.sh ] && echo 'Setup' || echo 'Not setup')"
+	@echo "  Tests: $(shell [ -f $(BUILD_DIR)/test_results.log ] && echo 'Passed' || echo 'Not run')"
+	@echo "  Coverage: $(shell [ -d $(COVERAGE_DIR) ] && echo 'Generated' || echo 'Not generated')"
+
+# Print build configuration
+config:
+	@echo "$(CYAN)Build Configuration:$(NC)"
+	@echo "  PROJECT_NAME: $(PROJECT_NAME)"
+	@echo "  VERSION: $(VERSION)"
+	@echo "  BUILD_TYPE: $(BUILD_TYPE)"
+	@echo "  BUILD_DIR: $(BUILD_DIR)"
+	@echo "  DIST_DIR: $(DIST_DIR)"
+	@echo "  COVERAGE_DIR: $(COVERAGE_DIR)"
+	@echo "  NPROC: $(NPROC)"
+	@echo "  OS: $(OS)"
+	@echo "  ARCH: $(ARCH)"

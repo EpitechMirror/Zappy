@@ -8,21 +8,22 @@
 ## Last update Mon Jun 29 2:39:35 PM 2025 adrien.marette@epitech.eu
 ##
 
-import unittest
 import math
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import Mock, patch
 
 # Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from Classes import Direction, ResourceType, ActionType, Position, GameState, Experience
+from Classes import (ActionType, Direction, Experience, GameState, Position,
+                     ResourceType)
 
 
 class TestDirection(unittest.TestCase):
     """Test cases for Direction enum"""
-    
+
     def test_direction_values(self):
         """Test that direction enum has correct values"""
         self.assertEqual(Direction.NORTH.value, 1)
@@ -37,7 +38,7 @@ class TestDirection(unittest.TestCase):
 
 class TestResourceType(unittest.TestCase):
     """Test cases for ResourceType enum"""
-    
+
     def test_resource_values(self):
         """Test that resource types have correct string values"""
         self.assertEqual(ResourceType.FOOD.value, "food")
@@ -55,7 +56,7 @@ class TestResourceType(unittest.TestCase):
 
 class TestActionType(unittest.TestCase):
     """Test cases for ActionType enum"""
-    
+
     def test_action_values(self):
         """Test that action types have correct integer values"""
         self.assertEqual(ActionType.MOVE_FORWARD.value, 0)
@@ -77,7 +78,7 @@ class TestActionType(unittest.TestCase):
 
 class TestPosition(unittest.TestCase):
     """Test cases for Position dataclass"""
-    
+
     def test_position_creation(self):
         """Test position creation with x and y coordinates"""
         pos = Position(5, 10)
@@ -101,7 +102,9 @@ class TestPosition(unittest.TestCase):
         """Test distance calculation with negative coordinates"""
         pos1 = Position(-1, -1)
         pos2 = Position(2, 3)
-        expected_distance = math.sqrt((2 - (-1))**2 + (3 - (-1))**2)  # sqrt(9 + 16) = 5.0
+        expected_distance = math.sqrt(
+            (2 - (-1)) ** 2 + (3 - (-1)) ** 2
+        )  # sqrt(9 + 16) = 5.0
         self.assertEqual(pos1.distance_to(pos2), expected_distance)
 
     def test_distance_symmetry(self):
@@ -113,7 +116,7 @@ class TestPosition(unittest.TestCase):
 
 class TestGameState(unittest.TestCase):
     """Test cases for GameState dataclass"""
-    
+
     def test_default_game_state(self):
         """Test game state creation with default values"""
         state = GameState()
@@ -136,9 +139,9 @@ class TestGameState(unittest.TestCase):
             inventory=inventory,
             food_units=50,
             turn_count=100,
-            last_action_reward=10.5
+            last_action_reward=10.5,
         )
-        
+
         self.assertEqual(state.level, 3)
         self.assertEqual(state.position, pos)
         self.assertEqual(state.direction, Direction.SOUTH)
@@ -182,7 +185,7 @@ class TestGameState(unittest.TestCase):
 
 class TestExperience(unittest.TestCase):
     """Test cases for Experience dataclass"""
-    
+
     def test_experience_creation(self):
         """Test experience creation with all required fields"""
         state = [1.0, 2.0, 3.0]
@@ -190,15 +193,11 @@ class TestExperience(unittest.TestCase):
         reward = 10.5
         next_state = [1.1, 2.1, 3.1]
         done = True
-        
+
         exp = Experience(
-            state=state,
-            action=action,
-            reward=reward,
-            next_state=next_state,
-            done=done
+            state=state, action=action, reward=reward, next_state=next_state, done=done
         )
-        
+
         self.assertEqual(exp.state, state)
         self.assertEqual(exp.action, action)
         self.assertEqual(exp.reward, reward)
@@ -208,29 +207,19 @@ class TestExperience(unittest.TestCase):
     def test_experience_with_false_done(self):
         """Test experience creation with done=False"""
         exp = Experience(
-            state=[0.0],
-            action=1,
-            reward=-5.0,
-            next_state=[0.1],
-            done=False
+            state=[0.0], action=1, reward=-5.0, next_state=[0.1], done=False
         )
-        
+
         self.assertFalse(exp.done)
         self.assertEqual(exp.reward, -5.0)
 
     def test_experience_with_empty_states(self):
         """Test experience creation with empty state vectors"""
-        exp = Experience(
-            state=[],
-            action=0,
-            reward=0.0,
-            next_state=[],
-            done=True
-        )
-        
+        exp = Experience(state=[], action=0, reward=0.0, next_state=[], done=True)
+
         self.assertEqual(exp.state, [])
         self.assertEqual(exp.next_state, [])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,68 @@
+{
+  "name": "zappy",
+  "version": "1.0.0",
+  "description": "Zappy Project - Multi-component game with server, GUI, and AI clients",
+  "main": "index.js",
+  "scripts": {
+    "build": "./build.sh build",
+    "clean": "./build.sh clean",
+    "test": "./build.sh test",
+    "coverage": "./build.sh coverage",
+    "memory": "./build.sh memory",
+    "analyze": "./build.sh analyze",
+    "format": "./build.sh format",
+    "release": "./build.sh release",
+    "ci": "./build.sh ci",
+    "setup": "./build.sh setup",
+    "dev": "make dev",
+    "watch": "make watch",
+    "benchmark": "make benchmark",
+    "status": "make status",
+    "lint": "make analyze",
+    "install-deps": "make install-deps",
+    "docker:build": "make docker-build",
+    "docker:run": "make docker-run",
+    "start:server": "./dist/zappy_server -p 8080 -x 10 -y 10 -n team1 team2 -c 5 -f 100",
+    "start:gui": "./dist/zappy_gui -p 8080 -h localhost",
+    "start:ai": "./dist/run_ai.sh -p 8080 -n team1 -h localhost",
+    "preinstall": "chmod +x build.sh",
+    "postinstall": "make check-deps"
+  },
+  "keywords": [
+    "game",
+    "server",
+    "gui",
+    "ai",
+    "client",
+    "epitech",
+    "zappy"
+  ],
+  "author": "Epitech Student",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/zappy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/zappy/issues"
+  },
+  "homepage": "https://github.com/your-username/zappy#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "linux",
+    "darwin"
+  ],
+  "devDependencies": {},
+  "dependencies": {},
+  "config": {
+    "build_type": "Release",
+    "server_port": "8080",
+    "default_teams": "team1,team2",
+    "default_clients": "5",
+    "default_freq": "100",
+    "map_width": "10",
+    "map_height": "10"
+  }
+}

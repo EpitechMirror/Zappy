@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # Zappy Server
+  zappy-server:
+    build:
+      context: .
+      target: production
+    container_name: zappy-server
+    ports:
+      - "8080:8080"
+    environment:
+      - ZAPPY_PORT=8080
+      - ZAPPY_WIDTH=15
+      - ZAPPY_HEIGHT=15
+      - ZAPPY_TEAMS=team1 team2 team3
+      - ZAPPY_CLIENTS=6
+      - ZAPPY_FREQ=100
+    command: server
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "./docker-entrypoint.sh", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - zappy-network
+
+  # Zappy GUI
+  zappy-gui:
+    build:
+      context: .
+      target: production
+    container_name: zappy-gui
+    depends_on:
+      - zappy-server
+    environment:
+      - ZAPPY_HOST=zappy-server
+      - ZAPPY_PORT=8080
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: gui
+    restart: unless-stopped
+    networks:
+      - zappy-network
+
+  # Zappy AI Client - Team 1
+  zappy-ai-team1:
+    build:
+      context: .
+      target: production
+    container_name: zappy-ai-team1
+    depends_on:
+      - zappy-server
+    environment:
+      - ZAPPY_HOST=zappy-server
+      - ZAPPY_PORT=8080
+    command: ai team1
+    restart: unless-stopped
+    networks:
+      - zappy-network
+
+  # Zappy AI Client - Team 2
+  zappy-ai-team2:
+    build:
+      context: .
+      target: production
+    container_name: zappy-ai-team2
+    depends_on:
+      - zappy-server
+    environment:
+      - ZAPPY_HOST=zappy-server
+      - ZAPPY_PORT=8080
+    command: ai team2
+    restart: unless-stopped
+    networks:
+      - zappy-network
+
+  # Zappy AI Client - Team 3
+  zappy-ai-team3:
+    build:
+      context: .
+      target: production
+    container_name: zappy-ai-team3
+    depends_on:
+      - zappy-server
+    environment:
+      - ZAPPY_HOST=zappy-server
+      - ZAPPY_PORT=8080
+    command: ai team3
+    restart: unless-stopped
+    networks:
+      - zappy-network
+
+networks:
+  zappy-network:
+    driver: bridge
+    name: zappy-network
+
+volumes:
+  zappy-logs:
+    driver: local
+  zappy-data:
+    driver: local
