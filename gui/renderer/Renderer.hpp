@@ -11,6 +11,8 @@
 #include <iostream>
 #include <random>
 #include <optional>
+#include <map>
+#include <set>
 #include "raylib.h"
 #include "rlgl.h"
 #include "../map/Map.hpp"
@@ -25,6 +27,30 @@
 #include <cstring>
 #include "../Console/Console.hpp"
 
+enum NotificationType {
+    PLAYER_LEVEL_UP,
+    PLAYER_CONNECTED,
+    EGG_DROPPED,
+    PLAYER_DISCONNECTED
+};
+
+struct Notification {
+    NotificationType type;
+    std::string message;
+    Color color;
+    
+    Notification(NotificationType t, const std::string& msg, Color c = WHITE) 
+        : type(t), message(msg), color(c) {}
+};
+
+struct FallingEgg {
+    int x, y;
+    float fallHeight;
+    float fallSpeed;
+    
+    FallingEgg(int x, int y) : x(x), y(y), fallHeight(5.0f), fallSpeed(2.0f) {}
+};
+
 class Renderer {
     public:
         Renderer(int width, int height, const Map & map);
@@ -35,6 +61,7 @@ class Renderer {
         void InfoTeamsBoard();
         void InfoPlayersBoard();
         void InfoBoxBoard();
+        void NotificationsBoard();
         void DrawGrid();
         void drawItems();
         void DrawEggs();
@@ -47,6 +74,7 @@ class Renderer {
         bool GetRayGroundIntersection(Ray ray, Vector3 &outPoint);
         void showLoadingScreen(const std::string &message);
         Color getColorForResource(ResourceType type);
+        void DrawFallingEggs();
 
         float getDesktopY();
 
@@ -88,6 +116,19 @@ class Renderer {
         bool _showInfoBoards = true;
         bool _shouldQuit = false;
         void DrawButton();
+        
+        std::vector<FallingEgg> _fallingEggs;
+        std::vector<Notification> _notifications;
+        static const int MAX_NOTIFICATIONS = 15;
+        void addNotification(NotificationType type, const std::string& message, Color color = WHITE);
+        void checkForPlayerEvents();
+        
+        std::map<int, int> _playerLevels;
+        std::set<int> _knownPlayers;
+    public:
+        void addFallingEgg(int x, int y);
+    private:
+        void updateFallingEggs();
 };
 
 #endif

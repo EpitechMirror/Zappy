@@ -15,4 +15,10 @@ for i in {1..10}; do
     $SCRIPT_PATH -p $PORT -n TeamB &
 done
 
+# Lancer 5 IA pour TeamB
+for i in {1..10}; do
+    echo "Lancement TeamC instance $i..."
+    $SCRIPT_PATH -p $PORT -n TeamC &
+done
+
 echo "Toutes les IA ont été lancées."

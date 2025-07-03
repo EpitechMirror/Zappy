@@ -318,27 +318,31 @@ void ProtocolHandler::handlePdr(std::istringstream &iss) {
 
 //----Player drop an egg
 void ProtocolHandler::handlePfk(std::istringstream &iss) {
-    //std::string idStr;
-//
-    //if (!(iss >> idStr)) {
-    //    std::cerr << "Invalid pfk format\n";
-    //    return;
-    //}
-//
-    //int playerId = std::stoi(idStr.substr(1));
-    //Player* player = _map.getPlayerById(playerId);
-    //if (!player) {
-    //    std::cerr << "Unknown player in pfk: #" << playerId << "\n";
-    //    return;
-    //}
-//
-    //Vector3 pos = player->getPosition();
-    //int x = static_cast<int>(pos.x);
-    //int y = static_cast<int>(pos.z);
-//
-    //_map.addEgg(-1, x, y);
-//
-    //std::cout << "Player #" << playerId << " laid an egg at (" << x << ", " << y << ")\n";
+    std::string idStr;
+
+    if (!(iss >> idStr)) {
+        Console::warning("Invalid pfk format");
+        return;
+    }
+
+    try {
+        int playerId = std::stoi(idStr.substr(1));
+        Player* player = _map.getPlayerById(playerId);
+        if (!player) {
+            Console::warning("Unknown player in pfk: #" + std::to_string(playerId));
+            return;
+        }
+
+        Vector3 pos = player->getPosition();
+        int x = static_cast<int>(pos.x);
+        int y = static_cast<int>(pos.z);
+
+        _map.addFallingEgg(x, y);
+
+        Console::debug("Player #" + std::to_string(playerId) + " is laying an egg at (" + std::to_string(x) + ", " + std::to_string(y) + ") - animation started");
+    } catch (const std::exception& e) {
+        Console::warning("Invalid player ID format in pfk: " + idStr);
+    }
 }
 
 //----Player begin incantation

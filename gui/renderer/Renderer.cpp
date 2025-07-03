@@ -6,6 +6,7 @@
 */
 
 #include "Renderer.hpp"
+#include <algorithm>
 constexpr float TILE_SIZE = 64.0f;
 
 Renderer::Renderer(int width, int height, const Map &map)
@@ -19,6 +20,10 @@ Renderer::Renderer(int width, int height, const Map &map)
       _disconnectTimer(0.0f)
 {
     _menuButton = {20, static_cast<float>(height - 60), 100, 40};
+    
+    const_cast<Map&>(_map).setFallingEggCallback([this](int x, int y) {
+        this->addFallingEgg(x, y);
+    });
 }
 
 float Renderer::getDesktopY() {
@@ -648,6 +653,8 @@ void Renderer::gameLoop(Client &client) {
         }
 
         _cameraController.update();
+        updateFallingEggs();
+        checkForPlayerEvents();
         for (auto& l : _lights)
             l.updateShader(_assets.shaders.getPBR());
 
@@ -682,6 +689,7 @@ void Renderer::gameLoop(Client &client) {
                 DrawGrid();
                 drawItems();
                 DrawEggs();
+                DrawFallingEggs();
                 DrawPlayers();
                 DrawIncantations();
                 DrawSelectionMarkers();
@@ -693,6 +701,7 @@ void Renderer::gameLoop(Client &client) {
                 InfoTeamsBoard();
                 InfoPlayersBoard();
                 InfoBoxBoard();
+                NotificationsBoard();
             }
             DrawButton();
             
@@ -703,6 +712,17 @@ void Renderer::gameLoop(Client &client) {
                 DrawMenu();
             }
         EndDrawing();
+    }
+}
+
+void Renderer::DrawFallingEggs() {
+    for (const FallingEgg& egg : _fallingEggs) {
+        Vector3 pos = { 
+            static_cast<float>(egg.x) + 0.5f, 
+            egg.fallHeight, 
+            static_cast<float>(egg.y) + 0.5f 
+        };
+        DrawSphere(pos, 0.13f, WHITE);
     }
 }
 
@@ -1095,3 +1115,114 @@ void Renderer::DrawGameOver() {
 
 bool Renderer::firstCall = true;
 bool Renderer::disconnected = false;
+
+void Renderer::addFallingEgg(int x, int y) {
+    _fallingEggs.emplace_back(x, y);
+    Console::debug("Added falling egg at (" + std::to_string(x) + ", " + std::to_string(y) + ")");
+    
+    std::string message = "Egg dropped at (" + std::to_string(x) + ", " + std::to_string(y) + ")";
+    addNotification(EGG_DROPPED, message, WHITE);
+}
+
+void Renderer::updateFallingEggs() {
+    float deltaTime = GetFrameTime();
+    
+    for (auto& egg : _fallingEggs) {
+        egg.fallHeight -= egg.fallSpeed * deltaTime;
+    }
+    
+    _fallingEggs.erase(
+        std::remove_if(_fallingEggs.begin(), _fallingEggs.end(),
+            [](const FallingEgg& egg) {
+                return egg.fallHeight <= 0.1f;
+            }),
+        _fallingEggs.end()
+    );
+}
+
+void Renderer::addNotification(NotificationType type, const std::string& message, Color color) {
+    _notifications.emplace_back(type, message, color);
+    
+    if (_notifications.size() > MAX_NOTIFICATIONS) {
+        _notifications.erase(_notifications.begin());
+    }
+    
+    Console::debug("Notification: " + message);
+}
+
+void Renderer::checkForPlayerEvents() {
+    const auto& currentPlayers = _map.getPlayers();
+    
+    for (const Player& player : currentPlayers) {
+        int id = player.getId();
+        
+        if (_knownPlayers.find(id) == _knownPlayers.end()) {
+            _knownPlayers.insert(id);
+            addNotification(PLAYER_CONNECTED, 
+                          "Player #" + std::to_string(id) + " (" + player.getTeam() + ") connected", 
+                          GREEN);
+        }
+        
+        auto levelIt = _playerLevels.find(id);
+        if (levelIt != _playerLevels.end()) {
+            if (player.getLevel() > levelIt->second) {
+                addNotification(PLAYER_LEVEL_UP,
+                              "Player #" + std::to_string(id) + " leveled up to " + std::to_string(player.getLevel()),
+                              GOLD);
+            }
+        }
+        _playerLevels[id] = player.getLevel();
+    }
+    
+    std::set<int> currentPlayerIds;
+    for (const Player& player : currentPlayers) {
+        currentPlayerIds.insert(player.getId());
+    }
+    
+    for (auto it = _knownPlayers.begin(); it != _knownPlayers.end();) {
+        if (currentPlayerIds.find(*it) == currentPlayerIds.end()) {
+            addNotification(PLAYER_DISCONNECTED,
+                          "Player #" + std::to_string(*it) + " disconnected",
+                          RED);
+            _playerLevels.erase(*it);
+            it = _knownPlayers.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+void Renderer::NotificationsBoard() {
+    if (!_showInfoBoards || _notifications.empty()) return;
+    
+    int titleSize = 20;
+    int lineSpacing = 25;
+    int padding = 10;
+    
+    int maxWidth = MeasureText("Events Log", titleSize);
+    for (const auto& notif : _notifications) {
+        int w = MeasureText(notif.message.c_str(), titleSize);
+        if (w > maxWidth) maxWidth = w;
+    }
+    
+    int boxWidth = maxWidth + 2 * padding;
+    int boxHeight = (1 + _notifications.size()) * lineSpacing + 2 * padding;
+    
+    // Posizione
+    int boxX = _screenWidth - boxWidth - 10;
+    int boxY = _screenHeight - boxHeight - 10;
+    
+    DrawRectangle(boxX, boxY, boxWidth, boxHeight, Fade(BLACK, 0.7f));
+    DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLUE);
+    
+    int x = boxX + padding;
+    int y = boxY + padding;
+    
+    DrawText("Events Log", x, y, titleSize, YELLOW);
+    y += lineSpacing;
+    
+    for (const auto& notif : _notifications) {
+        DrawText(notif.message.c_str(), x, y, titleSize, notif.color);
+        y += lineSpacing;
+    }
+}
