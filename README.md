@@ -23,7 +23,7 @@
 ## 🚀 Features
 
 * **Server (`zappy_server`)**: Implements world simulation in C, manages resource spawning, agent actions, and game logic using non-blocking I/O (`poll`).
-* **Graphical Client (`zappy_gui`)**: C++ application (SFML-based) that visualizes the game world in real time.
+* **Graphical Client (`zappy_gui`)**: C++ application (Raylib-based) that visualizes the game world in real time in 3D.
 * **AI Client (`zappy_ai`)**: Autonomous agent controller in any language, following the project protocol to interact with the server.
 * **Toroidal Map**: World edges wrap around seamlessly.
 * **Elevating Ritual**: Cooperative leveling mechanic requiring players to gather specific resources and synchronize actions.
@@ -36,12 +36,12 @@ Ensure you have the following installed on your system:
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential cmake pkg-config libsfml-dev
+sudo apt install -y build-essential cmake pkg-config libsfml-dev libglfw3-dev libgl1-mesa-dev
 ```
 
 * **build-essential** (GCC, g++, make)
 * **CMake** (≥ 3.10)
-* **SFML** (Simple and Fast Multimedia Library) for the GUI
+* **Raylib** (Simple and Fast Multimedia Library) for the GUI
 * **pkg-config**
 
 ---
@@ -143,7 +143,7 @@ Refer to [`docs/PROTOCOL.md`](docs/PROTOCOL.md) for full command definitions and
 ## 📦 Dependencies
 
 * **C (Server)**: Standard library, POSIX sockets, `poll()`
-* **C++ (GUI)**: SFML, threading, JSON (for message parsing)
+* **C++ (GUI)**: Raylib, threading
 * **AI Client**: Any language supporting TCP sockets (reference in Python included)
 
 ---
