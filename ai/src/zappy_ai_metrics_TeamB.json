@@ -1,7 +1,7 @@
 {
-  "total_rewards": -652.9999999999987,
-  "successful_actions": 6,
-  "failed_actions": 18,
+  "total_rewards": -5.699999999999999,
+  "successful_actions": 0,
+  "failed_actions": 3,
   "elevations_completed": 0,
-  "resources_collected": 5
+  "resources_collected": 0
 }

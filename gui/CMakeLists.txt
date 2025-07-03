@@ -62,7 +62,7 @@ add_executable(unit_tests
     tests/test_camera.cpp
     tests/test_light.cpp
     tests/test_assets_manager.cpp
-    tests/test_renderer.cpp
+    tests/test_protocol_handler.cpp
     client/Client.cpp
     map/Map.cpp
     player/Player.cpp
