@@ -59,6 +59,7 @@ static void handle_egg_auth(egg_t *egg, client_t *client,
     client->is_graphic = false;
     client->state = AUTHENTICATED;
     client->is_alive = true;
+    client->id = client->fd;
     client->inventory.food = 10;
     client->hunger_tick = 0;
     client->x = egg->x;
@@ -69,6 +70,7 @@ static void handle_egg_auth(egg_t *egg, client_t *client,
     client->inventory.food = 10;
     client->next = conf->clients;
     conf->clients = client;
+    client->team_idx = find_team_index(conf, team);
     send_pnw_to_graphics(client, conf);
     send_ebo_to_graphics(egg->id, conf);
 }

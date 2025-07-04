@@ -84,7 +84,6 @@ egg_t *create_egg_fork(server_config_t *conf, client_t *client)
 {
     egg_t *egg = create_egg(conf, client->team_idx, client->x, client->y);
 
-    printf("fork to create an egg");
     if (!egg)
         return NULL;
     egg->used = 1;
