@@ -30,6 +30,7 @@ public:
     Font toyFont;
     Music mainMusic;
     Music loadingMusic;
+    Texture2D wallpaperTexture;
     ShadersManager shaders;
 
     bool isModelLoaded(const std::string &modelPath) const;
@@ -41,11 +42,11 @@ public:
 
     void loadFonts();
     void loadAudio();
-
-private:
     void loadModels();
     void loadTextures();
     void loadShaders();
+
+private:
     int mapWidth;
     int mapHeight;
 

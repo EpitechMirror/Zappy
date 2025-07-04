@@ -182,3 +182,11 @@ void Map::clearIncantationAt(int x, int y) {
 const std::vector<Incantation>& Map::getActiveIncantations() const {
     return _activeIncantations;
 }
+
+void Map::addFallingEgg(int x, int y) {
+    Console::debug("Falling egg at (" + std::to_string(x) + ", " + std::to_string(y) + ")");
+    
+    if (_fallingEggCallback) {
+        _fallingEggCallback(x, y);
+    }
+}

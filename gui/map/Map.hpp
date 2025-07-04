@@ -13,6 +13,7 @@
 #include "../player/Player.hpp"
 #include "raylib.h"
 #include <algorithm>
+#include <functional>
 
 #pragma once
 
@@ -68,6 +69,11 @@ class Map {
         void startIncantation(int x, int y, int level, const std::vector<int> &players);
         void clearIncantationAt(int x, int y);
         const std::vector<Incantation>& getActiveIncantations() const;
+        void addFallingEgg(int x, int y);
+
+        void setFallingEggCallback(std::function<void(int, int)> callback) {
+            _fallingEggCallback = callback;
+        }
 
         void setGameOver(bool gameOver, std::string teamName) {
             _gameOver = gameOver;
@@ -91,6 +97,7 @@ class Map {
         std::vector<Resources> _tiles;
         std::vector<Egg> _eggs;
         std::vector<Player> _players;
+        std::function<void(int, int)> _fallingEggCallback;
 };
 
 #endif /* !MAP_HPP_ */
