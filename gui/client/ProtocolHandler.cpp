@@ -396,12 +396,12 @@ void ProtocolHandler::handlePie(std::istringstream &iss) {
 
     if (result == "0") {
         _map.clearIncantationAt(x, y);
-        Console::warning("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") failed");
+        Console::debug("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") failed");
     } else if (result == "1") {
         _map.clearIncantationAt(x, y);
-        Console::warning("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") succeeded");
+        Console::debug("Incantation at (" + std::to_string(x) + ", " + std::to_string(y) + ") succeeded");
     } else {
-        Console::warning("Unknown result in pie: " + result);
+        Console::debug("Unknown result in pie: " + result);
     }
 }
 
