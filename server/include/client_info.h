@@ -56,6 +56,11 @@ typedef struct client_s {
     struct client_s *next;
     command_t *command_queue;
     double last_command_end;
+    
+    // Champs pour l'incantation
+    bool is_incanting;
+    double incantation_end_time;
+    int incantation_result;
 } client_t;
 
 typedef struct {

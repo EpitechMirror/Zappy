@@ -51,7 +51,7 @@ static void pic_graphics(client_t *client, server_config_t *conf)
         send(conf->graphic_fds[i], msg, strlen(msg), 0);
 }
 
-static void pie_graphics(client_t *client, server_config_t *conf, int result)
+void pie_graphics(client_t *client, server_config_t *conf, int result)
 {
     char msg[256];
 
@@ -89,11 +89,48 @@ int find_nb_teams(client_t *client)
 }
 
 
-void notify_graphics_player_update(client_t *client, server_config_t *conf, int result)
+void notify_graphics_player_update(client_t *client, server_config_t *conf, int result, bool is_incantation)
 {
     ppo_graphics(client, conf);
-    pie_graphics(client, conf, result);
-    plv_graphics(client, conf);
-    pic_graphics(client, conf);
     pin_graphics(client, conf);
+    
+    if (is_incantation) {
+        pic_graphics(client, conf);
+        
+        if (result == 1) {
+            client->level++;
+            char level_msg[64];
+            snprintf(level_msg, sizeof(level_msg), "Current level: %d\n", client->level);
+            send(client->fd, level_msg, strlen(level_msg), 0);
+            send(client->fd, "ok\n", 3, 0);
+            
+            plv_graphics(client, conf);
+        } else {
+            send(client->fd, "ko\n", 3, 0);
+        }
+        
+        client->is_incanting = true;
+        client->incantation_end_time = get_current_time() + 6.0;
+        client->incantation_result = result;
+        
+        printf("[DEBUG] Client #%d starts incantation, will end in 5 seconds\n", client->fd);
+        
+    } else {
+        plv_graphics(client, conf);
+    }
+}
+
+void check_incantation_timers(server_config_t *conf)
+{
+    double now = get_current_time();
+    
+    for (client_t *client = conf->clients; client; client = client->next) {
+        if (client->is_incanting && now >= client->incantation_end_time) {
+            printf("[DEBUG] Client #%d incantation finished\n", client->fd);
+            
+            pie_graphics(client, conf, client->incantation_result);
+            
+            client->is_incanting = false;
+        }
+    }
 }

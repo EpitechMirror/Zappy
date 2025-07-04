@@ -67,9 +67,14 @@ void handle_incantation(client_t *client, server_config_t *conf, int fd)
     const elevation_req_t *req;
     int result = 1;
 
+    // Vérifier si le client fait déjà une incantation
+    if (client->is_incanting) {
+        send(fd, "ko\n", 3, 0);
+        return;
+    }
+
     if (client->level >= 8) {
         send(fd, "ko\n", 3, 0);
-        result = 0;
         return;
     }
     req = &elevation_requirements[client->level - 1];
@@ -77,16 +82,21 @@ void handle_incantation(client_t *client, server_config_t *conf, int fd)
         client->level);
     if (players_on_tile < req->nb_players) {
         send(fd, "ko\n", 3, 0);
-        result = 0;
         return;
     }
     if (!check_tile_resources(conf, client->x, client->y, req)) {
         send(fd, "ko\n", 3, 0);
-        result = 0;
         return;
     }
+    
+    // Répondre immédiatement au client
+    send(fd, "Elevation underway\n", 19, 0);
+    
+    // Démarrer l'incantation avec timer
+    notify_graphics_player_update(client, conf, result, true);
+    
+    // Consommer les ressources et élever les joueurs (sera fait à la fin du timer)
     consume_tile_resources(conf, client->x, client->y, req);
-    elevate_players_on_tile(conf, client->x, client->y, client->level, result);
 }
 
 int respond_to_server_fd(server_config_t *conf, char *c_message,

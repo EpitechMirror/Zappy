@@ -40,7 +40,7 @@ void set_object(client_t *client, server_config_t *conf, char *client_message,
 
     for (int i = 0; i < 7; i++)
         if (handle_resource(resourc, &mappings[i], fd)) {
-            notify_graphics_player_update(client, conf, result);
+            notify_graphics_player_update(client, conf, result, false);
             return;
         }
     send(fd, "ko\n", 3, 0);
@@ -89,7 +89,7 @@ void elevate_players_on_tile(server_config_t *conf, int x, int y, int level, int
     for (client_t *c = conf->clients; c != NULL; c = c->next) {
         if (c->x == x && c->y == y && c->level == level) {
             c->level++;
-            notify_graphics_player_update(c, conf, result);
+            notify_graphics_player_update(c, conf, result, false);
             send(c->fd, "Current level: ", 15, 0);
             snprintf(level_msg, sizeof(level_msg), "%d\n", c->level);
             send(c->fd, level_msg, strlen(level_msg), 0);

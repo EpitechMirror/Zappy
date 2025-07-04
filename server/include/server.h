@@ -87,7 +87,8 @@ int find_nb_teams(client_t *client);
 void set_object(client_t *client, server_config_t *conf, char *client_message,
     int fd);
 void notify_graphics_player_update(client_t *client, server_config_t *conf,
-    int result);
+    int result, bool is_incantation);
+void check_incantation_timers(server_config_t *conf);
 void handle_incantation(client_t *client, server_config_t *conf, int fd);
 int count_players_on_tile(server_config_t *conf, int x, int y, int level);
 int check_tile_resources(server_config_t *conf, int x, int y,

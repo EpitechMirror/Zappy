@@ -44,7 +44,7 @@ void handle_drop_command(client_t *client, server_config_t *conf,
             (*mappings[i].inventory_ptr)--;
             send(client->fd, "ok\n", 3, 0);
             send_pdr(client->fd, i, conf);
-            notify_graphics_player_update(client, conf, 1);
+            notify_graphics_player_update(client, conf, 1, false);
             return;
         }
     }
@@ -71,6 +71,15 @@ static const command_handler_t command_handlers[] = {
 static void handle_movement_commands(client_t *client, server_config_t *conf,
     const char *cmd)
 {
+    // Vérifier si le client fait une incantation
+    if (client->is_incanting) {
+        // Interrompre l'incantation
+        client->is_incanting = false;
+        pie_graphics(client, conf, 0); // Échec
+        send(client->fd, "ko\n", 3, 0);
+        return;
+    }
+    
     if (strncmp(cmd, "Forward", 7) == 0) {
         move_player(client, conf, client->direction);
         send(client->fd, "ok\n", 3, 0);
@@ -137,7 +146,7 @@ static void handle_eject_command(client_t *client, server_config_t *conf)
         if (c != client && c->x == client->x && c->y == client->y) {
             eject_direction = (client->direction + 2) % 4;
             move_player(c, conf, eject_direction);
-            notify_graphics_player_update(c, conf, result);
+            notify_graphics_player_update(c, conf, result, false);
         }
     }
     send(client->fd, "ok\n", 3, 0);

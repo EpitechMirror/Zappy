@@ -31,8 +31,7 @@ void send_pfk(int fd, egg_t *egg, int player_id)
 {
     char msg[128];
 
-    snprintf(msg, sizeof(msg), "pfk #%d %d %d %d\n",
-        egg->id, player_id, egg->x, egg->y);
+    snprintf(msg, sizeof(msg), "pfk #%d\n", player_id);
     send(fd, msg, strlen(msg), 0);
 }
 

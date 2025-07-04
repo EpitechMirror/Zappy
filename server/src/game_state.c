@@ -127,6 +127,7 @@ void *game_tick_thread(void *arg)
         usleep(1000000 / conf->freq);
         pthread_mutex_lock(&conf->mutex);
         execute_pending_commands(conf);
+        check_incantation_timers(conf);
         update_players_hunger(conf);
         periodic_resource_respawn(conf);
         pthread_mutex_unlock(&conf->mutex);
